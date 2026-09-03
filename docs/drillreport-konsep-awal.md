@@ -678,14 +678,47 @@ sudah ada meng-cover otomatis.
       (§9.3). MVP = tab "Riwayat DR Drill" di halaman aset.
 
 - [x] ~~Menu node: Tools vs Management?~~ **Management → DR Drill Report** (§11.1)
-- [x] ~~Nama cron task?~~ `DrillReminder` (MVP) + `ActionFollowup` + `FindingStatusSync`
-      (opsional) — §11.2
+- [x] ~~Nama cron task?~~ `DrillReminder` + `ActionFollowup` (impl.) `FindingStatusSync` (opsional) — §11.2
+- [x] ~~Right `plugin_drillreport_*`?~~ **4 right** `_drill` / `_action` / `_approve` / `_config`
+- [x] ~~Bikin repo + skeleton?~~ **DONE** — `teguh-umar/drillreport` (private), commit
+      `edb3ce2` v0.1.0. Konsep doc kanonik pindah ke repo: `drillreport/docs/drillreport-konsep-awal.md`.
 
-### Sisa terbuka
+## 13. Status Implementasi
 
-- [ ] Nama field `fields` RTO/RPO — nunggu akses server
-- [ ] Right `plugin_drillreport_*` — daftar final. Usulan: `plugin_drillreport_drill`
-      (CRUD laporan), `plugin_drillreport_approve` (sign-off), `plugin_drillreport_config`
-      (Setup). Konfirmasi.
-- [ ] Konfirmasi label menu ("DR Drill Report" / "Disaster Recovery Drills" / lain)
-- [ ] Bikin repo + `setup.php` + skeleton → mulai coding MVP
+**Repo:** `teguh-umar/drillreport` (private) · **v0.1.0** `edb3ce2` — installable
+skeleton, `php -l` bersih, **belum dijalankan di VM-HQ-GLPI**.
+
+Sudah ada (skeleton):
+
+| Area | File |
+|---|---|
+| Bootstrap | `setup.php`, `hook.php`, `composer.json`, `LICENSE` (GPL-3.0), `README.md`, `CHANGELOG.md` |
+| Schema (8 tabel) | `hook.php` + `src/Migration.php` |
+| Itemtype | `src/Drill.php` (form legacy sementara), `src/Objective.php`, `src/Action.php`, `src/Drill_Item.php` |
+| Dropdown | `src/Scenario.php`, `src/TestType.php`, `src/ActionCategory.php`, `src/Seed.php` (seed 5 test type) |
+| Rights | `src/RightDefinition.php` (4 right), grant per profil di `hook.php` |
+| Menu / Setup | `src/Menu.php`, `src/Profile.php`, `front/config.php` |
+| Cron | `src/Cron.php` (`DrillReminder`, `ActionFollowup` — log-only stub) |
+| Front | `front/drill.php`, `drill.form.php`, `action.php`, `scenario.php`, `testtype.php`, `actioncategory.php` |
+| Mapping RR | `Action::toFindingInput()` — `code = DRILL-<drills_id>-<actions_id>` |
+
+Belum ada (MVP berikutnya):
+
+- [ ] Form entry Twig macro (ganti `Drill::showForm()` legacy) — §7.3
+- [ ] Grid tambah/edit inline anak (`_objectives`/`_actions`/`_drills_items`) — sekarang read-only list
+- [ ] Tombol "Kirim ke Risk Register" (UI + guard `isPluginActive('riskregister')`) — §5
+- [ ] Soft-read RTO/RPO target dari plugin `fields` saat aset ditambah — §6.4
+- [ ] Notifikasi GLPI untuk kedua cron (sekarang cuma `Toolbox::logInFile`)
+- [ ] Laporan cetak (`templates/report.html.twig` + print CSS + `window.print`) — §6
+- [ ] Kolom Business Criticity di laporan (toggle `show_business_criticity`) — §6.3a
+
+Belum diverifikasi (butuh akses VM):
+
+- [ ] `php bin/console glpi:plugin:install drillreport` bersih
+- [ ] `date_creation`/`date_mod` raw `timestamp` di CREATE TABLE — apakah `Plugin.php` VM ngeflag (hub §7 catatan `-46`); kalau ya → `$migration->addField(..., 'timestamp')`
+- [ ] Nama field `fields` RTO/RPO final + blok di-assign ke `Appliance`/`Computer`
+- [ ] Menu highlight + sub-entri tampil benar di Management
+
+### Sisa keputusan kecil
+
+- [ ] Konfirmasi label menu ("DR Drill Report" dipakai sekarang)

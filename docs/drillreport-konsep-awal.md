@@ -73,8 +73,12 @@ if (\Plugin::isPluginActive('riskregister')) {
 ### 5.1 Cara membuat Finding secara programatik
 
 - Class: **`\GlpiPlugin\Riskregister\Finding`** (PSR-4, plain `CommonDBTM`)
-- Kategori: `\GlpiPlugin\Riskregister\Import\ImportSupport::categoryIdByName('Disaster Recovery', $eid)`
-  → find-or-create, return `int` (stable public API)
+- Kategori: **`ImportSupport::categoryIdByName()` return 0 kalau nama tidak ada**
+  (bukan find-or-create — dikonfirmasi riskregister 2026-09-03) dan nama
+  `'Disaster Recovery'` **tidak** ada di seed riskregister. Jadi drillreport yang
+  bikin sendiri via itemtype API: `Action::ensureRiskCategoryId($eid)` →
+  `find()` dulu, `add()` kalau belum ada, return 0 kalau `riskregister` non-aktif
+  atau gagal (Finding jatuh ke kategori 0, dibetulkan di Reconcile).
 - Link ke aset GLPI (opsional): `\GlpiPlugin\Riskregister\Finding_Item`
 
 Tombol "Kirim ke Risk Register" muncul di **drill berstatus fail** dan meng-upsert
@@ -87,7 +91,6 @@ if (!\Plugin::isPluginActive('riskregister')) {
 }
 
 $eid  = $drill->fields['entities_id'];
-$catId = \GlpiPlugin\Riskregister\Import\ImportSupport::categoryIdByName('Disaster Recovery', $eid);
 
 foreach ($actions as $action) {                       // baris glpi_plugin_drillreport_actions
     $code = "DRILL-{$drill->getID()}-{$action['id']}"; // deterministik & stabil per action
@@ -105,7 +108,7 @@ foreach ($actions as $action) {                       // baris glpi_plugin_drill
         'date_due'       => $action['date_due'] ?: null,
         'assessment_ref' => "DR Drill {$year}",
         'raw_asset_text' => $assetLabel,      // dari _drills_items kalau action ditautkan ke aset
-        'plugin_riskregister_riskcategories_id' => $catId,
+        // $catId dari Action::ensureRiskCategoryId($eid) — hanya di-set kalau > 0
     ];
 
     $f   = new \GlpiPlugin\Riskregister\Finding();

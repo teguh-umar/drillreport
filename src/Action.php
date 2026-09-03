@@ -86,6 +86,9 @@ class Action extends CommonDBChild
         return true;
     }
 
+    /** Shared risk-category name used for drill Findings in riskregister. */
+    public const RISK_CATEGORY = 'Disaster Recovery';
+
     /**
      * Map an Action row to the riskregister Finding input array.
      * Used by the "Send to Risk Register" button (see docs §5.1).
@@ -104,7 +107,7 @@ class Action extends CommonDBChild
         string $assessmentRef,
         string $assetLabel = ''
     ): array {
-        return [
+        $input = [
             'entities_id'    => $eid,
             'code'           => sprintf('DRILL-%d-%d', (int) $row['plugin_drillreport_drills_id'], (int) $row['id']),
             'scope_label'    => $scope,
@@ -118,6 +121,41 @@ class Action extends CommonDBChild
             'assessment_ref' => $assessmentRef,
             'raw_asset_text' => $assetLabel,
         ];
+
+        $catId = self::ensureRiskCategoryId($eid);
+        if ($catId > 0) {
+            $input['plugin_riskregister_riskcategories_id'] = $catId;
+        }
+
+        return $input;
+    }
+
+    /**
+     * Find (or create) the "Disaster Recovery" RiskCategory in riskregister and
+     * return its id. Returns 0 when riskregister is absent or the row cannot be
+     * created — the Finding then lands with category 0 and is fixed on
+     * riskregister's Reconcile screen.
+     *
+     * `ImportSupport::categoryIdByName()` returns 0 on a miss (no auto-create,
+     * confirmed by riskregister 2026-09-03), and "Disaster Recovery" is not in
+     * riskregister's seed — so drillreport owns this name via the itemtype API.
+     */
+    public static function ensureRiskCategoryId(int $eid): int
+    {
+        $class = 'GlpiPlugin\\Riskregister\\RiskCategory';
+        if (!class_exists($class)) {
+            return 0;
+        }
+
+        /** @var \CommonTreeDropdown $cat */
+        $cat  = new $class();
+        $hits = $cat->find(['name' => self::RISK_CATEGORY, 'entities_id' => $eid]);
+        if ($hits !== []) {
+            return (int) array_key_first($hits);
+        }
+
+        $newId = $cat->add(['name' => self::RISK_CATEGORY, 'entities_id' => $eid]);
+        return $newId ? (int) $newId : 0;
     }
 
     /** @return array<string,string> */

@@ -1,0 +1,11 @@
+{
+  "name": "pgn/drillreport",
+  "description": "Annual Disaster-Recovery drill logging for GLPI 11 (ISO 22398 / NIST SP 800-84 AAR-IP)",
+  "type": "glpi-plugin",
+  "license": "GPL-3.0-or-later",
+  "authors": [
+    { "name": "PGN ICT" }
+  ],
+  "require": { "php": ">=8.2" },
+  "autoload": { "psr-4": { "GlpiPlugin\\Drillreport\\": "src/" } }
+}

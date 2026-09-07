@@ -31,7 +31,7 @@ class Menu extends CommonGLPI
         return 'ti ti-refresh-alert';
     }
 
-    public static function canView()
+    public static function canView(): bool
     {
         return Session::haveRight(Drill::$rightname, READ)
             || Session::haveRight(Action::$rightname, READ);

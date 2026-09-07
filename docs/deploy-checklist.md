@@ -61,7 +61,9 @@ Confirm: `unzip -l ../drillreportv*.zip` → root is `drillreport/`, no `.git/`.
 - [ ] Systems in scope → asset picker lists `Appliance` + `Computer`; add one →
       row appears with RTO/RPO columns
 - [ ] Open the linked `Appliance` / `Computer` → **"DR drill history"** tab shows the drill
-- [ ] Setup screen (`front/config.php`) loads; toggle a value, Save, reload → persisted
+- [ ] Setup screen (`front/config.php`) loads; toggle a value, **Save** → the page
+      reloads on `/plugins/drillreport/front/config.php` with "Configuration
+      updated." (NOT a redirect to `/` or an inventory-XML error), value persisted
 - [ ] Drill form → **"View / print report"** button → `front/report.php` renders
       all sections (summary, overview, participants, scope, timeline if enabled,
       RTO/RPO with met/not-met marks, objectives, findings, evidence, approval)
@@ -110,13 +112,20 @@ Confirm: `unzip -l ../drillreportv*.zip` → root is `drillreport/`, no `.git/`.
 
 ## Known items to watch
 
-- **GLPI 11.0.x signature tightening** (both fixed here — listed so a future
-  method addition gets the same check): `CommonGLPI::canView()` +
-  `CommonDBRelation::can*` now return `: bool`; `getTabNameForItem()` is a
-  non-static instance method (only `displayTabContentForItem()` is static). An
-  untyped `canView()` or a `static getTabNameForItem()` is a fatal on class load
-  → whole instance down. Rule of thumb when adding an override: grep the immediate
-  parent class for the method and match its signature exactly.
+- **GLPI 11 gotchas** (all handled here — listed so a future addition gets the
+  same check):
+  - `CommonGLPI::canView()` + `CommonDBRelation::can*` return `: bool`; untyped
+    override = fatal on class load → whole instance down.
+  - `getTabNameForItem()` is a non-static instance method (only
+    `displayTabContentForItem()` is static). `static` override = fatal.
+  - `menu.html.twig` renders only `content` entries with a `page` — a multi-page
+    plugin menu must be its own sector + `is_multi_entries`.
+  - `$_SERVER['PHP_SELF']` / `REQUEST_URI` / `SCRIPT_NAME` point at
+    `public/index.php`, not the running `front/*.php`. Use
+    `Html::getPrefixedUrl('/plugins/drillreport/front/x.php')` for hand-rolled
+    `<form action>` (or `Itemtype::getFormURL()`). Latent until the first POST.
+  - `CommonDBChild::prepareInputFor{Add,Update}` overrides must call `parent::`.
+  Rule: grep the immediate parent class for the method and match it exactly.
 - **`date_creation` / `date_mod`** are declared as raw `timestamp NULL` in
   `hook.php` CREATE TABLEs (same as riskregister ships). If GLPI's `Plugin.php`
   logs a timestamp-column warning on first upload, switch those columns to

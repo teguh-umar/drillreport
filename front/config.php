@@ -3,8 +3,9 @@
 /**
  * DR Drill Report — configuration screen.
  *
- * Reachable from Management → DR Drill Report → Setup and the "Config" cog in
- * Setup → Plugins. Manages the `plugin:drillreport` config keys (Config::DEFAULTS).
+ * Reachable from the "DR Drill Report" sidebar sector → Setup and the "Config"
+ * cog in Setup → Plugins. Manages the `plugin:drillreport` config keys
+ * (Config::DEFAULTS).
  *
  * CSRF is validated by core before this legacy script runs — never call
  * Session::checkCSRF() here; Html::closeForm() emits the token.
@@ -19,6 +20,10 @@ use GlpiPlugin\Drillreport\TestType;
 
 Session::checkRight('plugin_drillreport_config', READ);
 $can_update = Session::haveRight('plugin_drillreport_config', UPDATE);
+
+// GLPI 11: $_SERVER['PHP_SELF'] points at public/index.php, not this file —
+// a form posting there hits the native inventory endpoint. Build the real URL.
+$self = Html::getPrefixedUrl('/plugins/drillreport/front/config.php');
 
 $clamp = static fn (int $v, int $min, int $max): int => max($min, min($max, $v));
 
@@ -38,12 +43,12 @@ if (isset($_POST['update'])) {
     Html::back();
 }
 
-Html::header(__('DR Drill Report — Setup', 'drillreport'), $_SERVER['PHP_SELF'], 'drillreport', 'setup');
+Html::header(__('DR Drill Report — Setup', 'drillreport'), '', 'drillreport', 'setup');
 
 $get = static fn (string $k): mixed => Config::get($k);
 
 if ($can_update) {
-    echo "<form method='post' action='" . htmlescape($_SERVER['PHP_SELF']) . "' data-track-changes='true'>";
+    echo "<form method='post' action='" . htmlescape($self) . "' data-track-changes='true'>";
 } else {
     echo "<div class='alert alert-info'>" . __s('You have read-only access to this configuration.', 'drillreport') . "</div>";
 }

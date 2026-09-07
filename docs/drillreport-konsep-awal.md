@@ -716,9 +716,14 @@ VM-HQ-GLPI** — jalankan `docs/deploy-checklist.md`.
 >    (§11.1). Fix: `['drillreport' => [Menu::class]]` + `getMenuContent()` sektor.
 > 4. `CommonDBChild::prepareInputFor*` override **wajib** panggil `parent::`
 >    (validasi parent + entity forwarding). Fixed.
+> 5. `$_SERVER['PHP_SELF']` / `REQUEST_URI` / `SCRIPT_NAME` di GLPI 11 nunjuk ke
+>    `public/index.php`, **bukan** script `front/*.php` yang jalan. `<form action>`
+>    hand-rolled → POST ke `/` → kena endpoint inventory native → error XML. Fix:
+>    `Html::getPrefixedUrl('/plugins/drillreport/front/config.php')` (`0.3.1`).
+>    Form di `src/*` sudah pakai `Itemtype::getFormURL()` — aman.
 >
-> Aturan: kalau nambah override, grep parent class di `C:\tmp\gc\src`, samakan
-> signature-nya persis.
+> Aturan: kalau nambah override / form, grep parent class / helper di
+> `C:\tmp\gc\src`, samakan persis.
 
 Sudah ada:
 

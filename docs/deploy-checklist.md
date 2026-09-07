@@ -8,6 +8,10 @@ This is the **first** deploy — drillreport has never run on a real GLPI. Run t
 to bottom; fix any failure as its own commit, rebuild the zip, redeploy, re-run
 the section.
 
+VM-HQ-GLPI is a **shared production instance** (integrasipaman v1.11.0 is live on
+it). A class-load fatal in a plugin takes the whole instance down — do §0.5
+first.
+
 ---
 
 ## 0. Build the zip (on the workstation)
@@ -19,6 +23,17 @@ git archive --format=zip --prefix=drillreport/ -o "../drillreportv$(grep -oP "VE
 
 The zip lands next to the repo dir (same convention as `riskregisterv*.zip`).
 Confirm: `unzip -l ../drillreportv*.zip` → root is `drillreport/`, no `.git/`.
+
+## 0.5 Production pre-flight (do this BEFORE §1)
+
+- [ ] DB backup: `sudo -u nginx mysqldump --single-transaction glpi | gzip > ~/glpi-predrill-$(date +%F).sql.gz` (or GLPI's own Maintenance → Backup)
+- [ ] Note the current active-plugin list: `sudo -u nginx php bin/console glpi:plugin:list`
+- [ ] Confirm you can reach the box on a second SSH session (for rollback)
+- [ ] **Rollback plan** if the login page dies after activate:
+      `cd /data/www/glpi/plugins && sudo rm -rf drillreport && sudo systemctl reload php-fpm`
+      — GLPI ignores a plugin dir that isn't there; the instance comes straight back.
+      (If it was activated first: `sudo -u nginx php bin/console glpi:plugin:deactivate drillreport` also works, but removing the dir is the sledgehammer.)
+- [ ] Pick a low-traffic window; keep `tail -f files/_log/php-errors.log` open throughout
 
 ## 1. Upload & extract
 

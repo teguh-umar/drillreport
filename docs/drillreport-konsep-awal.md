@@ -688,29 +688,28 @@ sudah ada meng-cover otomatis.
 
 ## 13. Status Implementasi
 
-**Repo:** `teguh-umar/drillreport` (private) · **v0.1.0** `edb3ce2` — installable
-skeleton, `php -l` bersih, **belum dijalankan di VM-HQ-GLPI**.
+**Repo:** `teguh-umar/drillreport` (private) · **v0.1.0** — dua commit setelahnya
+menambah child-CRUD + integrasi RR. `php -l` bersih, **belum dijalankan di VM-HQ-GLPI**.
 
-Sudah ada (skeleton):
+Sudah ada:
 
 | Area | File |
 |---|---|
 | Bootstrap | `setup.php`, `hook.php`, `composer.json`, `LICENSE` (GPL-3.0), `README.md`, `CHANGELOG.md` |
 | Schema (8 tabel) | `hook.php` + `src/Migration.php` |
-| Itemtype | `src/Drill.php` (form legacy sementara), `src/Objective.php`, `src/Action.php`, `src/Drill_Item.php` |
-| Dropdown | `src/Scenario.php`, `src/TestType.php`, `src/ActionCategory.php`, `src/Seed.php` (seed 5 test type) |
-| Rights | `src/RightDefinition.php` (4 right), grant per profil di `hook.php` |
-| Menu / Setup | `src/Menu.php`, `src/Profile.php`, `front/config.php` |
-| Cron | `src/Cron.php` (`DrillReminder`, `ActionFollowup` — log-only stub) |
-| Front | `front/drill.php`, `drill.form.php`, `action.php`, `scenario.php`, `testtype.php`, `actioncategory.php` |
-| Mapping RR | `Action::toFindingInput()` — `code = DRILL-<drills_id>-<actions_id>` |
+| Itemtype | `src/Drill.php` (form legacy sementara), `Objective.php`, `Action.php`, `Drill_Item.php` |
+| **Child CRUD** | tab tambah/edit/hapus inline untuk Objective / Action / Drill_Item + `front/objective.form.php`, `action.form.php`, `drill_item.form.php` |
+| **Send to RR** | tombol "Send findings to Risk Register" di drill fail (guard `riskregisterAvailable()`) → `Action::sendDrillToRiskRegister()` upsert per baris + write-back `findings_id`/`code` |
+| **Soft-read `fields`** | `Drill_Item::fieldsSoftReadTargets()` — pre-fill RTO/RPO target dari custom field aset saat link dibuat; no-op kalau `fields` non-aktif |
+| Dropdown | `Scenario.php`, `TestType.php`, `ActionCategory.php`, `Seed.php` (seed 5 test type) |
+| Rights | `RightDefinition.php` (4 right), grant per profil di `hook.php` |
+| Menu / Setup | `Menu.php`, `Profile.php`, `front/config.php` |
+| Cron | `Cron.php` (`DrillReminder`, `ActionFollowup` — log-only stub) |
+| Asset picker | `Dropdown::showSelectItemFromItemtypes` di tab "Systems in scope" |
 
 Belum ada (MVP berikutnya):
 
 - [ ] Form entry Twig macro (ganti `Drill::showForm()` legacy) — §7.3
-- [ ] Grid tambah/edit inline anak (`_objectives`/`_actions`/`_drills_items`) — sekarang read-only list
-- [ ] Tombol "Kirim ke Risk Register" (UI + guard `isPluginActive('riskregister')`) — §5
-- [ ] Soft-read RTO/RPO target dari plugin `fields` saat aset ditambah — §6.4
 - [ ] Notifikasi GLPI untuk kedua cron (sekarang cuma `Toolbox::logInFile`)
 - [ ] Laporan cetak (`templates/report.html.twig` + print CSS + `window.print`) — §6
 - [ ] Kolom Business Criticity di laporan (toggle `show_business_criticity`) — §6.3a

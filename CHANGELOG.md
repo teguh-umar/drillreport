@@ -6,6 +6,21 @@ Format: [Keep a Changelog](https://keepachangelog.com/); this project uses
 
 ## [Unreleased]
 
+### Added
+- Child-record management on the drill form: add / edit / delete `Objective`,
+  `Action` and `Drill_Item` rows inline from their tabs
+  (`front/objective.form.php`, `action.form.php`, `drill_item.form.php`).
+- `Action` — "Send findings to Risk Register" button on a **failed** drill (shown
+  only when `riskregister` is active). Upserts one `Finding` per action row on the
+  `(entities_id, code)` key and writes `findings_id` + `code` back
+  (`Action::sendDrillToRiskRegister()`).
+- `Drill_Item` — RTO/RPO **targets** pre-filled from the asset's custom fields via
+  the `fields` plugin on link creation (`Drill_Item::fieldsSoftReadTargets()`);
+  soft, degrades to no-op when `fields` is inactive or nothing matches. Keys are
+  `plugin:drillreport` / `fields_rto_key` + `fields_rpo_key`.
+- Asset picker (`Dropdown::showSelectItemFromItemtypes`) to add systems to a
+  drill's scope.
+
 ## [0.1.0] - 2026-09-03
 
 Initial installable scaffold.

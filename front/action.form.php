@@ -50,7 +50,7 @@ if (isset($_POST['add'])) {
     Html::back();
 } elseif (isset($_GET['id'])) {
     $drills_id = (int) ($_GET['parent_id'] ?? 0);
-    Html::header(Action::getTypeName(1), '', 'management', \GlpiPlugin\Drillreport\Menu::class);
+    Html::header(Action::getTypeName(1), '', 'management', \GlpiPlugin\Drillreport\Menu::class, 'action');
     (new Action())->showForm((int) $_GET['id'], ['parent_id' => $drills_id]);
     Html::footer();
 } else {

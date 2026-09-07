@@ -688,9 +688,11 @@ sudah ada meng-cover otomatis.
 
 ## 13. Status Implementasi
 
-**Repo:** `teguh-umar/drillreport` (private) · **v0.1.0** — commit berikutnya
-menambah child-CRUD + integrasi RR + fix kompat GLPI 11.0.x. `php -l` bersih,
-**belum dijalankan di VM-HQ-GLPI**.
+**Repo:** `teguh-umar/drillreport` (private) · **v0.2.2** · `drillreportv0.2.2.zip`
+dibangun. Child-CRUD + integrasi RR + **3 fix kompat GLPI 11.0.x** + **static
+review lengkap vs source `glpi 11.0/bugfixes`** (semua framework call di `src/` +
+`front/` diverifikasi). `php -l` bersih. **Belum dijalankan di VM-HQ-GLPI** —
+jalankan `docs/deploy-checklist.md`.
 
 > ⚠️ **GLPI 11.0.x signature tightening** (dua-duanya sudah difix di drillreport):
 > 1. `CommonGLPI::canView()` + `CommonDBRelation::can{View,Create,Update,Delete,Purge}`

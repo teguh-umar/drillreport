@@ -60,7 +60,7 @@ if (\Plugin::isPluginActive('riskregister')) {
 | **Field utama (usulan)** | tanggal drill, skenario/site DR, RTO target vs aktual, RPO target vs aktual, status pass/fail, catatan (RTO/RPO **bukan** field native GLPI — lihat §6.3) |
 | **Link ke aset** | `Drill_Item` polymorphic — target utama **`Appliance`** (web application — disepakati) & **`Computer`** (server/host); opsional `Cluster`, `DatabaseInstance`. **`Application` bukan itemtype GLPI** — lihat §6.3 |
 | **Group in charge** | Native field `groups_id` — **tidak perlu tabel mapping baru** (beda dengan `assetmap`/`usermap` di `integrasipaman`), karena GLPI sudah track relasi Group per aset secara native |
-| **Menu node** | **Management → DR Drill Report** (`$PLUGIN_HOOKS['menu_toadd']['drillreport'] = ['management' => \GlpiPlugin\Drillreport\Menu::class]`) — lihat §11.1 |
+| **Menu** | **Sektor sidebar `drillreport` sendiri** (`['drillreport' => [Menu::class]]` + `is_multi_entries`) — bukan node di Management. Lihat §11.1 |
 | **Cron (opsional, ringan)** | `GlpiPlugin\Drillreport\Cron::DrillReminder` (reminder tahunan) + `…::ActionFollowup` (action overdue) — notifikasi saja. Lihat §11.2 |
 | **Korelasi ke `riskregister`** | Tombol manual "Kirim ke Risk Register" saat drill berstatus fail — muncul hanya kalau `riskregister` terdeteksi aktif; sengaja manual (bukan auto-create Finding) karena proses drill sendiri manual dan butuh review manusia sebelum jadi Finding formal. Detail kontrak API di §5. |
 
@@ -591,32 +591,44 @@ approval) **tidak disarankan dimatikan** — inti laporan standar.
 
 ## 11. Menu Node & Cron Task
 
-### 11.1 Menu node — **Management** (bukan Tools)
+### 11.1 Menu — **sektor sidebar top-level sendiri**
 
-**Keputusan: `Management → DR Drill Report`.**
+**Keputusan (revisi 2026-09-07): sektor `drillreport` sendiri di sidebar**, bukan
+node di bawah Management.
 
-| Kandidat | Untuk | Lawan |
-|---|---|---|
-| **Management** ✅ | Sejajar `riskregister` (Management → Risk Register) — domain governance yang sama & target integrasi. `Appliance` (itemtype utama yang di-link) juga hidup di Management. Data governance level-organisasi, bukan utilitas per-user. Sub-menu Contracts/Certificates/Appliances/Clusters/Databases semua "manajemen CMDB/bisnis" — drillreport pas di situ. | — |
-| Tools | Tempat `integrasipaman`. | Tools = utilitas (Projects, Notes, Reminders, KB, Reports). `integrasipaman` di sana karena sifatnya **sync/integration utility**; drillreport adalah **modul records-management** seperti `riskregister`, bukan utilitas. "Reports" di Tools = plugin `reports`/`mreporting`, hal lain. |
+> Alasan revisi: `menu.html.twig` GLPI 11 **hanya** render entri `content` yang
+> punya `page` — **tidak pernah** array `options`. Pola lama "1 node + options"
+> tampil cuma "DR Drill Report → DR Drill Report" di sidebar. Pola yang benar
+> (dikonfirmasi riskregister v1.2.0): sektor sendiri + `is_multi_entries`.
 
 ```php
-$PLUGIN_HOOKS['menu_toadd']['drillreport'] = [
-    'management' => \GlpiPlugin\Drillreport\Menu::class,
-];
+// setup.php — array-of-classes = SEKTOR BARU; string biasa = nempel ke sektor lama
+$PLUGIN_HOOKS['menu_toadd']['drillreport'] = ['drillreport' => [Menu::class]];
 ```
 
-`Menu extends CommonGLPI` (pola `riskregister` hub §4) → `getMenuContent()` return
-`['title','page','icon','links','options'=>[...]]`. Sub-entri:
+```php
+// Menu::getMenuContent()
+return ['is_multi_entries' => true, 'title' => self::getTypeName()] + $entries;
+// $entries['drill']  = ['title','page'=>Drill::getSearchURL(false),'icon','links'=>['search','add'=>… if canCreate]]
+// $entries['action'] = […]   $entries['setup'] = […]
+// return false kalau user tidak punya hak → sektor sembunyi
+```
 
-| Sub-entri | Halaman | Fase |
+```php
+// front/*.php
+Html::header($title, '', 'drillreport', '<entry key>');           // 'drill' / 'action' / 'setup'
+// front/drill.form.php
+$menus['central'] = ['drillreport', 'drill'];                      // displayFullPageForItem()
+```
+
+| Entry | Halaman | Fase |
 |---|---|---|
-| Drills | list `Drill` (Search) | MVP |
-| Improvement Actions | list `Action` (Search, filter overdue) | MVP |
-| DR Drill History | `history.html.twig` — heatmap aset × tahun | Fase 2 |
-| Setup | Config page (`plugin:drillreport`) | MVP |
+| `drill` | list `Drill` (Search) + "+ Add" | MVP |
+| `action` | list `Action` (Search, filter overdue) | MVP |
+| `setup` | Config page (`plugin:drillreport`) | MVP |
 
-Icon: `ti ti-refresh-alert` atau `ti ti-shield-check` (Tabler, dipakai GLPI 11).
+Icon sektor: `ti ti-refresh-alert`. Laporan cetak per-drill = tombol di form
+drill (`front/report.php?id=X`), bukan entri menu.
 
 ### 11.2 Cron task — usulan nama
 
@@ -688,25 +700,25 @@ sudah ada meng-cover otomatis.
 
 ## 13. Status Implementasi
 
-**Repo:** `teguh-umar/drillreport` (private) · **v0.2.2** · `drillreportv0.2.2.zip`
-dibangun. Child-CRUD + integrasi RR + **3 fix kompat GLPI 11.0.x** + **static
-review lengkap vs source `glpi 11.0/bugfixes`** (semua framework call di `src/` +
-`front/` diverifikasi). `php -l` bersih. **Belum dijalankan di VM-HQ-GLPI** —
-jalankan `docs/deploy-checklist.md`.
+**Repo:** `teguh-umar/drillreport` (private) · **v0.2.x** (Unreleased). Child-CRUD +
+integrasi RR + **laporan cetak Twig** + menu sektor sendiri + **static review
+lengkap vs source `glpi 11.0/bugfixes`**. `php -l` bersih. **Belum dijalankan di
+VM-HQ-GLPI** — jalankan `docs/deploy-checklist.md`.
 
-> ⚠️ **GLPI 11.0.x signature tightening** (dua-duanya sudah difix di drillreport):
-> 1. `CommonGLPI::canView()` + `CommonDBRelation::can{View,Create,Update,Delete,Purge}`
->    sekarang `: bool`. Override tanpa return type = fatal compile error →
->    **seluruh GLPI tumbang** (login included). Fix: `Menu::canView(): bool` (`87448fd`).
-> 2. `getTabNameForItem()` **harus instance method** (non-static) — di core
->    `CommonGLPI` non-static, dan untuk kelas yang extends `\Profile` core-nya juga
->    non-static. `static` override = fatal "cannot make non static method static"
->    saat autoload (kebuka waktu Setup → Profiles / tab drill dibuka). Fix:
->    `Objective` / `Action` / `Profile` `getTabNameForItem` jadi non-static
->    (`0.2.1`). `displayTabContentForItem` tetap `static`. `Drill_Item` sudah benar.
+> ⚠️ **Gotcha GLPI 11.0.x — semua 3 sudah difix di drillreport** (heads-up dari
+> sesi riskregister yang kena masing-masing di v1.1.1 / v1.1.2 / v1.1.3 / v1.2.0):
+> 1. `canView()` / `CommonDBRelation::can*` butuh return type `: bool`. Override
+>    tanpa itu = fatal compile error → **seluruh GLPI tumbang**. Fix `Menu::canView(): bool`.
+> 2. `getTabNameForItem()` **harus instance method** (non-static); hanya
+>    `displayTabContentForItem()` yang `static`. Fix di `Objective`/`Action`/`Profile`.
+> 3. `menu.html.twig` cuma render entri `content` yang punya `page`, tidak pernah
+>    `options`. Menu multi-halaman **harus** sektor sendiri + `is_multi_entries`
+>    (§11.1). Fix: `['drillreport' => [Menu::class]]` + `getMenuContent()` sektor.
+> 4. `CommonDBChild::prepareInputFor*` override **wajib** panggil `parent::`
+>    (validasi parent + entity forwarding). Fixed.
 >
-> Aturan main: kalau nambah override, grep parent class-nya, samakan signature-nya
-> persis. Heads-up dari sesi riskregister (v1.1.1 + v1.1.2 kena dua-duanya).
+> Aturan: kalau nambah override, grep parent class di `C:\tmp\gc\src`, samakan
+> signature-nya persis.
 
 Sudah ada:
 
@@ -718,9 +730,10 @@ Sudah ada:
 | **Child CRUD** | tab tambah/edit/hapus inline untuk Objective / Action / Drill_Item + `front/objective.form.php`, `action.form.php`, `drill_item.form.php` |
 | **Send to RR** | tombol "Send findings to Risk Register" di drill fail (guard `riskregisterAvailable()`) → `Action::sendDrillToRiskRegister()` upsert per baris + write-back `findings_id`/`code` |
 | **Soft-read `fields`** | `Drill_Item::fieldsSoftReadTargets()` — pre-fill RTO/RPO target dari custom field aset saat link dibuat; no-op kalau `fields` non-aktif |
+| **Laporan cetak** | `src/Report.php` (assembler) + `templates/report.html.twig` (14 komponen §6, print CSS, section toggle `report_sections`, kolom Business Criticity ikut `show_business_criticity`) + `front/report.php` · tombol "View / print report" di form drill |
 | Dropdown | `Scenario.php`, `TestType.php`, `ActionCategory.php`, `Seed.php` (seed 5 test type) |
 | Rights | `RightDefinition.php` (4 right), grant per profil di `hook.php` |
-| Menu / Setup | `Menu.php`, `Profile.php`, `front/config.php` |
+| Menu / Setup | `Menu.php` (**sektor sidebar sendiri**, `is_multi_entries`), `Profile.php`, `front/config.php` |
 | Cron | `Cron.php` (`DrillReminder`, `ActionFollowup` — log-only stub) |
 | Asset picker | `Dropdown::showSelectItemFromItemtypes` di tab "Systems in scope" |
 
@@ -728,15 +741,16 @@ Belum ada (MVP berikutnya):
 
 - [ ] Form entry Twig macro (ganti `Drill::showForm()` legacy) — §7.3
 - [ ] Notifikasi GLPI untuk kedua cron (sekarang cuma `Toolbox::logInFile`)
-- [ ] Laporan cetak (`templates/report.html.twig` + print CSS + `window.print`) — §6
-- [ ] Kolom Business Criticity di laporan (toggle `show_business_criticity`) — §6.3a
+
+Fase 2: heatmap aset × tahun (§9.3), dashboard cards (§9.2).
 
 Belum diverifikasi (butuh akses VM):
 
 - [ ] `php bin/console glpi:plugin:install drillreport` bersih
 - [ ] `date_creation`/`date_mod` raw `timestamp` di CREATE TABLE — apakah `Plugin.php` VM ngeflag (hub §7 catatan `-46`); kalau ya → `$migration->addField(..., 'timestamp')`
 - [ ] Nama field `fields` RTO/RPO final + blok di-assign ke `Appliance`/`Computer`
-- [ ] Menu highlight + sub-entri tampil benar di Management
+- [ ] Sektor "DR Drill Report" tampil di sidebar dengan 3 entri (bukan collapse jadi "X → X")
+- [ ] Laporan cetak render + print preview bersih
 
 ### Sisa keputusan kecil
 

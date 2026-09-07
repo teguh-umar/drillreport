@@ -17,7 +17,7 @@ use GlpiPlugin\Drillreport\ActionCategory;
 use GlpiPlugin\Drillreport\Menu;
 use GlpiPlugin\Drillreport\Profile as DRProfile;
 
-define('PLUGIN_DRILLREPORT_VERSION', '0.2.2');
+define('PLUGIN_DRILLREPORT_VERSION', '0.3.0');
 define('PLUGIN_DRILLREPORT_MIN_GLPI', '11.0.0');
 define('PLUGIN_DRILLREPORT_MAX_GLPI', '11.9.99');
 
@@ -82,9 +82,10 @@ function plugin_init_drillreport(): void
     }
     $PLUGIN_HOOKS['item_purge']['drillreport'][Drill::class] = $dr_item_purge;
 
-    // Management -> DR Drill Report.
+    // "DR Drill Report" as its own top-level sidebar sector.
+    // Array-of-classes value => NEW sector; a bare string only appends to one.
     Plugin::registerClass(Menu::class);
-    $PLUGIN_HOOKS['menu_toadd']['drillreport'] = ['management' => Menu::class];
+    $PLUGIN_HOOKS['menu_toadd']['drillreport'] = ['drillreport' => [Menu::class]];
 
     // Setup landing page (cog next to the plugin in Setup > Plugins).
     $PLUGIN_HOOKS['config_page']['drillreport'] = 'front/config.php';

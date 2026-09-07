@@ -6,13 +6,16 @@ use CommonGLPI;
 use Session;
 
 /**
- * "DR Drill Report" node under the GLPI 11 Management sector.
+ * "DR Drill Report" — its own top-level sidebar sector (GLPI 11).
  *
  * Wired in {@see plugin_init_drillreport()} via
- *   $PLUGIN_HOOKS['menu_toadd']['drillreport'] = ['management' => Menu::class];
+ *   $PLUGIN_HOOKS['menu_toadd']['drillreport'] = ['drillreport' => [Menu::class]];
+ * The ARRAY-of-classes value creates a NEW sector `drillreport`; a bare class
+ * string would only append to an existing sector. `menu.html.twig` renders only
+ * `content` entries that carry a `page`, never an `options` array — so a
+ * multi-page plugin must return `is_multi_entries` (see getMenuContent()).
  *
- * Not a persisted itemtype — no table. Only supplies the static hooks GLPI's
- * menu builder needs.
+ * Not a persisted itemtype — no table.
  */
 class Menu extends CommonGLPI
 {
@@ -46,35 +49,22 @@ class Menu extends CommonGLPI
             return false;
         }
 
-        $drill_read  = Session::haveRight(Drill::$rightname, READ);
-        $action_read = Session::haveRight(Action::$rightname, READ);
+        $entries = [];
 
-        $landing = $drill_read
-            ? Drill::getSearchURL(false)
-            : Action::getSearchURL(false);
-
-        $menu = [
-            'title'   => self::getMenuName(),
-            'page'    => $landing,
-            'icon'    => self::getIcon(),
-            'links'   => ['search' => $landing],
-            'options' => [],
-        ];
-
-        if ($drill_read) {
-            $menu['options']['drill'] = [
+        if (Session::haveRight(Drill::$rightname, READ)) {
+            $entries['drill'] = [
                 'title' => Drill::getTypeName(Session::getPluralNumber()),
                 'page'  => Drill::getSearchURL(false),
                 'icon'  => Drill::getIcon(),
                 'links' => ['search' => Drill::getSearchURL(false)],
             ];
             if (Session::haveRight(Drill::$rightname, CREATE)) {
-                $menu['options']['drill']['links']['add'] = Drill::getFormURL(false);
+                $entries['drill']['links']['add'] = Drill::getFormURL(false);
             }
         }
 
-        if ($action_read) {
-            $menu['options']['action'] = [
+        if (Session::haveRight(Action::$rightname, READ)) {
+            $entries['action'] = [
                 'title' => Action::getTypeName(Session::getPluralNumber()),
                 'page'  => Action::getSearchURL(false),
                 'icon'  => Action::getIcon(),
@@ -83,15 +73,17 @@ class Menu extends CommonGLPI
         }
 
         if (Session::haveRight('plugin_drillreport_config', READ)) {
-            $setup = '/plugins/drillreport/front/config.php';
-            $menu['options']['setup'] = [
+            $entries['setup'] = [
                 'title' => __('Setup', 'drillreport'),
-                'page'  => $setup,
+                'page'  => '/plugins/drillreport/front/config.php',
                 'icon'  => 'ti ti-settings',
-                'links' => ['search' => $setup],
             ];
         }
 
-        return $menu;
+        if ($entries === []) {
+            return false;
+        }
+
+        return ['is_multi_entries' => true, 'title' => self::getTypeName()] + $entries;
     }
 }

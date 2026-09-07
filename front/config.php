@@ -14,7 +14,6 @@ include('../../../inc/includes.php');
 
 use GlpiPlugin\Drillreport\ActionCategory;
 use GlpiPlugin\Drillreport\Config;
-use GlpiPlugin\Drillreport\Menu;
 use GlpiPlugin\Drillreport\Scenario;
 use GlpiPlugin\Drillreport\TestType;
 
@@ -39,7 +38,7 @@ if (isset($_POST['update'])) {
     Html::back();
 }
 
-Html::header(__('DR Drill Report — Setup', 'drillreport'), $_SERVER['PHP_SELF'], 'management', Menu::class, 'setup');
+Html::header(__('DR Drill Report — Setup', 'drillreport'), $_SERVER['PHP_SELF'], 'drillreport', 'setup');
 
 $get = static fn (string $k): mixed => Config::get($k);
 

@@ -16,7 +16,7 @@ class Config extends CommonDBTM
         // Report / display
         'show_business_criticity' => 1,
         'show_timeline_fields'    => 0,
-        'report_sections'         => 'exec,overview,testtype,participants,scope,timeline,rto,rpo,objectives,findings,rootcause,improvement,evidence,approval',
+        'report_sections'         => 'summary,overview,participants,scope,timeline,rto_rpo,objectives,findings,evidence,approval',
         // Assets in scope
         'asset_itemtypes'         => 'Appliance,Computer',
         // Soft-read of RTO/RPO target from the `fields` plugin

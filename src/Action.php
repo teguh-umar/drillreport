@@ -73,7 +73,7 @@ class Action extends CommonDBChild
         return $input;
     }
 
-    public static function getTabNameForItem(CommonGLPI $item, $withtemplate = 0)
+    public function getTabNameForItem(CommonGLPI $item, $withtemplate = 0)
     {
         if ($item instanceof Drill && (int) $item->getID() > 0) {
             $count = countElementsInTable(self::getTable(), [self::$items_id => $item->getID()]);

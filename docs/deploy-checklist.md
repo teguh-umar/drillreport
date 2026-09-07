@@ -32,8 +32,10 @@ Confirm: `unzip -l ../drillreportv*.zip` → root is `drillreport/`, no `.git/`.
 
 - [ ] `cd /data/www/glpi && sudo -u nginx php bin/console glpi:plugin:install drillreport --username=<admin>`
 - [ ] `sudo -u nginx php bin/console glpi:plugin:activate drillreport`
-- [ ] **Open the GLPI login page** — confirm it still loads (guards against the
-      `canView(): bool` class-load fatal).
+- [ ] **Open the GLPI login page** — confirm it still loads (guards against a
+      class-load fatal).
+- [ ] Open **Setup → Profiles → (any profile) → DR Drill Report tab** — confirm it
+      renders (guards against the `getTabNameForItem` static/instance fatal).
 - [ ] `mysql> SHOW TABLES LIKE 'glpi\_plugin\_drillreport\_%';` → **8 rows**
       (`drills`, `objectives`, `actions`, `drills_items`, `scenarios`,
       `testtypes`, `actioncategories`)
@@ -95,6 +97,13 @@ Confirm: `unzip -l ../drillreportv*.zip` → root is `drillreport/`, no `.git/`.
 
 ## Known items to watch
 
+- **GLPI 11.0.x signature tightening** (both fixed here — listed so a future
+  method addition gets the same check): `CommonGLPI::canView()` +
+  `CommonDBRelation::can*` now return `: bool`; `getTabNameForItem()` is a
+  non-static instance method (only `displayTabContentForItem()` is static). An
+  untyped `canView()` or a `static getTabNameForItem()` is a fatal on class load
+  → whole instance down. Rule of thumb when adding an override: grep the immediate
+  parent class for the method and match its signature exactly.
 - **`date_creation` / `date_mod`** are declared as raw `timestamp NULL` in
   `hook.php` CREATE TABLEs (same as riskregister ships). If GLPI's `Plugin.php`
   logs a timestamp-column warning on first upload, switch those columns to

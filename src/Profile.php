@@ -22,7 +22,7 @@ class Profile extends \Profile
         return __('DR Drill Report', 'drillreport');
     }
 
-    public static function getTabNameForItem(CommonGLPI $item, $withtemplate = 0)
+    public function getTabNameForItem(CommonGLPI $item, $withtemplate = 0)
     {
         if ($item instanceof \Profile && (int) $item->getID() > 0 && $withtemplate === 0) {
             return self::createTabEntry(self::getTypeName(), 0, $item::class, 'ti ti-refresh-alert');

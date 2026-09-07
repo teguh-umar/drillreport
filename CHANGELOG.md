@@ -6,9 +6,21 @@ Format: [Keep a Changelog](https://keepachangelog.com/); this project uses
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-09-07
+
+### Fixed
+- `getTabNameForItem()` must be a **non-static** instance method on tab-provider
+  classes (`Objective`, `Action`, `Profile`) — `CommonGLPI::getTabNameForItem()`
+  is non-static, and for `Profile` the core `\Profile::getTabNameForItem()` is
+  too. A `static` override is a fatal "cannot make non static method static" on
+  autoload, firing when the relevant form (Setup → Profiles, a drill's tabs)
+  opens. `displayTabContentForItem()` stays `static`. (`Drill_Item` was already
+  correct.) Second instance of the GLPI-11 signature-tightening class of bug —
+  flagged by `risk-register-dashboard` (their v1.1.2).
+
 ## [0.2.0] - 2026-09-07
 
-First build packaged for a VM-HQ-GLPI test deploy (`drillreportv0.2.0.zip`).
+First build packaged for a VM-HQ-GLPI test deploy.
 
 ### Added
 - Child-record management on the drill form: add / edit / delete `Objective`,

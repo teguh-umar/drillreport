@@ -692,13 +692,19 @@ sudah ada meng-cover otomatis.
 menambah child-CRUD + integrasi RR + fix kompat GLPI 11.0.x. `php -l` bersih,
 **belum dijalankan di VM-HQ-GLPI**.
 
-> ⚠️ **GLPI 11.0.x:** `CommonGLPI::canView()` + `CommonDBRelation::can{View,Create,Update,Delete,Purge}`
-> sekarang deklarasi `: bool`. Override tanpa return type = fatal compile error →
-> **seluruh GLPI tumbang** (login included). Sudah difix (`Menu::canView(): bool`,
-> commit `87448fd`) — heads-up dari sesi riskregister yang kena bug ini duluan.
-> Untuk method lain (`defineTabs`, `rawSearchOptions`, `prepareInputFor*`,
-> `getForbiddenStandardMassiveAction`, `getTabNameForItem`, `showForm`) aman tanpa
-> return type (parent belum ketat).
+> ⚠️ **GLPI 11.0.x signature tightening** (dua-duanya sudah difix di drillreport):
+> 1. `CommonGLPI::canView()` + `CommonDBRelation::can{View,Create,Update,Delete,Purge}`
+>    sekarang `: bool`. Override tanpa return type = fatal compile error →
+>    **seluruh GLPI tumbang** (login included). Fix: `Menu::canView(): bool` (`87448fd`).
+> 2. `getTabNameForItem()` **harus instance method** (non-static) — di core
+>    `CommonGLPI` non-static, dan untuk kelas yang extends `\Profile` core-nya juga
+>    non-static. `static` override = fatal "cannot make non static method static"
+>    saat autoload (kebuka waktu Setup → Profiles / tab drill dibuka). Fix:
+>    `Objective` / `Action` / `Profile` `getTabNameForItem` jadi non-static
+>    (`0.2.1`). `displayTabContentForItem` tetap `static`. `Drill_Item` sudah benar.
+>
+> Aturan main: kalau nambah override, grep parent class-nya, samakan signature-nya
+> persis. Heads-up dari sesi riskregister (v1.1.1 + v1.1.2 kena dua-duanya).
 
 Sudah ada:
 

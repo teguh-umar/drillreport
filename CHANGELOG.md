@@ -6,6 +6,17 @@ Format: [Keep a Changelog](https://keepachangelog.com/); this project uses
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-09-07
+
+### Fixed
+- `front/config.php` — the Setup form posted to `$_SERVER['PHP_SELF']`, which in
+  GLPI 11 points at `public/index.php` (not the running script), so the POST hit
+  the native inventory endpoint instead of saving the config. Now builds the URL
+  with `Html::getPrefixedUrl('/plugins/drillreport/front/config.php')`.
+  `Html::header()`'s ignored 2nd `$url` arg is passed `''` in `config.php` /
+  `report.php`. (Flagged by `risk-register-dashboard`, their v1.2.3.) The
+  `src/*` forms already used `Itemtype::getFormURL()` and were unaffected.
+
 ## [0.3.0] - 2026-09-07
 
 ### Changed

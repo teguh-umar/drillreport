@@ -26,7 +26,7 @@ if ($id <= 0 || !$drill->getFromDB($id) || !$drill->can($id, READ)) {
 
 Html::header(
     sprintf(__('%s — report', 'drillreport'), $drill->fields['name']),
-    $_SERVER['PHP_SELF'],
+    '',
     'drillreport',
     'drill'
 );

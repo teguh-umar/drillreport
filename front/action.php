@@ -13,8 +13,7 @@ Session::checkRight(Action::$rightname, READ);
 Html::header(
     Action::getTypeName(Session::getPluralNumber()),
     '',
-    'management',
-    \GlpiPlugin\Drillreport\Menu::class,
+    'drillreport',
     'action'
 );
 

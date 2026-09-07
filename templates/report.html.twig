@@ -1,0 +1,241 @@
+{#
+ # DR Drill Report — printable report (ISO 22398 / NIST SP 800-84 AAR/IP).
+ # Rendered by front/report.php:
+ #   TemplateRenderer::getInstance()->display('@drillreport/report.html.twig', {report, print_mode})
+ #
+ # Every value comes from Report::build() and is emitted through Twig
+ # autoescaping — no |raw anywhere.
+ #}
+{% set d = report.drill %}
+{% set S = report.sections %}
+{% set result_cls = {'pass': 'bg-green', 'pass_with_exceptions': 'bg-yellow', 'fail': 'bg-red', 'pending': 'bg-secondary'} %}
+{% set sev_cls = {'critical': 'bg-red', 'high': 'bg-orange', 'medium': 'bg-yellow', 'low': 'bg-green', 'info': 'bg-secondary'} %}
+{% macro yn(v) %}{% if v is null %}<span class="text-muted">&mdash;</span>{% elseif v %}<span class="text-green fw-bold">&check;</span>{% else %}<span class="text-red fw-bold">&times;</span>{% endif %}{% endmacro %}
+{% import _self as m %}
+
+<div class="drillreport-report {{ print_mode ? 'dr-print' : '' }} container-fluid mt-2">
+
+    <style>
+        .drillreport-report h2 { font-size: 1.15rem; border-bottom: 2px solid var(--bs-border-color, #dee2e6); padding-bottom: .25rem; margin-top: 1.5rem; }
+        .drillreport-report .dr-kv th { width: 12rem; white-space: nowrap; vertical-align: top; color: var(--bs-secondary-color, #6c757d); font-weight: 600; }
+        .drillreport-report .dr-narrative { white-space: pre-wrap; }
+        .drillreport-report .dr-toolbar { position: sticky; top: 0; z-index: 5; }
+        @media print {
+            .drillreport-report .dr-no-print { display: none !important; }
+            .drillreport-report .card { border: none; box-shadow: none; }
+            .drillreport-report h2 { break-after: avoid; }
+            .drillreport-report table { break-inside: auto; }
+        }
+    </style>
+
+    <div class="d-flex align-items-center gap-2 mb-3 dr-toolbar dr-no-print">
+        <a href="{{ path('/plugins/drillreport/front/drill.form.php', {'id': d.id}) }}" class="btn btn-outline-secondary btn-sm">
+            <i class="ti ti-arrow-left"></i> {{ __('Back to drill', 'drillreport') }}
+        </a>
+        <button type="button" class="btn btn-primary btn-sm ms-auto" onclick="window.print();">
+            <i class="ti ti-printer"></i> {{ __('Print / Save as PDF', 'drillreport') }}
+        </button>
+    </div>
+
+    {# ---------------------------------------------------------------- Header #}
+    <div class="text-center mb-3">
+        <h1 class="h3 mb-1">{{ __('Disaster Recovery Drill Report', 'drillreport') }}</h1>
+        <div class="fw-bold">{{ d.name }}</div>
+        <div class="text-muted">
+            {{ d.entity }}{% if d.date_drill %} · {{ d.date_drill }}{% endif %}
+            · <span class="badge {{ result_cls[d.result_key] ?? 'bg-secondary' }}">{{ d.overall_result }}</span>
+            · {{ d.status }}
+        </div>
+    </div>
+
+    {# --------------------------------------------------------- 1. Summary #}
+    {% if 'summary' in S %}
+        <h2>{{ __('Executive summary', 'drillreport') }}</h2>
+        <p class="dr-narrative">{{ d.executive_summary ?: __('(not provided)', 'drillreport') }}</p>
+        {% if d.lessons_learned %}
+            <h6 class="text-muted mt-2">{{ __('Lessons learned', 'drillreport') }}</h6>
+            <p class="dr-narrative">{{ d.lessons_learned }}</p>
+        {% endif %}
+    {% endif %}
+
+    {# -------------------------------------------------------- 2. Overview #}
+    {% if 'overview' in S %}
+        <h2>{{ __('Overview', 'drillreport') }}</h2>
+        <table class="table table-sm dr-kv">
+            <tr><th>{{ __('DR scenario', 'drillreport') }}</th><td>{{ d.scenario ?: '—' }}</td></tr>
+            <tr><th>{{ __('Test type', 'drillreport') }}</th><td>{{ d.test_type ?: '—' }}</td></tr>
+            <tr><th>{{ __('Objectives', 'drillreport') }}</th><td class="dr-narrative">{{ d.objectives_text ?: '—' }}</td></tr>
+            <tr><th>{{ __('Scope', 'drillreport') }}</th><td class="dr-narrative">{{ d.scope_summary ?: '—' }}</td></tr>
+        </table>
+    {% endif %}
+
+    {# ---------------------------------------------------- 3. Participants #}
+    {% if 'participants' in S %}
+        <h2>{{ __('Participants & roles', 'drillreport') }}</h2>
+        <table class="table table-sm dr-kv">
+            <tr><th>{{ __('Group in charge') }}</th><td>{{ d.group_in_charge ?: '—' }}</td></tr>
+            <tr><th>{{ __('Drill coordinator', 'drillreport') }}</th><td>{{ d.coordinator ?: '—' }}</td></tr>
+        </table>
+    {% endif %}
+
+    {# --------------------------------------------------------- 4. Scope #}
+    {% if 'scope' in S %}
+        <h2>{{ __('Systems in scope', 'drillreport') }}</h2>
+        <table class="table table-sm">
+            <thead><tr>
+                <th>{{ __('Asset') }}</th>
+                <th>{{ __('Type') }}</th>
+                {% if report.show_criticity %}<th>{{ __('Business criticality') }}</th>{% endif %}
+                <th class="text-center">{{ __('Recovered', 'drillreport') }}</th>
+                <th class="text-center">{{ __('Order', 'drillreport') }}</th>
+            </tr></thead>
+            <tbody>
+            {% for it in report.items %}
+                <tr>
+                    <td>{{ it.name }}</td>
+                    <td>{{ it.type_name }}</td>
+                    {% if report.show_criticity %}<td>{{ it.criticity ?: '—' }}</td>{% endif %}
+                    <td class="text-center">{{ m.yn(it.recovered) }}</td>
+                    <td class="text-center">{{ it.order ?: '' }}</td>
+                </tr>
+            {% else %}
+                <tr><td colspan="5" class="text-muted text-center">{{ __('No systems recorded', 'drillreport') }}</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    {% endif %}
+
+    {# ------------------------------------------------------ 5. Timeline #}
+    {% if 'timeline' in S and report.show_timeline %}
+        <h2>{{ __('Timeline', 'drillreport') }}</h2>
+        <table class="table table-sm dr-kv">
+            <tr><th>{{ __('Disaster declared', 'drillreport') }}</th><td>{{ d.declaration_time ?: '—' }}</td></tr>
+            <tr><th>{{ __('Service recovered', 'drillreport') }}</th><td>{{ d.recovery_time ?: '—' }}</td></tr>
+            <tr><th>{{ __('Validation complete', 'drillreport') }}</th><td>{{ d.validation_time ?: '—' }}</td></tr>
+        </table>
+    {% endif %}
+
+    {# --------------------------------------------------- 6. RTO / RPO #}
+    {% if 'rto_rpo' in S %}
+        <h2>{{ __('RTO / RPO — target vs actual', 'drillreport') }}</h2>
+        <table class="table table-sm">
+            <thead><tr>
+                <th></th>
+                <th class="text-center">{{ __('Target (min)', 'drillreport') }}</th>
+                <th class="text-center">{{ __('Actual (min)', 'drillreport') }}</th>
+                <th class="text-center">{{ __('Met', 'drillreport') }}</th>
+            </tr></thead>
+            <tbody>
+                <tr>
+                    <th>{{ __('RTO — overall', 'drillreport') }}</th>
+                    <td class="text-center">{{ d.rto_target ?? '—' }}</td>
+                    <td class="text-center">{{ d.rto_actual ?? '—' }}</td>
+                    <td class="text-center">{{ m.yn(d.rto_met) }}</td>
+                </tr>
+                <tr>
+                    <th>{{ __('RPO — overall', 'drillreport') }}</th>
+                    <td class="text-center">{{ d.rpo_target ?? '—' }}</td>
+                    <td class="text-center">{{ d.rpo_actual ?? '—' }}</td>
+                    <td class="text-center">{{ m.yn(d.rpo_met) }}</td>
+                </tr>
+            </tbody>
+        </table>
+        {% if report.items|length %}
+            <h6 class="text-muted mt-2">{{ __('Per system', 'drillreport') }}</h6>
+            <table class="table table-sm">
+                <thead><tr>
+                    <th>{{ __('Asset') }}</th>
+                    <th class="text-center">{{ __('RTO target/actual', 'drillreport') }}</th>
+                    <th class="text-center">{{ __('RTO met', 'drillreport') }}</th>
+                    <th class="text-center">{{ __('RPO target/actual', 'drillreport') }}</th>
+                </tr></thead>
+                <tbody>
+                {% for it in report.items %}
+                    <tr>
+                        <td>{{ it.name }}</td>
+                        <td class="text-center">{{ it.rto_target ?? '—' }} / {{ it.rto_actual ?? '—' }}</td>
+                        <td class="text-center">{{ m.yn(it.rto_met) }}</td>
+                        <td class="text-center">{{ it.rpo_target ?? '—' }} / {{ it.rpo_actual ?? '—' }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        {% endif %}
+        {% if d.data_loss_summary %}
+            <p class="dr-narrative"><strong>{{ __('Data loss', 'drillreport') }}:</strong> {{ d.data_loss_summary }}</p>
+        {% endif %}
+    {% endif %}
+
+    {# ------------------------------------------------- 7. Objectives #}
+    {% if 'objectives' in S %}
+        <h2>{{ __('Objectives assessment', 'drillreport') }}</h2>
+        <table class="table table-sm">
+            <thead><tr>
+                <th>{{ __('Objective', 'drillreport') }}</th>
+                <th>{{ __('Result', 'drillreport') }}</th>
+                <th>{{ __('Comment') }}</th>
+            </tr></thead>
+            <tbody>
+            {% for o in report.objectives %}
+                <tr>
+                    <td>{{ o.name }}{% if o.content %}<div class="text-muted small dr-narrative">{{ o.content }}</div>{% endif %}</td>
+                    <td>{{ o.result }}</td>
+                    <td class="dr-narrative">{{ o.comment }}</td>
+                </tr>
+            {% else %}
+                <tr><td colspan="3" class="text-muted text-center">{{ __('No objectives recorded', 'drillreport') }}</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    {% endif %}
+
+    {# --------------------------------- 8. Findings & improvement plan #}
+    {% if 'findings' in S %}
+        <h2>{{ __('Findings & improvement plan', 'drillreport') }}</h2>
+        {% for a in report.findings %}
+            <div class="card mb-2">
+                <div class="card-body">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="badge {{ sev_cls[a.severity_key] ?? 'bg-secondary' }}">{{ a.severity }}</span>
+                        <strong>{{ a.name }}</strong>
+                        <span class="text-muted ms-auto">{{ a.status }}{% if a.date_due %} · {{ __('due') }} {{ a.date_due }}{% endif %}</span>
+                    </div>
+                    {% if a.content %}<div class="mt-1 dr-narrative"><strong>{{ __('Observation', 'drillreport') }}:</strong> {{ a.content }}</div>{% endif %}
+                    {% if a.cause %}<div class="dr-narrative"><strong>{{ __('Root cause', 'drillreport') }}:</strong> {{ a.cause }}</div>{% endif %}
+                    {% if a.recommendation %}<div class="dr-narrative"><strong>{{ __('Recommendation', 'drillreport') }}:</strong> {{ a.recommendation }}</div>{% endif %}
+                    <div class="text-muted small mt-1">
+                        {% if a.owner %}{{ __('Owner') }}: {{ a.owner }}{% endif %}
+                        {% if a.rr_code %} · {{ __('Risk Register', 'drillreport') }}: {{ a.rr_code }}{% endif %}
+                    </div>
+                </div>
+            </div>
+        {% else %}
+            <p class="text-muted">{{ __('No findings recorded', 'drillreport') }}</p>
+        {% endfor %}
+    {% endif %}
+
+    {# --------------------------------------------------- 9. Evidence #}
+    {% if 'evidence' in S %}
+        <h2>{{ __('Evidence', 'drillreport') }}</h2>
+        {% if report.evidence|length %}
+            <ul>
+            {% for e in report.evidence %}
+                <li>{{ e.name }}</li>
+            {% endfor %}
+            </ul>
+        {% else %}
+            <p class="text-muted">{{ __('No documents attached', 'drillreport') }}</p>
+        {% endif %}
+    {% endif %}
+
+    {# ------------------------------------------------- 10. Approval #}
+    {% if 'approval' in S %}
+        <h2>{{ __('Approval', 'drillreport') }}</h2>
+        <table class="table table-sm dr-kv">
+            <tr><th>{{ __('Status') }}</th><td>{{ d.status }}</td></tr>
+            <tr><th>{{ __('Approved by', 'drillreport') }}</th><td>{{ d.approved_by ?: '—' }}</td></tr>
+            <tr><th>{{ __('Approval date', 'drillreport') }}</th><td>{{ d.approval_date ?: '—' }}</td></tr>
+        </table>
+    {% endif %}
+
+</div>

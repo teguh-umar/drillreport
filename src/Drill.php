@@ -237,9 +237,18 @@ class Drill extends CommonDBTM
     public function showForm($ID, array $options = [])
     {
         $this->initForm($ID, $options);
-        $this->showFormHeader($options);
 
         $isNew = $this->isNewID($ID);
+
+        if (!$isNew) {
+            echo "<div class='mb-2 text-end'>";
+            echo "<a class='btn btn-outline-primary btn-sm' target='_blank' href='"
+                . htmlescape('/plugins/drillreport/front/report.php?id=' . (int) $ID) . "'>"
+                . "<i class='ti ti-file-text'></i> " . __s('View / print report', 'drillreport') . "</a>";
+            echo "</div>";
+        }
+
+        $this->showFormHeader($options);
 
         echo "<tr class='tab_bg_1'>";
         echo "<td>" . __s('Name') . "</td>";

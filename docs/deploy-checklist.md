@@ -47,11 +47,12 @@ Confirm: `unzip -l ../drillreportv*.zip` → root is `drillreport/`, no `.git/`.
 
 ## 3. UI smoke test (as Super-Admin)
 
-- [ ] **Management → DR Drill Report** node visible; sub-entries Drills /
-      Improvement actions / Setup
-- [ ] On the **Drills** list page — the breadcrumb reads "… › DR Drill Report ›
-      DR drills" and a **"+ Add"** button is present (guards against the missing
-      `Html::header()` 5th-arg regression)
+- [ ] **"DR Drill Report" appears as its own top-level sidebar sector** (with the
+      `ti-refresh-alert` icon), expanding to **Drills / Improvement actions /
+      Setup** — NOT collapsed to a single "DR Drill Report → DR Drill Report" line
+- [ ] On the **Drills** list page — the breadcrumb reads "DR Drill Report ›
+      DR drills" and a **"+ Add"** button is present (guards against the menu
+      `content`/`is_multi_entries` regression)
 - [ ] Create a drill (name, date, scenario, test type, group in charge, result = `fail`)
 - [ ] Drill form tabs: **Objectives**, **Improvement actions**, **Systems in scope** —
       each shows its add form
@@ -61,6 +62,15 @@ Confirm: `unzip -l ../drillreportv*.zip` → root is `drillreport/`, no `.git/`.
       row appears with RTO/RPO columns
 - [ ] Open the linked `Appliance` / `Computer` → **"DR drill history"** tab shows the drill
 - [ ] Setup screen (`front/config.php`) loads; toggle a value, Save, reload → persisted
+- [ ] Drill form → **"View / print report"** button → `front/report.php` renders
+      all sections (summary, overview, participants, scope, timeline if enabled,
+      RTO/RPO with met/not-met marks, objectives, findings, evidence, approval)
+- [ ] Report **"Print / Save as PDF"** button opens the browser print dialog; the
+      toolbar / GLPI chrome are hidden in the print preview
+- [ ] Setup → set `report_sections` to a subset (e.g. `summary,findings`) → the
+      report shows only those sections
+- [ ] Setup → `show_business_criticity = No` → the report's "Systems in scope"
+      table drops the Business Criticality column
 
 ## 4. `fields` plugin soft-read (optional, if `fields` v1.23.2 is configured)
 

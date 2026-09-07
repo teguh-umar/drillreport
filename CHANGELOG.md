@@ -6,6 +6,30 @@ Format: [Keep a Changelog](https://keepachangelog.com/); this project uses
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-09-07
+
+### Changed
+- **Menu is now its own top-level sidebar sector** (`drillreport`), not a node
+  under Management. GLPI 11's `menu.html.twig` renders only `content` entries
+  that carry a `page` — never an `options` array — so the old "one node +
+  options" layout showed just "DR Drill Report → DR Drill Report" in the sidebar.
+  `Menu::getMenuContent()` now returns `is_multi_entries` with Drills /
+  Improvement actions / Setup entries; `$PLUGIN_HOOKS['menu_toadd']` uses the
+  array-of-classes form. Front controllers pass sector `'drillreport'` + the
+  entry key. (Pattern from riskregister v1.2.0.)
+
+### Added
+- **Printable drill report** — `front/report.php?id=<drill>` renders the full
+  ISO 22398 / NIST SP 800-84 AAR/IP structure (executive summary, overview,
+  participants, systems in scope, timeline, RTO/RPO target-vs-actual with a
+  met/not-met marker, objectives assessment, findings & improvement plan,
+  evidence, approval) via `@drillreport/report.html.twig`. Print-optimised CSS +
+  a "Print / Save as PDF" button. Sections are toggled by
+  `plugin:drillreport` / `report_sections`; the Business Criticality column
+  follows `show_business_criticity`; the timeline block follows
+  `show_timeline_fields`. `src/Report.php` assembles the data (plain scalars —
+  no pre-rendered HTML). A "View / print report" button is on the drill form.
+
 ## [0.2.2] - 2026-09-07
 
 Static self-review against GLPI 11 source (`11.0/bugfixes`) — no VM available.

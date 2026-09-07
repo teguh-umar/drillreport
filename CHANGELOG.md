@@ -6,6 +6,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/); this project uses
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-09-07
+
+First build packaged for a VM-HQ-GLPI test deploy (`drillreportv0.2.0.zip`).
+
 ### Added
 - Child-record management on the drill form: add / edit / delete `Objective`,
   `Action` and `Drill_Item` rows inline from their tabs
@@ -14,12 +18,22 @@ Format: [Keep a Changelog](https://keepachangelog.com/); this project uses
   only when `riskregister` is active). Upserts one `Finding` per action row on the
   `(entities_id, code)` key and writes `findings_id` + `code` back
   (`Action::sendDrillToRiskRegister()`).
+- `Action::ensureRiskCategoryId()` — drillreport owns the "Disaster Recovery"
+  `RiskCategory` (riskregister's `categoryIdByName()` returns 0 on a miss and does
+  not seed it).
 - `Drill_Item` — RTO/RPO **targets** pre-filled from the asset's custom fields via
   the `fields` plugin on link creation (`Drill_Item::fieldsSoftReadTargets()`);
   soft, degrades to no-op when `fields` is inactive or nothing matches. Keys are
   `plugin:drillreport` / `fields_rto_key` + `fields_rpo_key`.
 - Asset picker (`Dropdown::showSelectItemFromItemtypes`) to add systems to a
   drill's scope.
+- `.gitattributes` — normalize line endings to LF for the Linux target.
+
+### Fixed
+- `Menu::canView()` now declares `: bool` — required by GLPI 11.0.x
+  (`CommonGLPI::canView()` / `CommonDBRelation::can*` gained a `: bool` return
+  type; an untyped override is a fatal compile error that takes the whole
+  instance down).
 
 ## [0.1.0] - 2026-09-03
 

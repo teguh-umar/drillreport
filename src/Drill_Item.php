@@ -25,6 +25,8 @@ class Drill_Item extends CommonDBRelation
     public static $itemtype_1    = Drill::class;
     public static $items_id_1    = 'plugin_drillreport_drills_id';
     public static $take_entity_1 = false;
+    /** Manage scope on any drill the user can READ; write is gated by $rightname. */
+    public static $checkItem_1_Rights = self::HAVE_VIEW_RIGHT_ON_ITEM;
 
     public static $itemtype_2         = 'itemtype';
     public static $items_id_2         = 'items_id';

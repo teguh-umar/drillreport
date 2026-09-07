@@ -47,7 +47,7 @@ if (isset($_POST['add'])) {
     Event::log($_POST['id'], 'drills', 4, 'management', sprintf(__('%s purges an item'), $_SESSION['glpiname']));
     $drill->redirectToList();
 } else {
-    $menus = ['central' => ['management', ''], 'helpdesk' => []];
+    $menus = ['central' => ['management', \GlpiPlugin\Drillreport\Menu::class, 'drill'], 'helpdesk' => []];
     Drill::displayFullPageForItem($_GET['id'], $menus, [
         'formoptions' => 'data-track-changes=true',
     ]);

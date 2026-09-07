@@ -187,9 +187,10 @@ class Drill extends CommonDBTM
         if (!is_array($values)) {
             $values = [$field => $values];
         }
+        $v = (string) ($values[$field] ?? '');
         return match ($field) {
-            'overall_result' => self::resultLabels()[$values[$field]] ?? $values[$field],
-            'status'         => self::statusLabels()[$values[$field]] ?? $values[$field],
+            'overall_result' => self::resultLabels()[$v] ?? $v,
+            'status'         => self::statusLabels()[$v] ?? $v,
             default          => parent::getSpecificValueToDisplay($field, $values, $options),
         };
     }

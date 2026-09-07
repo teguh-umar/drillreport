@@ -49,6 +49,9 @@ Confirm: `unzip -l ../drillreportv*.zip` → root is `drillreport/`, no `.git/`.
 
 - [ ] **Management → DR Drill Report** node visible; sub-entries Drills /
       Improvement actions / Setup
+- [ ] On the **Drills** list page — the breadcrumb reads "… › DR Drill Report ›
+      DR drills" and a **"+ Add"** button is present (guards against the missing
+      `Html::header()` 5th-arg regression)
 - [ ] Create a drill (name, date, scenario, test type, group in charge, result = `fail`)
 - [ ] Drill form tabs: **Objectives**, **Improvement actions**, **Systems in scope** —
       each shows its add form

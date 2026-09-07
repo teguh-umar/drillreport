@@ -17,7 +17,8 @@ Html::header(
     Drill::getTypeName(Session::getPluralNumber()),
     '',
     'management',
-    \GlpiPlugin\Drillreport\Menu::class
+    \GlpiPlugin\Drillreport\Menu::class,
+    'drill'
 );
 
 Search::show(Drill::class);

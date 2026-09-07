@@ -24,6 +24,9 @@ class Action extends CommonDBChild
     public static $itemtype = Drill::class;
     public static $items_id = 'plugin_drillreport_drills_id';
 
+    /** Manage actions on any drill the user can READ; write is gated by $rightname. */
+    public static $checkParentRights = self::HAVE_VIEW_RIGHT_ON_ITEM;
+
     public $dohistory = true;
 
     public static $rightname = 'plugin_drillreport_action';
@@ -47,12 +50,14 @@ class Action extends CommonDBChild
 
     public function prepareInputForAdd($input)
     {
-        return $this->prepareCommon($input);
+        $input = parent::prepareInputForAdd($input);
+        return is_array($input) ? $this->prepareCommon($input) : $input;
     }
 
     public function prepareInputForUpdate($input)
     {
-        return $this->prepareCommon($input);
+        $input = parent::prepareInputForUpdate($input);
+        return is_array($input) ? $this->prepareCommon($input) : $input;
     }
 
     /**
@@ -384,7 +389,7 @@ class Action extends CommonDBChild
             echo "<input type='hidden' name='" . self::$items_id . "' value='" . (int) $drill->getID() . "'>";
             echo Html::submit(
                 __s('Send findings to Risk Register', 'drillreport'),
-                ['name' => 'send_to_riskregister', 'class' => 'btn btn-outline-warning', 'icon' => 'ti ti-external-link']
+                ['name' => 'send_to_riskregister', 'class' => 'btn btn-outline-warning']
             );
             echo " <span class='text-muted'>" . __s('Creates / updates one Finding per row (idempotent).', 'drillreport') . "</span>";
             Html::closeForm();

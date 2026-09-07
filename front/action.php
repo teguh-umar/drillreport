@@ -14,7 +14,8 @@ Html::header(
     Action::getTypeName(Session::getPluralNumber()),
     '',
     'management',
-    \GlpiPlugin\Drillreport\Menu::class
+    \GlpiPlugin\Drillreport\Menu::class,
+    'action'
 );
 
 Search::show(Action::class);

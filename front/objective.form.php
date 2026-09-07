@@ -27,7 +27,7 @@ if (isset($_POST['add'])) {
 } elseif (isset($_GET['id'])) {
     $drills_id = (int) ($_GET['parent_id'] ?? 0);
     $menus = ['central' => ['management', ''], 'helpdesk' => []];
-    Html::header(Objective::getTypeName(1), '', 'management', \GlpiPlugin\Drillreport\Menu::class);
+    Html::header(Objective::getTypeName(1), '', 'management', \GlpiPlugin\Drillreport\Menu::class, 'drill');
     (new Objective())->showForm((int) $_GET['id'], ['parent_id' => $drills_id]);
     Html::footer();
 } else {

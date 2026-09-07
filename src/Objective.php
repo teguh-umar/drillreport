@@ -19,6 +19,9 @@ class Objective extends CommonDBChild
     public static $itemtype = Drill::class;
     public static $items_id = 'plugin_drillreport_drills_id';
 
+    /** Manage objectives on any drill the user can READ; write is gated by $rightname. */
+    public static $checkParentRights = self::HAVE_VIEW_RIGHT_ON_ITEM;
+
     public $dohistory = true;
 
     public static $rightname = 'plugin_drillreport_drill';
@@ -37,12 +40,14 @@ class Objective extends CommonDBChild
 
     public function prepareInputForAdd($input)
     {
-        return $this->prepareCommon($input);
+        $input = parent::prepareInputForAdd($input);
+        return is_array($input) ? $this->prepareCommon($input) : $input;
     }
 
     public function prepareInputForUpdate($input)
     {
-        return $this->prepareCommon($input);
+        $input = parent::prepareInputForUpdate($input);
+        return is_array($input) ? $this->prepareCommon($input) : $input;
     }
 
     /**

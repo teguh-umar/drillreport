@@ -6,6 +6,28 @@ Format: [Keep a Changelog](https://keepachangelog.com/); this project uses
 
 ## [Unreleased]
 
+## [0.2.2] - 2026-09-07
+
+Static self-review against GLPI 11 source (`11.0/bugfixes`) — no VM available.
+
+### Fixed
+- `Objective` / `Action` (`CommonDBChild`) — `prepareInputForAdd()` /
+  `prepareInputForUpdate()` now call `parent::` first. The overrides were
+  skipping the parent-item validation and entity forwarding that
+  `CommonDBChild` performs.
+- Front controllers pass the sub-menu key as `Html::header()`'s 5th arg
+  (`'drill'` / `'action'` / `'setup'`) and `displayFullPageForItem()` gets
+  `['management', Menu::class, 'drill']` — otherwise GLPI 11 shows no "+ Add"
+  button on the list pages and the wrong breadcrumb (flagged by
+  `risk-register-dashboard`, their v1.1.3).
+- `Objective` / `Action` set `$checkParentRights = HAVE_VIEW_RIGHT_ON_ITEM`,
+  `Drill_Item` sets `$checkItem_1_Rights = HAVE_VIEW_RIGHT_ON_ITEM` — managing a
+  drill's children needs only READ on the drill; write is gated by the plugin
+  right. (Default `HAVE_SAME_RIGHT_ON_ITEM` would have forced the drill's UPDATE
+  right on `_action`-only users.)
+- Removed an unsupported `'icon'` option from a `Html::submit()` call.
+- `Drill::getSpecificValueToDisplay()` hardened against a missing value key.
+
 ## [0.2.1] - 2026-09-07
 
 ### Fixed

@@ -39,7 +39,7 @@ if (isset($_POST['update'])) {
     Html::back();
 }
 
-Html::header(__('DR Drill Report — Setup', 'drillreport'), $_SERVER['PHP_SELF'], 'management', Menu::class);
+Html::header(__('DR Drill Report — Setup', 'drillreport'), $_SERVER['PHP_SELF'], 'management', Menu::class, 'setup');
 
 $get = static fn (string $k): mixed => Config::get($k);
 

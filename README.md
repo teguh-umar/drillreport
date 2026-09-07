@@ -44,9 +44,19 @@ are the MVP work items — see `docs/drillreport-konsep-awal.md` §10.
 
 ## Install
 
+Deploy the release zip (`drillreportv<version>.zip`, archive root `drillreport/`)
+into `<glpi>/plugins/`, then:
+
 ```
 php bin/console glpi:plugin:install drillreport --username=<admin>
 php bin/console glpi:plugin:activate drillreport
+```
+
+See [`docs/deploy-checklist.md`](docs/deploy-checklist.md) for the full VM
+deploy + first-run verification steps. To build the zip:
+
+```
+git archive --format=zip --prefix=drillreport/ -o ../drillreportv<version>.zip HEAD
 ```
 
 ## Rights

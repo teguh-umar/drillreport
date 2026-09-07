@@ -688,8 +688,17 @@ sudah ada meng-cover otomatis.
 
 ## 13. Status Implementasi
 
-**Repo:** `teguh-umar/drillreport` (private) · **v0.1.0** — dua commit setelahnya
-menambah child-CRUD + integrasi RR. `php -l` bersih, **belum dijalankan di VM-HQ-GLPI**.
+**Repo:** `teguh-umar/drillreport` (private) · **v0.1.0** — commit berikutnya
+menambah child-CRUD + integrasi RR + fix kompat GLPI 11.0.x. `php -l` bersih,
+**belum dijalankan di VM-HQ-GLPI**.
+
+> ⚠️ **GLPI 11.0.x:** `CommonGLPI::canView()` + `CommonDBRelation::can{View,Create,Update,Delete,Purge}`
+> sekarang deklarasi `: bool`. Override tanpa return type = fatal compile error →
+> **seluruh GLPI tumbang** (login included). Sudah difix (`Menu::canView(): bool`,
+> commit `87448fd`) — heads-up dari sesi riskregister yang kena bug ini duluan.
+> Untuk method lain (`defineTabs`, `rawSearchOptions`, `prepareInputFor*`,
+> `getForbiddenStandardMassiveAction`, `getTabNameForItem`, `showForm`) aman tanpa
+> return type (parent belum ketat).
 
 Sudah ada:
 

@@ -1,0 +1,3 @@
+# Normalize to LF — this plugin is deployed on Linux (VM-HQ-GLPI).
+* text=auto eol=lf
+*.png binary

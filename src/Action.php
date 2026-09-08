@@ -69,6 +69,10 @@ class Action extends CommonDBChild
         if (isset($input['name'])) {
             $input['name'] = trim((string) $input['name']);
         }
+        // MySQL strict mode rejects '' for a DATE column.
+        if (array_key_exists('date_due', $input) && trim((string) $input['date_due']) === '') {
+            $input['date_due'] = 'NULL';
+        }
         if (isset($input['severity']) && !in_array($input['severity'], self::SEVERITIES, true)) {
             unset($input['severity']);
         }

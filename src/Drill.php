@@ -50,10 +50,23 @@ class Drill extends CommonDBTM
      * @param array<string,mixed> $input
      * @return array<string,mixed>|false
      */
+    /** Nullable numeric / date / datetime columns — an empty form field becomes NULL. */
+    private const NULLABLE_FIELDS = [
+        'date_drill', 'declaration_time', 'recovery_time', 'validation_time', 'approval_date',
+        'rto_target_minutes', 'rto_actual_minutes', 'rpo_target_minutes', 'rpo_actual_minutes',
+    ];
+
     private function prepareCommon($input)
     {
         if (isset($input['name'])) {
             $input['name'] = trim((string) $input['name']);
+        }
+
+        // MySQL strict mode rejects '' for INT / DATE / DATETIME columns.
+        foreach (self::NULLABLE_FIELDS as $k) {
+            if (array_key_exists($k, $input) && trim((string) $input[$k]) === '') {
+                $input[$k] = 'NULL';
+            }
         }
 
         if (isset($input['overall_result']) && !in_array($input['overall_result'], self::RESULTS, true)) {

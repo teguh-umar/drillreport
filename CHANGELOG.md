@@ -6,6 +6,25 @@ Format: [Keep a Changelog](https://keepachangelog.com/); this project uses
 
 ## [Unreleased]
 
+## [0.3.2] - 2026-09-08
+
+First fix from the VM-HQ-GLPI production deploy — install + activate were clean
+(no class-load fatal), adding a drill failed on save.
+
+### Fixed
+- Saving a `Drill` / `Drill_Item` / `Action` with an empty numeric or date field
+  threw `Incorrect integer value: '' for column …` — MySQL strict mode rejects
+  `''` for `INT` / `DATE` / `DATETIME`. `prepareInputFor{Add,Update}` now maps an
+  empty value to `'NULL'` (GLPI's sentinel, converted to SQL `NULL` in
+  `CommonDBTM::addToDB()` / the query builder) for: `Drill` — `date_drill`,
+  `declaration_time`, `recovery_time`, `validation_time`, `approval_date`,
+  `rto_target_minutes`, `rto_actual_minutes`, `rpo_target_minutes`,
+  `rpo_actual_minutes`; `Drill_Item` — the four RTO/RPO columns + `recovery_order`
+  (and a `prepareInputForUpdate` override, which was missing); `Action` —
+  `date_due`.
+- Confirmed on the VM: raw `timestamp NULL` columns for `date_creation` /
+  `date_mod` install and insert fine — no `$migration->addField()` change needed.
+
 ## [0.3.1] - 2026-09-07
 
 ### Fixed

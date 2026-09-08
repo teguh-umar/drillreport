@@ -66,22 +66,48 @@ class Drill_Item extends CommonDBRelation
      * @param array<string,mixed> $input
      * @return array<string,mixed>|false
      */
+    /** Nullable INT columns — an empty form field becomes SQL NULL (MySQL strict mode). */
+    private const NULLABLE_FIELDS = [
+        'rto_target_minutes', 'rto_actual_minutes', 'rpo_target_minutes', 'rpo_actual_minutes', 'recovery_order',
+    ];
+
     public function prepareInputForAdd($input)
     {
         $input = parent::prepareInputForAdd($input);
         if (!is_array($input)) {
             return $input;
         }
+        $input = $this->nullifyEmpty($input);
 
         $itemtype = (string) ($input['itemtype'] ?? '');
         $items_id = (int) ($input['items_id'] ?? 0);
         if ($itemtype !== '' && $items_id > 0) {
             $t = self::fieldsSoftReadTargets($itemtype, $items_id);
-            if (($input['rto_target_minutes'] ?? null) === null && isset($t['rto'])) {
+            if (($input['rto_target_minutes'] ?? 'NULL') === 'NULL' && isset($t['rto'])) {
                 $input['rto_target_minutes'] = $t['rto'];
             }
-            if (($input['rpo_target_minutes'] ?? null) === null && isset($t['rpo'])) {
+            if (($input['rpo_target_minutes'] ?? 'NULL') === 'NULL' && isset($t['rpo'])) {
                 $input['rpo_target_minutes'] = $t['rpo'];
+            }
+        }
+        return $input;
+    }
+
+    public function prepareInputForUpdate($input)
+    {
+        $input = parent::prepareInputForUpdate($input);
+        return is_array($input) ? $this->nullifyEmpty($input) : $input;
+    }
+
+    /**
+     * @param array<string,mixed> $input
+     * @return array<string,mixed>
+     */
+    private function nullifyEmpty(array $input): array
+    {
+        foreach (self::NULLABLE_FIELDS as $k) {
+            if (array_key_exists($k, $input) && trim((string) $input[$k]) === '') {
+                $input[$k] = 'NULL';
             }
         }
         return $input;

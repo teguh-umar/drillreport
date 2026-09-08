@@ -6,6 +6,12 @@ Format: [Keep a Changelog](https://keepachangelog.com/); this project uses
 
 ## [Unreleased]
 
+## [0.3.3] - 2026-09-08
+
+### Changed
+- Drill form: RTO/RPO **target and actual** now sit side by side on one row each
+  (was one field per row).
+
 ## [0.3.2] - 2026-09-08
 
 First fix from the VM-HQ-GLPI production deploy — install + activate were clean

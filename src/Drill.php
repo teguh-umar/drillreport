@@ -305,16 +305,19 @@ class Drill extends CommonDBTM
         Dropdown::showFromArray('status', self::statusLabels(), ['value' => $this->fields['status'] ?? 'draft']);
         echo "</td></tr>";
 
-        foreach ([
-            'rto_target_minutes' => __s('RTO target (min)', 'drillreport'),
-            'rto_actual_minutes' => __s('RTO actual (min)', 'drillreport'),
-            'rpo_target_minutes' => __s('RPO target (min)', 'drillreport'),
-            'rpo_actual_minutes' => __s('RPO actual (min)', 'drillreport'),
-        ] as $f => $label) {
-            echo "<tr class='tab_bg_1'><td>{$label}</td><td colspan='3'>"
-                . Html::input($f, ['value' => $this->fields[$f] ?? '', 'type' => 'number', 'min' => '0'])
-                . "</td></tr>";
-        }
+        $num = fn (string $f): string => Html::input($f, [
+            'value' => $this->fields[$f] ?? '',
+            'type'  => 'number',
+            'min'   => '0',
+        ]);
+        echo "<tr class='tab_bg_1'>";
+        echo "<td>" . __s('RTO target (min)', 'drillreport') . "</td><td>" . $num('rto_target_minutes') . "</td>";
+        echo "<td>" . __s('RTO actual (min)', 'drillreport') . "</td><td>" . $num('rto_actual_minutes') . "</td>";
+        echo "</tr>";
+        echo "<tr class='tab_bg_1'>";
+        echo "<td>" . __s('RPO target (min)', 'drillreport') . "</td><td>" . $num('rpo_target_minutes') . "</td>";
+        echo "<td>" . __s('RPO actual (min)', 'drillreport') . "</td><td>" . $num('rpo_actual_minutes') . "</td>";
+        echo "</tr>";
 
         foreach ([
             'objectives'        => __s('Objectives', 'drillreport'),

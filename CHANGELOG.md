@@ -6,6 +6,14 @@ Format: [Keep a Changelog](https://keepachangelog.com/); this project uses
 
 ## [Unreleased]
 
+## [0.3.9] - 2026-09-09
+
+### Fixed
+- Printing the report (`front/report.php` → Print / Save as PDF) now hides the
+  GLPI chrome — sidebar, secondary bar, debug toolbar, footer, banners — and
+  lets the report fill the sheet. GLPI's top header already carries
+  `d-print-none`; the `@media print` block in `report.html.twig` handles the rest.
+
 ## [0.3.8] - 2026-09-09
 
 ### Changed

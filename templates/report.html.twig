@@ -21,10 +21,35 @@
         .drillreport-report .dr-narrative { white-space: pre-wrap; }
         .drillreport-report .dr-toolbar { position: sticky; top: 0; z-index: 5; }
         @media print {
+            /* --- strip GLPI 11 chrome (the top header already has d-print-none) --- */
+            aside.navbar-vertical,
+            .sidebar,
+            [data-testid="sidebar"],
+            .navbar.secondary-bar,
+            #debug-toolbar-applet,
+            [id^="debug-toolbar"],
+            .debug-toolbar,
+            #maintenance-float,
+            #impersonate-banner,
+            footer.footer,
+            .glpi-footer {
+                display: none !important;
+            }
+            body, .page, .page-wrapper, .page-body, main#page, #page.legacy {
+                display: block !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                width: 100% !important;
+                max-width: none !important;
+                overflow: visible !important;
+            }
+            /* --- report itself --- */
+            .drillreport-report { margin: 0 !important; padding: 0 !important; }
             .drillreport-report .dr-no-print { display: none !important; }
-            .drillreport-report .card { border: none; box-shadow: none; }
+            .drillreport-report .card { border: none !important; box-shadow: none !important; }
             .drillreport-report h2 { break-after: avoid; }
             .drillreport-report table { break-inside: auto; }
+            .drillreport-report a { color: inherit; text-decoration: none; }
         }
     </style>
 

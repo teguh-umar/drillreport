@@ -6,6 +6,19 @@ Format: [Keep a Changelog](https://keepachangelog.com/); this project uses
 
 ## [Unreleased]
 
+## [0.3.4] - 2026-09-09
+
+### Added
+- `ActionCategory` is seeded on install with a 9-item BCP/DR starter taxonomy
+  (Runbook / procedure, Backup & recovery, Infrastructure / capacity,
+  Network & connectivity, Data integrity, Staffing & training,
+  Monitoring & alerting, Third-party / vendor, Documentation). Idempotent —
+  the admin can rename, deactivate, delete or add. `Scenario` stays empty
+  (entirely org-specific). Re-run `bin/console glpi:plugin:install drillreport`
+  to seed on an already-installed instance.
+- Design doc §6.6 — a fully worked Improvement Action example (all fields +
+  the resulting Risk Register Finding).
+
 ## [0.3.3] - 2026-09-08
 
 ### Changed

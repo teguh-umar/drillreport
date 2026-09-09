@@ -408,6 +408,42 @@ Secara kode drillreport tidak ada bedanya — soft-read tetap `class_exists` /
 `isPluginActive`-guarded; target bacaannya sekarang custom field `fields` pada
 `Appliance` / `Computer`, bukan custom asset.
 
+### 6.6 Contoh lengkap satu Improvement Action (rujukan)
+
+Diisi lengkap sebagai acuan cara pakai tab **Improvement actions** — nyambung ke
+skema `_actions` (§6.2) dan mapping ke `Finding` riskregister (§5).
+
+| Field | Isi contoh |
+|---|---|
+| **Drill** (induk) | *DR Drill 2026 — Failover CRM ke DRC* |
+| **Finding** (`name`) | Restore database CRM melebihi RTO — 95 menit vs target 60 menit |
+| **Category** (`plugin_drillreport_actioncategories_id`) | `Backup & recovery` |
+| **Severity** (`severity`) | `high` |
+| **Status** (`status`) | `open` |
+| **Owner group** (`groups_id`) | Tim Database |
+| **Owner** (`users_id`) | *(DBA lead)* |
+| **Due date** (`date_due`) | `2026-11-30` |
+| **Asset terkait** (`plugin_drillreport_drills_items_id`) | Appliance *CRM Production* (dari tab Systems in scope) |
+| **What failed / observation** (`content`) | Saat failover, restore full backup DB CRM (240 GB) ke server DRC memakan **95 menit**. RTO target CRM = 60 menit. Aplikasi baru online 09:47; disaster dideklarasi 08:12. |
+| **Root cause** (`cause`) | Backup CRM hanya *full daily*, tanpa incremental. Link replikasi DC→DRC 1 Gbps *shared*, throughput efektif ~35 MB/s di jam kerja. Tidak ada standby DB yang sudah ter-restore di DRC. |
+| **Recommendation** (`recommendation`) | 1) Aktifkan *streaming replication* PostgreSQL DC→DRC untuk CRM (standby hangat, restore <5 menit). 2) Jika tidak feasible: jadwalkan restore mingguan ke DRC + apply incremental saat drill. 3) Usulkan link replikasi CRM dedicated 10 Gbps (capex Q4). |
+
+**Setelah "Send findings to Risk Register"** (drill status `fail`, `riskregister` aktif):
+
+| Field Finding | Nilai |
+|---|---|
+| `code` | `DRILL-1-1` (`DRILL-<drills_id>-<actions_id>`) |
+| `entities_id` | ikut entity drill |
+| `scope_label` | nama skenario drill (*Failover CRM ke DRC*) |
+| `name` / `content` / `cause` / `recommendation` / `severity` (`High`) / `date_due` | copy 1:1 dari Action |
+| `assessment_ref` | `DR Drill 2026` |
+| `raw_asset_text` | `CRM Production` (dari asset terkait) |
+| `plugin_riskregister_riskcategories_id` | kategori **Disaster Recovery** (di-*find-or-create* oleh `Action::ensureRiskCategoryId()`) |
+
+Setelah terkirim, baris `_actions` menyimpan `riskregister_findings_id` + `code` →
+kolom "Sent to Risk Register" di tab terisi `DRILL-1-1`. Tekan tombol lagi = update
+Finding yang sama (idempoten), bukan duplikat.
+
 ---
 
 ## 7. Apakah Format Bisa Diubah dengan Mudah? (Configurable)

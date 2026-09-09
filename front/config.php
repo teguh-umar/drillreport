@@ -15,6 +15,8 @@ include('../../../inc/includes.php');
 
 use GlpiPlugin\Drillreport\ActionCategory;
 use GlpiPlugin\Drillreport\Config;
+use GlpiPlugin\Drillreport\Drill;
+use GlpiPlugin\Drillreport\Sample;
 use GlpiPlugin\Drillreport\Scenario;
 use GlpiPlugin\Drillreport\TestType;
 
@@ -40,6 +42,31 @@ if (isset($_POST['update'])) {
         'fields_rpo_key'          => trim((string) ($_POST['fields_rpo_key'] ?? 'rpo_target_minutes')),
     ]);
     Session::addMessageAfterRedirect(__s('Configuration updated.', 'drillreport'));
+    Html::back();
+}
+
+if (isset($_POST['create_sample'])) {
+    Session::checkRight('plugin_drillreport_config', UPDATE);
+    Session::checkRight(Drill::$rightname, CREATE);
+    $id = Sample::create((int) ($_SESSION['glpiactive_entity'] ?? 0));
+    Session::addMessageAfterRedirect(
+        $id > 0
+            ? __s('Sample drill created.', 'drillreport')
+            : __s('Could not create the sample drill (see the log).', 'drillreport'),
+        false,
+        $id > 0 ? INFO : ERROR
+    );
+    Html::back();
+}
+
+if (isset($_POST['remove_sample'])) {
+    Session::checkRight('plugin_drillreport_config', UPDATE);
+    Session::checkRight(Drill::$rightname, PURGE);
+    $n = Sample::remove();
+    Session::addMessageAfterRedirect(sprintf(
+        _n('%d sample drill removed.', '%d sample drills removed.', $n, 'drillreport'),
+        $n
+    ));
     Html::back();
 }
 
@@ -95,11 +122,38 @@ if ($can_update) {
     Html::closeForm();
 }
 
-echo "<div class='card'><div class='card-body'>";
+echo "<div class='card mb-3'><div class='card-body'>";
 echo "<h3>" . __s('Reference data', 'drillreport') . "</h3><ul>";
 foreach ([Scenario::class, TestType::class, ActionCategory::class] as $class) {
     echo "<li><a href='" . htmlescape($class::getSearchURL()) . "'>" . htmlescape($class::getTypeName(Session::getPluralNumber())) . "</a></li>";
 }
 echo "</ul></div></div>";
+
+// ---- Sample data ---------------------------------------------------
+if ($can_update && Session::haveRight(Drill::$rightname, CREATE)) {
+    $sampleId = Sample::drillId();
+    echo "<div class='card'><div class='card-body'>";
+    echo "<h3>" . __s('Sample data', 'drillreport') . "</h3>";
+    echo "<p class='text-muted'>"
+        . __s('A fully worked demo drill (objectives, improvement actions, a system in scope) so you have a concrete reference. Every row is prefixed "[SAMPLE]".', 'drillreport')
+        . "</p>";
+    echo "<form method='post' action='" . htmlescape($self) . "'>";
+    if ($sampleId > 0) {
+        echo "<a class='btn btn-outline-secondary' href='" . htmlescape(Drill::getFormURLWithID($sampleId)) . "'>"
+            . "<i class='ti ti-external-link'></i> " . __s('Open the sample drill', 'drillreport') . "</a> ";
+        echo Html::submit(__s('Remove sample data', 'drillreport'), [
+            'name'    => 'remove_sample',
+            'class'   => 'btn btn-outline-danger',
+            'confirm' => __('Confirm the final deletion?'),
+        ]);
+    } else {
+        echo Html::submit(__s('Create the sample drill', 'drillreport'), [
+            'name'  => 'create_sample',
+            'class' => 'btn btn-outline-primary',
+        ]);
+    }
+    Html::closeForm();
+    echo "</div></div>";
+}
 
 Html::footer();

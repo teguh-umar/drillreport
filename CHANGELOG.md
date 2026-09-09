@@ -6,6 +6,16 @@ Format: [Keep a Changelog](https://keepachangelog.com/); this project uses
 
 ## [Unreleased]
 
+## [0.3.6] - 2026-09-09
+
+### Added
+- **Timeline fields on the drill form** — "Disaster declared", "Service
+  recovered", "Validation complete" (datetime, optional). They were storable in
+  the schema and shown on the report but had no form input. The `plugin:drillreport`
+  / `show_timeline_fields` toggle now controls only whether the report renders the
+  Timeline section; the form always captures them.
+- Sample drill fills the timeline (08:12 → 09:47 → 10:35).
+
 ## [0.3.5] - 2026-09-09
 
 ### Added

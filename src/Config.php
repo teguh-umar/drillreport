@@ -45,13 +45,48 @@ class Config extends CommonDBTM
     /** @return list<class-string> resolved, existing itemtypes from `asset_itemtypes` */
     public static function assetItemtypes(): array
     {
+        $choices = self::assetItemtypeChoices();
         $out = [];
         foreach (explode(',', (string) self::get('asset_itemtypes')) as $t) {
             $t = trim($t);
-            if ($t !== '' && class_exists($t)) {
+            if ($t !== '' && isset($choices[$t])) {
                 $out[] = $t;
             }
         }
         return $out ?: ['Appliance', 'Computer'];
+    }
+
+    /**
+     * The GLPI itemtypes a drill may legitimately cover — the fixed set the
+     * Setup multi-select is built from. Curated DR-relevant base list, plus every
+     * standard asset / management type GLPI declares at runtime (which includes
+     * GLPI 11 custom asset definitions).
+     *
+     * @return array<class-string, string> itemtype => localized name, name-sorted
+     */
+    public static function assetItemtypeChoices(): array
+    {
+        global $CFG_GLPI;
+
+        static $cache = null;
+        if ($cache !== null) {
+            return $cache;
+        }
+
+        $candidates = array_merge(
+            ['Computer', 'Appliance', 'Cluster', 'Software', 'DatabaseInstance', 'Database'],
+            (array) ($CFG_GLPI['asset_types'] ?? []),
+            (array) ($CFG_GLPI['management_types'] ?? []),
+        );
+
+        $out = [];
+        foreach (array_unique($candidates) as $class) {
+            if (!is_string($class) || !class_exists($class) || !is_a($class, CommonDBTM::class, true)) {
+                continue;
+            }
+            $out[$class] = $class::getTypeName(1);
+        }
+        asort($out);
+        return $cache = $out;
     }
 }

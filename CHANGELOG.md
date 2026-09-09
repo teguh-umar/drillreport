@@ -6,6 +6,20 @@ Format: [Keep a Changelog](https://keepachangelog.com/); this project uses
 
 ## [Unreleased]
 
+## [0.3.7] - 2026-09-09
+
+### Changed
+- Setup → "Assets in scope" — no more free text:
+  - **Asset types** is now a multi-select of real GLPI asset / management types
+    (`Config::assetItemtypeChoices()` — the curated DR list plus everything GLPI
+    declares in `asset_types` / `management_types`, including GLPI 11 custom asset
+    definitions). A mistyped or unknown value can't be saved.
+  - **RTO / RPO target column** — when the `fields` plugin is active, a dropdown
+    of the columns it actually exposes on any `glpi_plugin_fields_*` table
+    (`Drill_Item::availableFieldsColumns()`), with a "— not used —" option. Falls
+    back to a plain text field only when `fields` is inactive, with an inline
+    note explaining the state.
+
 ## [0.3.6] - 2026-09-09
 
 ### Added

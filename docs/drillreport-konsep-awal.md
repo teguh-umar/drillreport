@@ -499,8 +499,8 @@ itemtype yang diisi 1x/tahun.
 |---|---|---|
 | `show_business_criticity` | Tampilkan kolom Business Criticity aset di laporan | `on` |
 | `show_timeline_fields` | Tampilkan **section Timeline di laporan cetak** (form drill selalu menampilkan 3 field-nya) | `off` |
-| `asset_itemtypes` | Daftar itemtype yang boleh di-`Drill_Item` (CSV) | `Appliance,Computer` |
-| `fields_rto_key` / `fields_rpo_key` | Nama custom field `fields` untuk soft-read target RTO/RPO | `rto_target_minutes` / `rpo_target_minutes` |
+| `asset_itemtypes` | Itemtype aset yang boleh di-`Drill_Item` — **multi-select** dari asset/management type GLPI (bukan free text lagi, 0.3.7) | `Appliance,Computer` |
+| `fields_rto_key` / `fields_rpo_key` | Kolom custom field `fields` untuk soft-read target RTO/RPO — **dropdown** kolom yang terdeteksi kalau `fields` aktif (0.3.7); `''` = tidak dipakai | `rto_target_minutes` / `rpo_target_minutes` |
 | `reminder_enabled` / `reminder_month` | Cron reminder tahunan "drill belum disubmit" | `on` / `11` |
 | `report_sections` | Section laporan cetak yang aktif (CSV dari 14 komponen §6.1) | semua |
 

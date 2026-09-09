@@ -502,7 +502,7 @@ itemtype yang diisi 1x/tahun.
 | `asset_itemtypes` | Itemtype aset yang boleh di-`Drill_Item` — **multi-select** dari asset/management type GLPI (bukan free text lagi, 0.3.7) | `Appliance,Computer` |
 | `fields_rto_key` / `fields_rpo_key` | Kolom custom field `fields` untuk soft-read target RTO/RPO — **dropdown** kolom yang terdeteksi kalau `fields` aktif (0.3.7); `''` = tidak dipakai | `rto_target_minutes` / `rpo_target_minutes` |
 | `reminder_enabled` / `reminder_month` | Cron reminder tahunan "drill belum disubmit" | `on` / `11` |
-| `report_sections` | Section laporan cetak yang aktif (CSV dari 14 komponen §6.1) | semua |
+| `report_sections` | Section laporan cetak yang aktif — 9 key (0.4.0): `summary, overview, scope, timeline, rto_rpo, objectives, findings, remediation, approval`. Format laporan mengikuti dokumen rujukan `DR_Drill_2026_CRM_Failover_to_DRC.pdf` (section bernomor, tabel header navy, AAR/IP) | semua |
 
 ### 7.3 Form entry — Twig native vs hand-rolled
 

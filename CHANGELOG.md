@@ -6,6 +6,27 @@ Format: [Keep a Changelog](https://keepachangelog.com/); this project uses
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-09-09
+
+### Changed
+- **Report re-styled to the reference AAR/IP document format** — numbered
+  sections (`1. Executive Summary` … `9. Approval`), a header info table
+  (Entity / Date / Result / Status), navy table headers, serif body, and:
+  - Scenario Overview merges the old Overview + Participants and lists the
+    objectives as bullets.
+  - Systems in Scope shows `order (recovered)` in one column.
+  - Timeline is a Milestone / Time table with a computed "Actual recovery
+    duration" row (recovery − declaration), and a note when unfilled.
+  - RTO/RPO has explicit "Overall Summary" / "Per System" sub-tables.
+  - Findings: each recommendation is auto-split into bullets when it is
+    enumerated ("1) … 2) …" or line-per-item); the Evidence line moves into
+    this section's header.
+  - **New "8. Remediation Summary"** — Severity / Finding / Due Date / Status
+    table of all findings, severity-coloured.
+  - Footer note (ISO 22398 / NIST SP 800-84; SAMPLE marker when demo data).
+- `report_sections` default updated to the new 9 keys
+  (`summary,overview,scope,timeline,rto_rpo,objectives,findings,remediation,approval`).
+
 ## [0.3.9] - 2026-09-09
 
 ### Fixed

@@ -6,6 +6,14 @@ Format: [Keep a Changelog](https://keepachangelog.com/); this project uses
 
 ## [Unreleased]
 
+## [0.4.1] - 2026-09-09
+
+### Fixed
+- `Config::setDefaults()` (run on `plugin:install`) now resets a stored
+  `report_sections` that still holds keys from an older version
+  (`participants` / `evidence`) so the new "Remediation Summary" section shows
+  and dropped sections disappear on an in-place upgrade.
+
 ## [0.4.0] - 2026-09-09
 
 ### Changed

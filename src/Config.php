@@ -42,16 +42,26 @@ class Config extends CommonDBTM
             \Config::setConfigurationValues('plugin:drillreport', $missing);
         }
 
+        $fix = [];
+
         // Self-heal: an earlier default seeded a placeholder `fields` key that is
         // very unlikely to be a real column. If it isn't one, blank it so the
         // Setup screen doesn't show "(not found)" out of the box.
-        $fix = [];
         foreach (['fields_rto_key', 'fields_rpo_key'] as $k) {
             $v = trim((string) ($current[$k] ?? ''));
             if ($v !== '' && !self::fieldsColumnExists($v)) {
                 $fix[$k] = '';
             }
         }
+
+        // Self-heal: a stored `report_sections` from an older plugin version can
+        // hold section keys that no longer exist (and miss new ones). If any
+        // stored token is unknown to Report::SECTIONS, reset to the default.
+        $stored = array_filter(array_map('trim', explode(',', (string) ($current['report_sections'] ?? ''))));
+        if ($stored !== [] && array_diff($stored, Report::SECTIONS) !== []) {
+            $fix['report_sections'] = self::DEFAULTS['report_sections'];
+        }
+
         if ($fix !== []) {
             \Config::setConfigurationValues('plugin:drillreport', $fix);
         }

@@ -17,7 +17,7 @@ use GlpiPlugin\Drillreport\ActionCategory;
 use GlpiPlugin\Drillreport\Menu;
 use GlpiPlugin\Drillreport\Profile as DRProfile;
 
-define('PLUGIN_DRILLREPORT_VERSION', '0.3.7');
+define('PLUGIN_DRILLREPORT_VERSION', '0.3.8');
 define('PLUGIN_DRILLREPORT_MIN_GLPI', '11.0.0');
 define('PLUGIN_DRILLREPORT_MAX_GLPI', '11.9.99');
 

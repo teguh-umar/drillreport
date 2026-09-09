@@ -6,6 +6,15 @@ Format: [Keep a Changelog](https://keepachangelog.com/); this project uses
 
 ## [Unreleased]
 
+## [0.3.8] - 2026-09-09
+
+### Changed
+- `fields_rto_key` / `fields_rpo_key` now default to empty ("— not used —").
+  The earlier `rto_target_minutes` / `rpo_target_minutes` placeholders showed as
+  "(not found)" on the Setup screen because they rarely match a real `fields`
+  column. `Config::setDefaults()` (run on `plugin:install`) self-heals an existing
+  install: a stored key that is not an actual `fields` column is blanked.
+
 ## [0.3.7] - 2026-09-09
 
 ### Changed

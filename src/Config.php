@@ -19,9 +19,10 @@ class Config extends CommonDBTM
         'report_sections'         => 'summary,overview,participants,scope,timeline,rto_rpo,objectives,findings,evidence,approval',
         // Assets in scope
         'asset_itemtypes'         => 'Appliance,Computer',
-        // Soft-read of RTO/RPO target from the `fields` plugin
-        'fields_rto_key'          => 'rto_target_minutes',
-        'fields_rpo_key'          => 'rpo_target_minutes',
+        // Soft-read of RTO/RPO target from the `fields` plugin — empty = off
+        // (admin picks a real column on the Setup screen when they want it).
+        'fields_rto_key'          => '',
+        'fields_rpo_key'          => '',
         // Annual reminder cron
         'reminder_enabled'        => 1,
         'reminder_month'          => 11,
@@ -40,6 +41,35 @@ class Config extends CommonDBTM
         if ($missing !== []) {
             \Config::setConfigurationValues('plugin:drillreport', $missing);
         }
+
+        // Self-heal: an earlier default seeded a placeholder `fields` key that is
+        // very unlikely to be a real column. If it isn't one, blank it so the
+        // Setup screen doesn't show "(not found)" out of the box.
+        $fix = [];
+        foreach (['fields_rto_key', 'fields_rpo_key'] as $k) {
+            $v = trim((string) ($current[$k] ?? ''));
+            if ($v !== '' && !self::fieldsColumnExists($v)) {
+                $fix[$k] = '';
+            }
+        }
+        if ($fix !== []) {
+            \Config::setConfigurationValues('plugin:drillreport', $fix);
+        }
+    }
+
+    private static function fieldsColumnExists(string $column): bool
+    {
+        global $DB;
+
+        if (!class_exists('\\Plugin') || !\Plugin::isPluginActive('fields')) {
+            return false;
+        }
+        foreach ($DB->listTables('glpi\\_plugin\\_fields\\_%') as $trow) {
+            if ($DB->fieldExists($trow['TABLE_NAME'], $column)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /** @return list<class-string> resolved, existing itemtypes from `asset_itemtypes` */

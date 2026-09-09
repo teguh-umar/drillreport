@@ -16,6 +16,7 @@ include('../../../inc/includes.php');
 use GlpiPlugin\Drillreport\ActionCategory;
 use GlpiPlugin\Drillreport\Config;
 use GlpiPlugin\Drillreport\Drill;
+use GlpiPlugin\Drillreport\Drill_Item;
 use GlpiPlugin\Drillreport\Sample;
 use GlpiPlugin\Drillreport\Scenario;
 use GlpiPlugin\Drillreport\TestType;
@@ -32,14 +33,21 @@ $clamp = static fn (int $v, int $min, int $max): int => max($min, min($max, $v))
 if (isset($_POST['update'])) {
     Session::checkRight('plugin_drillreport_config', UPDATE);
 
+    // asset_itemtypes: multi-select → keep only real, allowed itemtypes.
+    $allowed = Config::assetItemtypeChoices();
+    $picked  = array_values(array_intersect(
+        array_keys($allowed),
+        (array) ($_POST['asset_itemtypes'] ?? [])
+    ));
+
     \Config::setConfigurationValues('plugin:drillreport', [
         'show_business_criticity' => !empty($_POST['show_business_criticity']) ? 1 : 0,
         'show_timeline_fields'    => !empty($_POST['show_timeline_fields']) ? 1 : 0,
         'reminder_enabled'        => !empty($_POST['reminder_enabled']) ? 1 : 0,
         'reminder_month'          => $clamp((int) ($_POST['reminder_month'] ?? 11), 1, 12),
-        'asset_itemtypes'         => trim((string) ($_POST['asset_itemtypes'] ?? 'Appliance,Computer')),
-        'fields_rto_key'          => trim((string) ($_POST['fields_rto_key'] ?? 'rto_target_minutes')),
-        'fields_rpo_key'          => trim((string) ($_POST['fields_rpo_key'] ?? 'rpo_target_minutes')),
+        'asset_itemtypes'         => implode(',', $picked ?: ['Appliance', 'Computer']),
+        'fields_rto_key'          => trim((string) ($_POST['fields_rto_key'] ?? '')),
+        'fields_rpo_key'          => trim((string) ($_POST['fields_rpo_key'] ?? '')),
     ]);
     Session::addMessageAfterRedirect(__s('Configuration updated.', 'drillreport'));
     Html::back();
@@ -93,17 +101,62 @@ echo "</table></div></div>";
 
 echo "<div class='card mb-3'><div class='card-body'>";
 echo "<h3>" . __s('Assets in scope', 'drillreport') . "</h3>";
-echo "<p class='text-muted'>" . __s('Comma-separated GLPI itemtypes a drill may cover.', 'drillreport') . "</p>";
+echo "<p class='text-muted'>" . __s('Which GLPI asset types a drill may cover.', 'drillreport') . "</p>";
 echo "<table class='tab_cadre_fixe'>";
-echo "<tr class='tab_bg_1'><td>" . __s('Asset itemtypes', 'drillreport') . "</td><td>"
-    . Html::input('asset_itemtypes', ['value' => (string) $get('asset_itemtypes'), 'size' => 50] + ($can_update ? [] : ['disabled' => 'disabled']))
-    . "</td></tr>";
-echo "<tr class='tab_bg_1'><td>" . __s('"fields" plugin key — RTO target', 'drillreport') . "</td><td>"
-    . Html::input('fields_rto_key', ['value' => (string) $get('fields_rto_key')] + ($can_update ? [] : ['disabled' => 'disabled']))
-    . "</td></tr>";
-echo "<tr class='tab_bg_1'><td>" . __s('"fields" plugin key — RPO target', 'drillreport') . "</td><td>"
-    . Html::input('fields_rpo_key', ['value' => (string) $get('fields_rpo_key')] + ($can_update ? [] : ['disabled' => 'disabled']))
-    . "</td></tr>";
+
+// Asset itemtypes — multi-select of real GLPI asset types (no free text).
+$choices  = Config::assetItemtypeChoices();
+$selected = Config::assetItemtypes();
+echo "<tr class='tab_bg_1'><td>" . __s('Asset types', 'drillreport') . "</td><td>";
+Dropdown::showFromArray('asset_itemtypes', $choices, [
+    'values'   => $selected,
+    'multiple' => true,
+    'width'    => '100%',
+    'readonly' => !$can_update,
+]);
+echo "</td></tr>";
+
+// RTO/RPO target key — dropdown of columns the `fields` plugin actually exposes.
+$fieldsActive = class_exists('\\Plugin') && \Plugin::isPluginActive('fields');
+$fieldCols    = $fieldsActive ? Drill_Item::availableFieldsColumns() : [];
+
+$keyField = static function (string $name, string $label) use ($get, $can_update, $fieldsActive, $fieldCols): string {
+    $cur = (string) $get($name);
+    if ($fieldsActive && $fieldCols !== []) {
+        $opts = ['' => __('— not used —', 'drillreport')];
+        foreach ($fieldCols as $c) {
+            $opts[$c] = $c;
+        }
+        if ($cur !== '' && !isset($opts[$cur])) {
+            $opts[$cur] = $cur . ' ' . __('(not found)', 'drillreport');
+        }
+        return "<tr class='tab_bg_1'><td>{$label}</td><td>"
+            . Dropdown::showFromArray($name, $opts, ['value' => $cur, 'display' => false, 'width' => '100%', 'readonly' => !$can_update])
+            . "</td></tr>";
+    }
+    return "<tr class='tab_bg_1'><td>{$label}</td><td>"
+        . Html::input($name, ['value' => $cur, 'size' => 30] + ($can_update ? [] : ['disabled' => 'disabled']))
+        . "</td></tr>";
+};
+
+echo "</table>";
+echo "<h4 class='mt-3'>" . __s('RTO / RPO target from the "fields" plugin', 'drillreport') . "</h4>";
+if (!$fieldsActive) {
+    echo "<div class='alert alert-info'>"
+        . __s('The "fields" plugin is not active — targets can only be entered on each drill.', 'drillreport')
+        . "</div>";
+} elseif ($fieldCols === []) {
+    echo "<div class='alert alert-warning'>"
+        . __s('The "fields" plugin is active but has no custom field on any itemtype yet. Create the RTO/RPO fields there first.', 'drillreport')
+        . "</div>";
+} else {
+    echo "<p class='text-muted'>"
+        . __s('Pick the "fields" plugin column that holds each target. Leave "not used" to always enter targets on the drill.', 'drillreport')
+        . "</p>";
+}
+echo "<table class='tab_cadre_fixe'>";
+echo $keyField('fields_rto_key', __s('RTO target column', 'drillreport'));
+echo $keyField('fields_rpo_key', __s('RPO target column', 'drillreport'));
 echo "</table></div></div>";
 
 echo "<div class='card mb-3'><div class='card-body'>";

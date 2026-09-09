@@ -114,6 +114,40 @@ class Drill_Item extends CommonDBRelation
     }
 
     /**
+     * Candidate custom-field column names from the `fields` plugin that could
+     * hold an RTO/RPO target — every column on a `glpi_plugin_fields_*` table
+     * that also carries `itemtype`/`items_id`, minus the plumbing columns.
+     * Used to build the Setup dropdown so the key can't be mistyped.
+     *
+     * @return list<string> sorted, unique
+     */
+    public static function availableFieldsColumns(): array
+    {
+        global $DB;
+
+        if (!class_exists('\\Plugin') || !\Plugin::isPluginActive('fields')) {
+            return [];
+        }
+
+        $skip = ['id', 'items_id', 'itemtype', 'plugin_fields_containers_id', 'entities_id', 'is_recursive', 'date_creation', 'date_mod'];
+        $cols = [];
+        foreach ($DB->listTables('glpi\\_plugin\\_fields\\_%') as $trow) {
+            $table = $trow['TABLE_NAME'];
+            if (!$DB->fieldExists($table, 'itemtype') || !$DB->fieldExists($table, 'items_id')) {
+                continue;
+            }
+            foreach ($DB->listFields($table) as $name => $meta) {
+                if (!in_array($name, $skip, true) && !str_ends_with((string) $name, 'dropdowns_id')) {
+                    $cols[$name] = true;
+                }
+            }
+        }
+        $cols = array_keys($cols);
+        sort($cols);
+        return $cols;
+    }
+
+    /**
      * Best-effort read of RTO/RPO target custom fields for an asset, provided by
      * the `fields` plugin. Scans `glpi_plugin_fields_*` tables for one that has
      * both configured key columns plus `itemtype`/`items_id`, and returns the

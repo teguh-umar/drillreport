@@ -220,7 +220,7 @@ PSR-4 (ikut `riskregister`): `GlpiPlugin\Drillreport\Drill`,
 | `users_id_tech` | INT UNSIGNED NOT NULL DEFAULT 0 | idx · koordinator drill |
 | `objectives` | TEXT | naratif tujuan (komp. 2) |
 | `scope_summary` | TEXT | ruang lingkup (komp. 2) |
-| `declaration_time` | TIMESTAMP NULL | timeline (komp. 6) — tampil kalau `show_timeline_fields` |
+| `declaration_time` | TIMESTAMP NULL | timeline (komp. 6) — input di form (opsional); di laporan ikut `show_timeline_fields` |
 | `recovery_time` | TIMESTAMP NULL | timeline |
 | `validation_time` | TIMESTAMP NULL | timeline |
 | `rto_target_minutes` | INT UNSIGNED NULL | keseluruhan · pre-fill dari max aset |
@@ -498,7 +498,7 @@ itemtype yang diisi 1x/tahun.
 | Key config | Fungsi | Default |
 |---|---|---|
 | `show_business_criticity` | Tampilkan kolom Business Criticity aset di laporan | `on` |
-| `show_timeline_fields` | Tampilkan field declaration/recovery/validation time + durasi saran | `off` |
+| `show_timeline_fields` | Tampilkan **section Timeline di laporan cetak** (form drill selalu menampilkan 3 field-nya) | `off` |
 | `asset_itemtypes` | Daftar itemtype yang boleh di-`Drill_Item` (CSV) | `Appliance,Computer` |
 | `fields_rto_key` / `fields_rpo_key` | Nama custom field `fields` untuk soft-read target RTO/RPO | `rto_target_minutes` / `rpo_target_minutes` |
 | `reminder_enabled` / `reminder_month` | Cron reminder tahunan "drill belum disubmit" | `on` / `11` |

@@ -331,6 +331,23 @@ class Drill extends CommonDBTM
         echo "<td>" . __s('RPO actual (min)', 'drillreport') . "</td><td>" . $num('rpo_actual_minutes') . "</td>";
         echo "</tr>";
 
+        // Timeline — optional; drives the report's Timeline section (shown when
+        // Config 'show_timeline_fields' is on) and can back the RTO/RPO numbers.
+        echo "<tr class='tab_bg_2'><th colspan='4' class='text-start'>"
+            . __s('Timeline', 'drillreport')
+            . " <span class='fw-normal text-muted'>(" . __s('optional', 'drillreport') . ")</span></th></tr>";
+        echo "<tr class='tab_bg_1'>";
+        echo "<td>" . __s('Disaster declared', 'drillreport') . "</td><td>";
+        Html::showDateTimeField('declaration_time', ['value' => $this->fields['declaration_time'] ?? '']);
+        echo "</td>";
+        echo "<td>" . __s('Service recovered', 'drillreport') . "</td><td>";
+        Html::showDateTimeField('recovery_time', ['value' => $this->fields['recovery_time'] ?? '']);
+        echo "</td></tr>";
+        echo "<tr class='tab_bg_1'>";
+        echo "<td>" . __s('Validation complete', 'drillreport') . "</td><td>";
+        Html::showDateTimeField('validation_time', ['value' => $this->fields['validation_time'] ?? '']);
+        echo "</td><td colspan='2'></td></tr>";
+
         foreach ([
             'objectives'        => __s('Objectives', 'drillreport'),
             'scope_summary'     => __s('Scope summary', 'drillreport'),

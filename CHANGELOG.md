@@ -6,6 +6,18 @@ Format: [Keep a Changelog](https://keepachangelog.com/); this project uses
 
 ## [Unreleased]
 
+## [0.3.5] - 2026-09-09
+
+### Added
+- **Sample drill** — Setup screen → "Sample data" → "Create the sample drill".
+  Loads one fully worked demo drill (3 objectives, 3 improvement actions, and a
+  system in scope if any asset exists) matching docs §6.6, so a fresh install
+  has a concrete reference. Every row is prefixed `[SAMPLE]`; a "Remove sample
+  data" button purges them. Gated on `_config` UPDATE + `_drill` CREATE/PURGE.
+- `Drill::cleanDBonPurge()` — permanently deleting a drill now also purges its
+  `Objective` / `Action` rows (soft-delete still keeps them for a lossless
+  restore; `Drill_Item` was already handled by the `item_purge` hook).
+
 ## [0.3.4] - 2026-09-09
 
 ### Added

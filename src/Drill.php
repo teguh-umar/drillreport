@@ -110,6 +110,18 @@ class Drill extends CommonDBTM
         return $tabs;
     }
 
+    /**
+     * Purge the child records when a drill is permanently deleted. (Soft-delete
+     * keeps them so a restore is lossless.) `Drill_Item` rows are handled by the
+     * `item_purge` hook wired in setup.php.
+     */
+    public function cleanDBonPurge()
+    {
+        foreach ([Objective::class, Action::class] as $child) {
+            (new $child())->deleteByCriteria(['plugin_drillreport_drills_id' => $this->fields['id']], true);
+        }
+    }
+
     public function rawSearchOptions()
     {
         $opts = parent::rawSearchOptions();

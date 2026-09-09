@@ -444,6 +444,12 @@ Setelah terkirim, baris `_actions` menyimpan `riskregister_findings_id` + `code`
 kolom "Sent to Risk Register" di tab terisi `DRILL-1-1`. Tekan tombol lagi = update
 Finding yang sama (idempoten), bukan duplikat.
 
+> **Sample data (0.3.5):** contoh di atas bisa dimuat langsung ke instance —
+> Setup → DR Drill Report → **Sample data → Create the sample drill**. Membuat 1
+> drill `[SAMPLE] DR Drill 2026 — Failover CRM ke DRC` lengkap (3 objective, 3
+> action, + 1 system in scope kalau ada aset). "Remove sample data" untuk hapus.
+> `src/Sample.php`.
+
 ---
 
 ## 7. Apakah Format Bisa Diubah dengan Mudah? (Configurable)

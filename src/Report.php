@@ -16,9 +16,28 @@ class Report
 {
     /** Report sections, in order. Keys match the `report_sections` config CSV. */
     public const SECTIONS = [
-        'summary', 'overview', 'participants', 'scope', 'timeline',
-        'rto_rpo', 'objectives', 'findings', 'evidence', 'approval',
+        'summary', 'overview', 'scope', 'timeline', 'rto_rpo',
+        'objectives', 'findings', 'remediation', 'approval',
     ];
+
+    /** Severity display order for the remediation summary. */
+    private const SEVERITY_ORDER = ['critical' => 0, 'high' => 1, 'medium' => 2, 'low' => 3, 'info' => 4];
+
+    /** @return array<string,string> section key => English title */
+    private static function sectionTitles(): array
+    {
+        return [
+            'summary'     => __('Executive Summary', 'drillreport'),
+            'overview'    => __('Scenario Overview', 'drillreport'),
+            'scope'       => __('Systems in Scope', 'drillreport'),
+            'timeline'    => __('Timeline', 'drillreport'),
+            'rto_rpo'     => __('RTO / RPO — Target vs Actual', 'drillreport'),
+            'objectives'  => __('Objectives Assessment', 'drillreport'),
+            'findings'    => __('Findings & Improvement Plan', 'drillreport'),
+            'remediation' => __('Remediation Summary', 'drillreport'),
+            'approval'    => __('Approval', 'drillreport'),
+        ];
+    }
 
     /**
      * @return array<string,mixed>
@@ -35,10 +54,18 @@ class Report
             array_map('trim', explode(',', (string) Config::get('report_sections')))
         )) ?: self::SECTIONS;
 
+        // Numbered headings for the enabled sections, in order.
+        $titles      = self::sectionTitles();
+        $headings    = [];
+        $sectionNum  = 0;
+        foreach ($enabled as $key) {
+            $headings[$key] = (++$sectionNum) . '. ' . ($titles[$key] ?? ucfirst($key));
+        }
+
         $showCriticity = (bool) Config::get('show_business_criticity');
         $showTimeline  = (bool) Config::get('show_timeline_fields');
 
-        // ---- objectives ------------------------------------------------
+        // ---- objectives ----------------------------------------------
         $objectives = [];
         foreach ($DB->request([
             'FROM'  => Objective::getTable(),
@@ -54,7 +81,7 @@ class Report
             ];
         }
 
-        // ---- systems in scope + per-asset RTO/RPO --------------------
+        // ---- systems in scope + per-asset RTO/RPO -------------------
         $items = [];
         foreach ($DB->request([
             'FROM'  => Drill_Item::getTable(),
@@ -90,17 +117,16 @@ class Report
                 'rpo_actual' => $r['rpo_actual_minutes'],
                 'rto_met'    => ($rtoTarget !== null && $rtoActual !== null) ? ((int) $rtoActual <= (int) $rtoTarget) : null,
                 'recovered'  => (int) $r['is_recovered'] === 1,
-                'order'      => $r['recovery_order'],
+                'order'      => $r['recovery_order'] !== null ? (int) $r['recovery_order'] : null,
                 'comment'    => (string) $r['comment'],
             ];
         }
 
-        // ---- findings / improvement plan ----------------------------
+        // ---- findings / improvement plan ---------------------------
         $findings = [];
         foreach ($DB->request([
             'FROM'  => Action::getTable(),
             'WHERE' => ['plugin_drillreport_drills_id' => $drill->getID()],
-            'ORDER' => ['severity', 'id'],
         ]) as $r) {
             $owner = '';
             if ((int) $r['groups_id'] > 0) {
@@ -108,21 +134,28 @@ class Report
             } elseif ((int) $r['users_id'] > 0) {
                 $owner = (string) \getUserName((int) $r['users_id']);
             }
+            $sevKey = (string) $r['severity'];
             $findings[] = [
-                'name'           => (string) $r['name'],
-                'content'        => (string) $r['content'],
-                'cause'          => (string) $r['cause'],
-                'recommendation' => (string) $r['recommendation'],
-                'severity'       => Action::severityLabels()[$r['severity']] ?? $r['severity'],
-                'severity_key'   => (string) $r['severity'],
-                'status'         => Action::statusLabels()[$r['status']] ?? $r['status'],
-                'owner'          => $owner,
-                'date_due'       => (string) $r['date_due'],
-                'rr_code'        => (int) $r['riskregister_findings_id'] > 0 ? (string) $r['riskregister_code'] : '',
+                'name'            => (string) $r['name'],
+                'category'        => (int) $r['plugin_drillreport_actioncategories_id'] > 0
+                    ? (string) Dropdown::getDropdownName(ActionCategory::getTable(), (int) $r['plugin_drillreport_actioncategories_id'])
+                    : '',
+                'content'         => (string) $r['content'],
+                'cause'           => (string) $r['cause'],
+                'recommendation'  => (string) $r['recommendation'],
+                'recommendations' => self::bulletize((string) $r['recommendation']),
+                'severity'        => Action::severityLabels()[$sevKey] ?? $sevKey,
+                'severity_key'    => $sevKey,
+                'severity_rank'   => self::SEVERITY_ORDER[$sevKey] ?? 9,
+                'status'          => Action::statusLabels()[$r['status']] ?? $r['status'],
+                'owner'           => $owner,
+                'date_due'        => (string) $r['date_due'],
+                'rr_code'         => (int) $r['riskregister_findings_id'] > 0 ? (string) $r['riskregister_code'] : '',
             ];
         }
+        usort($findings, static fn ($a, $b) => [$a['severity_rank'], $a['name']] <=> [$b['severity_rank'], $b['name']]);
 
-        // ---- evidence (attached documents) -------------------------
+        // ---- evidence (attached documents) ------------------------
         $evidence = [];
         foreach ($DB->request([
             'SELECT' => ['d.id', 'd.name', 'd.filename'],
@@ -133,19 +166,35 @@ class Report
             $evidence[] = ['id' => (int) $r['id'], 'name' => (string) ($r['name'] ?: $r['filename'])];
         }
 
-        // ---- overall RTO/RPO at drill level ------------------------
+        // ---- overall RTO/RPO --------------------------------------
         $rtoMet = ($f['rto_target_minutes'] !== null && $f['rto_actual_minutes'] !== null)
             ? ((int) $f['rto_actual_minutes'] <= (int) $f['rto_target_minutes']) : null;
         $rpoMet = ($f['rpo_target_minutes'] !== null && $f['rpo_actual_minutes'] !== null)
             ? ((int) $f['rpo_actual_minutes'] <= (int) $f['rpo_target_minutes']) : null;
 
+        // ---- timeline + computed duration -----------------------
+        $decl = (string) $f['declaration_time'];
+        $recv = (string) $f['recovery_time'];
+        $vald = (string) $f['validation_time'];
+        $durationMin = null;
+        if ($decl !== '' && $recv !== '' && strtotime($recv) !== false && strtotime($decl) !== false) {
+            $durationMin = (int) round((strtotime($recv) - strtotime($decl)) / 60);
+        }
+
+        $name    = (string) $f['name'];
+        $isSample = str_starts_with($name, Sample::MARKER);
+
         return [
             'sections'       => $enabled,
+            'headings'       => $headings,
             'show_timeline'  => $showTimeline,
             'show_criticity' => $showCriticity,
+            'has_timeline'   => ($decl !== '' || $recv !== '' || $vald !== ''),
             'drill' => [
                 'id'                => $drill->getID(),
-                'name'              => (string) $f['name'],
+                'name'              => $name,
+                'name_clean'        => $isSample ? trim(substr($name, strlen(Sample::MARKER))) : $name,
+                'is_sample'         => $isSample,
                 'entity'            => (string) Dropdown::getDropdownName('glpi_entities', $eid),
                 'date_drill'        => (string) $f['date_drill'],
                 'scenario'          => (string) Dropdown::getDropdownName(Scenario::getTable(), (int) $f['plugin_drillreport_scenarios_id']),
@@ -154,9 +203,10 @@ class Report
                 'coordinator'       => (int) $f['users_id_tech'] > 0 ? (string) \getUserName((int) $f['users_id_tech']) : '',
                 'objectives_text'   => (string) $f['objectives'],
                 'scope_summary'     => (string) $f['scope_summary'],
-                'declaration_time'  => (string) $f['declaration_time'],
-                'recovery_time'     => (string) $f['recovery_time'],
-                'validation_time'   => (string) $f['validation_time'],
+                'declaration_time'  => $decl,
+                'recovery_time'     => $recv,
+                'validation_time'   => $vald,
+                'duration_minutes'  => $durationMin,
                 'rto_target'        => $f['rto_target_minutes'],
                 'rto_actual'        => $f['rto_actual_minutes'],
                 'rto_met'           => $rtoMet,
@@ -177,5 +227,40 @@ class Report
             'findings'   => $findings,
             'evidence'   => $evidence,
         ];
+    }
+
+    /**
+     * Split an enumerated recommendation ("1) … 2) … 3) …" or "1. … 2. …" or
+     * bullet-per-line) into a list. Returns a single-element list when there is
+     * no clear enumeration.
+     *
+     * @return list<string>
+     */
+    private static function bulletize(string $text): array
+    {
+        $text = trim($text);
+        if ($text === '') {
+            return [];
+        }
+
+        // newline-separated bullets
+        $lines = preg_split('/\R+/', $text) ?: [];
+        if (count($lines) > 1) {
+            return array_values(array_filter(array_map(
+                static fn ($l) => trim(preg_replace('/^\s*(?:\d+[\).\-]|[-*•])\s*/u', '', $l) ?? $l),
+                $lines
+            ), static fn ($l) => $l !== ''));
+        }
+
+        // inline "1) ... 2) ... 3) ..." — split before "<space>N)" / "<space>N."
+        $parts = preg_split('/(?<=\D)\s+(?=\d+[\)\.]\s)/u', $text) ?: [$text];
+        if (count($parts) > 1) {
+            return array_values(array_filter(array_map(
+                static fn ($p) => trim(preg_replace('/^\s*\d+[\)\.]\s*/', '', $p) ?? $p),
+                $parts
+            ), static fn ($p) => $p !== ''));
+        }
+
+        return [$text];
     }
 }

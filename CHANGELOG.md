@@ -6,6 +6,15 @@ Format: [Keep a Changelog](https://keepachangelog.com/); this project uses
 
 ## [Unreleased]
 
+### Changed
+- Sample drill (`src/Sample.php`) now carries the **real CRM DRC drill of
+  23 Aug 2026**, transcribed from the two source documents — 7 timed runbook
+  activities (planned vs actual), 5 improvement findings, full timeline and
+  narrative. Still `[SAMPLE]`-marked and removable from Setup; no schema or
+  version change. The 8-server "Systems in scope" table still can't be seeded
+  (assets may not exist) — one representative row is linked, add the rest per
+  `docs/entering-a-real-drill.md`.
+
 ## [0.6.2] - 2026-09-10
 
 ### Fixed

@@ -89,6 +89,16 @@ class Drill extends CommonDBTM
             return false;
         }
 
+        // Stamp the sign-off the first time a drill is set to "approved".
+        if (
+            ($input['status'] ?? null) === 'approved'
+            && (int) ($this->fields['approved_by'] ?? 0) === 0
+            && empty($input['approved_by'])
+        ) {
+            $input['approved_by']   = (int) ($_SESSION['glpiID'] ?? 0);
+            $input['approval_date'] = $_SESSION['glpi_currenttime'] ?? date('Y-m-d H:i:s');
+        }
+
         return $input;
     }
 

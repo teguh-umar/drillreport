@@ -65,19 +65,30 @@ class Report
         $showCriticity = (bool) Config::get('show_business_criticity');
         $showTimeline  = (bool) Config::get('show_timeline_fields');
 
-        // ---- objectives ----------------------------------------------
-        $objectives = [];
+        // ---- objectives / activities -------------------------------
+        $objectives  = [];
+        $objTarget   = 0;
+        $objActual   = 0;
         foreach ($DB->request([
             'FROM'  => Objective::getTable(),
             'WHERE' => ['plugin_drillreport_drills_id' => $drill->getID()],
-            'ORDER' => 'id',
+            'ORDER' => ['start_time', 'id'],
         ]) as $r) {
+            $target = (int) ($r['target_minutes'] ?? 0);
+            $actual = Objective::minutesBetween($r['start_time'] ?? null, $r['end_time'] ?? null);
+            $objTarget += $target;
+            $objActual += (int) ($actual ?? 0);
             $objectives[] = [
-                'name'    => (string) $r['name'],
-                'content' => (string) $r['content'],
-                'result'  => Objective::resultLabels()[$r['result']] ?? $r['result'],
-                'is_met'  => $r['result'] === 'met',
-                'comment' => (string) $r['comment'],
+                'name'       => (string) $r['name'],
+                'content'    => (string) $r['content'],
+                'result'     => Objective::resultLabels()[$r['result']] ?? $r['result'],
+                'result_key' => (string) $r['result'],
+                'is_met'     => $r['result'] === 'met',
+                'target'     => $target > 0 ? $target : null,
+                'actual'     => $actual,
+                'start_time' => (string) ($r['start_time'] ?? ''),
+                'end_time'   => (string) ($r['end_time'] ?? ''),
+                'comment'    => (string) $r['comment'],
             ];
         }
 
@@ -166,9 +177,15 @@ class Report
             $evidence[] = ['id' => (int) $r['id'], 'name' => (string) ($r['name'] ?: $r['filename'])];
         }
 
-        // ---- overall RTO/RPO --------------------------------------
-        $rtoMet = ($f['rto_target_minutes'] !== null && $f['rto_actual_minutes'] !== null)
-            ? ((int) $f['rto_actual_minutes'] <= (int) $f['rto_target_minutes']) : null;
+        // ---- overall RTO/RPO -------------------------------------
+        // Drill-level fields win; when empty, fall back to the sum of the
+        // objectives' target / actual durations (docs §6.6 mapping rule).
+        $rtoTarget = $f['rto_target_minutes'] !== null ? (int) $f['rto_target_minutes'] : ($objTarget ?: null);
+        $rtoActual = $f['rto_actual_minutes'] !== null ? (int) $f['rto_actual_minutes'] : ($objActual ?: null);
+        $rtoFromActivities = ($f['rto_target_minutes'] === null && $objTarget > 0)
+            || ($f['rto_actual_minutes'] === null && $objActual > 0);
+
+        $rtoMet = ($rtoTarget !== null && $rtoActual !== null) ? ($rtoActual <= $rtoTarget) : null;
         $rpoMet = ($f['rpo_target_minutes'] !== null && $f['rpo_actual_minutes'] !== null)
             ? ((int) $f['rpo_actual_minutes'] <= (int) $f['rpo_target_minutes']) : null;
 
@@ -207,9 +224,12 @@ class Report
                 'recovery_time'     => $recv,
                 'validation_time'   => $vald,
                 'duration_minutes'  => $durationMin,
-                'rto_target'        => $f['rto_target_minutes'],
-                'rto_actual'        => $f['rto_actual_minutes'],
+                'rto_target'        => $rtoTarget,
+                'rto_actual'        => $rtoActual,
                 'rto_met'           => $rtoMet,
+                'rto_from_activities' => $rtoFromActivities,
+                'obj_target_total'  => $objTarget ?: null,
+                'obj_actual_total'  => $objActual ?: null,
                 'rpo_target'        => $f['rpo_target_minutes'],
                 'rpo_actual'        => $f['rpo_actual_minutes'],
                 'rpo_met'           => $rpoMet,
@@ -222,10 +242,11 @@ class Report
                 'approved_by'       => (int) $f['approved_by'] > 0 ? (string) \getUserName((int) $f['approved_by']) : '',
                 'approval_date'     => (string) $f['approval_date'],
             ],
-            'objectives' => $objectives,
-            'items'      => $items,
-            'findings'   => $findings,
-            'evidence'   => $evidence,
+            'objectives'         => $objectives,
+            'has_objective_time' => ($objTarget > 0 || $objActual > 0),
+            'items'              => $items,
+            'findings'           => $findings,
+            'evidence'           => $evidence,
         ];
     }
 

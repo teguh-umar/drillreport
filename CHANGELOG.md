@@ -6,6 +6,27 @@ Format: [Keep a Changelog](https://keepachangelog.com/); this project uses
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-09-10
+
+### Added
+- **Objectives are now timed activities.** `Objective` gains `target_minutes`
+  (planned / budget duration), `start_time`, `end_time` and an optional
+  `plugin_drillreport_drills_items_id` (link to a system in scope). Actual
+  duration = end − start. `result` (met / partial / not-met) can be entered by
+  hand or ticked **"auto from timing"** — actual ≤ target → met, ≤ target×1.25 →
+  partial, else not-met. The Objectives tab shows a **Total** (Σ target / Σ actual).
+  In-place `addField` migration; runs on `plugin:install`.
+- **Report §5 RTO** falls back to the objective totals when the drill's own RTO
+  target / actual are left blank (docs §6.6 rule: RTO = sum of activity
+  plan / actual durations), with a note saying so. §6 gains Target / Actual
+  columns and a Total row when any objective is timed.
+- `docs/entering-a-real-drill.md` — a worked walkthrough for entering the real
+  CRM Failover drill (Aug 2026) field by field.
+
+### Changed
+- Setting a drill to **Approved** now stamps `approved_by` + `approval_date`
+  automatically (first time only).
+
 ## [0.4.2] - 2026-09-10
 
 ### Fixed

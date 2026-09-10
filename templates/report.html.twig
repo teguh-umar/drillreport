@@ -232,6 +232,12 @@
                 </tr>
             </tbody>
         </table>
+        {% if d.rto_from_activities %}
+            <p class="dr-muted">
+                {{ __('RTO figures are the sum of the activity target / actual durations', 'drillreport') }}
+                ({{ d.obj_target_total ?? '—' }} / {{ d.obj_actual_total ?? '—' }} {{ __('min', 'drillreport') }}).
+            </p>
+        {% endif %}
 
         {% if report.items|length %}
             <h3>{{ __('Per System', 'drillreport') }}</h3>
@@ -262,10 +268,15 @@
 
     {# --------------------------------------------- 6. Objectives Assessment #}
     {% if 'objectives' in S %}
+        {% set any_time = report.has_objective_time %}
         <h2>{{ H.objectives }}</h2>
         <table>
             <thead><tr>
-                <th>{{ __('Objective', 'drillreport') }}</th>
+                <th>{{ __('Objective / activity', 'drillreport') }}</th>
+                {% if any_time %}
+                    <th>{{ __('Target (min)', 'drillreport') }}</th>
+                    <th>{{ __('Actual (min)', 'drillreport') }}</th>
+                {% endif %}
                 <th>{{ __('Result', 'drillreport') }}</th>
                 <th>{{ __('Comment') }}</th>
             </tr></thead>
@@ -273,12 +284,26 @@
             {% for o in report.objectives %}
                 <tr>
                     <td>{{ o.name }}</td>
-                    <td class="{{ o.is_met ? 'dr-ok' : 'dr-bad' }}">{{ o.result }}</td>
+                    {% if any_time %}
+                        <td>{{ o.target ?? '—' }}</td>
+                        <td class="{% if o.target and o.actual is not null %}{{ o.actual <= o.target ? 'dr-ok' : 'dr-bad' }}{% endif %}">
+                            {{- o.actual ?? '—' -}}
+                        </td>
+                    {% endif %}
+                    <td class="{{ o.result_key == 'met' ? 'dr-ok' : (o.result_key == 'not_met' ? 'dr-bad' : '') }}">{{ o.result }}</td>
                     <td class="dr-narrative">{{ o.comment }}</td>
                 </tr>
             {% else %}
-                <tr><td colspan="3" class="dr-muted">{{ __('No objectives recorded', 'drillreport') }}</td></tr>
+                <tr><td colspan="{{ any_time ? 5 : 3 }}" class="dr-muted">{{ __('No objectives recorded', 'drillreport') }}</td></tr>
             {% endfor %}
+            {% if any_time and (report.drill.obj_target_total or report.drill.obj_actual_total) %}
+                <tr>
+                    <th>{{ __('Total', 'drillreport') }}</th>
+                    <th>{{ report.drill.obj_target_total ?? '—' }}</th>
+                    <th>{{ report.drill.obj_actual_total ?? '—' }}</th>
+                    <th colspan="2"></th>
+                </tr>
+            {% endif %}
             </tbody>
         </table>
     {% endif %}

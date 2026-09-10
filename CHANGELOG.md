@@ -6,6 +6,14 @@ Format: [Keep a Changelog](https://keepachangelog.com/); this project uses
 
 ## [Unreleased]
 
+## [0.6.1] - 2026-09-10
+
+### Fixed
+- `plugin_drillreport_install()` — `$DB` was used without `global $DB`, so the
+  v0.6.0 in-place `addField` guard threw *Call to a member function tableExists()
+  on null* during `plugin:install`. Added `global $DB;`. Install is idempotent —
+  just re-run it.
+
 ## [0.6.0] - 2026-09-10
 
 ### Added

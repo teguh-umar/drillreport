@@ -6,6 +6,15 @@ Format: [Keep a Changelog](https://keepachangelog.com/); this project uses
 
 ## [Unreleased]
 
+## [0.6.2] - 2026-09-10
+
+### Fixed
+- Objectives tab — an objective / activity saved with a blank name produced a
+  row that could not be opened or deleted. `Objective::prepareCommon()` now
+  rejects a blank name on add/update, and the drill's Objectives table renders
+  a clickable *(untitled #N)* placeholder for any legacy nameless row so it can
+  still be opened and purged.
+
 ## [0.6.1] - 2026-09-10
 
 ### Fixed

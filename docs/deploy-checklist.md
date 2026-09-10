@@ -47,6 +47,17 @@ Confirm: `unzip -l ../drillreportv*.zip` → root is `drillreport/`, no `.git/`.
 
 - [ ] `cd /data/www/glpi && sudo -u nginx php bin/console glpi:plugin:install drillreport --username=<admin>`
 - [ ] `sudo -u nginx php bin/console glpi:plugin:activate drillreport`
+
+> **Upgrading an already-installed drillreport** (not a first install): the web
+> **Setup → Plugins → Upgrade** button is unreliable on VM-HQ-GLPI's GLPI 11
+> build (`BadRequestHttpException` at `front/plugin.form.php`). Use the CLI:
+> `sudo -u nginx php bin/console glpi:plugin:install drillreport --force`
+> then `glpi:plugin:activate drillreport` if it deactivated. `--force` is
+> required — `isAlreadyInstalled()` counts an ACTIVATED plugin as installed.
+> Safe: `plugin_drillreport_install()` is idempotent (missing tables only,
+> `addField` for new columns, config top-up, `array_diff` rights) — no DROP.
+> A schema-only change (no seed/column change) needs just a file overwrite +
+> `glpi:cache:clear` + `systemctl reload php-fpm`, no re-install.
 - [ ] **Open the GLPI login page** — confirm it still loads (guards against a
       class-load fatal).
 - [ ] Open **Setup → Profiles → (any profile) → DR Drill Report tab** — confirm it

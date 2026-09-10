@@ -92,19 +92,24 @@ function plugin_drillreport_install(): bool
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     ");
 
-    // ---- Child: per-objective assessment -------------------------------
+    // ---- Child: per-objective / activity assessment ------------------
     DRMigration::register('glpi_plugin_drillreport_objectives', "
         CREATE TABLE `glpi_plugin_drillreport_objectives` (
           `id` int unsigned NOT NULL AUTO_INCREMENT,
           `plugin_drillreport_drills_id` int unsigned NOT NULL DEFAULT 0,
+          `plugin_drillreport_drills_items_id` int unsigned NOT NULL DEFAULT 0,
           `name` varchar(255) NOT NULL DEFAULT '',
           `content` text,
+          `target_minutes` int NOT NULL DEFAULT 0,
+          `start_time` timestamp NULL DEFAULT NULL,
+          `end_time` timestamp NULL DEFAULT NULL,
           `result` varchar(20) NOT NULL DEFAULT 'not_met',
           `comment` text,
           `date_creation` timestamp NULL DEFAULT NULL,
           `date_mod` timestamp NULL DEFAULT NULL,
           PRIMARY KEY (`id`),
-          KEY `drill` (`plugin_drillreport_drills_id`)
+          KEY `drill` (`plugin_drillreport_drills_id`),
+          KEY `drill_item` (`plugin_drillreport_drills_items_id`)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     ");
 
@@ -160,6 +165,17 @@ function plugin_drillreport_install(): bool
           KEY `item` (`itemtype`,`items_id`)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     ");
+
+    // ---- In-place upgrades (idempotent — addField no-ops if the column exists) --
+    if ($DB->tableExists('glpi_plugin_drillreport_objectives')) {
+        // v0.5.0: objectives gain a time budget + actual start/end + an optional
+        // asset link, so an objective doubles as a timed runbook activity.
+        $glpiMigration->addField('glpi_plugin_drillreport_objectives', 'plugin_drillreport_drills_items_id', 'integer', ['after' => 'plugin_drillreport_drills_id']);
+        $glpiMigration->addField('glpi_plugin_drillreport_objectives', 'target_minutes', 'integer', ['after' => 'content']); // 0 = no target
+        $glpiMigration->addField('glpi_plugin_drillreport_objectives', 'start_time', 'timestamp', ['after' => 'target_minutes']);
+        $glpiMigration->addField('glpi_plugin_drillreport_objectives', 'end_time', 'timestamp', ['after' => 'start_time']);
+        $glpiMigration->addKey('glpi_plugin_drillreport_objectives', 'plugin_drillreport_drills_items_id');
+    }
 
     DRMigration::install($glpiMigration);
 

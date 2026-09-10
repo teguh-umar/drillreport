@@ -238,17 +238,26 @@ PSR-4 (ikut `riskregister`): `GlpiPlugin\Drillreport\Drill`,
 | `date_creation` / `date_mod` | TIMESTAMP NULL | |
 | `is_deleted` | TINYINT NOT NULL DEFAULT 0 | idx |
 
-#### `glpi_plugin_drillreport_objectives` (komp. 9)
+#### `glpi_plugin_drillreport_objectives` (komp. 9 — sekaligus runbook activity, 0.5.0)
 
 | Kolom | Tipe | Catatan |
 |---|---|---|
 | `id` | INT UNSIGNED AI PK | |
 | `plugin_drillreport_drills_id` | INT UNSIGNED NOT NULL DEFAULT 0 | idx |
-| `name` | VARCHAR(255) NOT NULL DEFAULT '' | objective singkat |
-| `content` | TEXT | deskripsi |
-| `result` | VARCHAR(20) NOT NULL DEFAULT 'not_met' | **enum**: met / partial / not_met |
+| `plugin_drillreport_drills_items_id` | INT NOT NULL DEFAULT 0 | idx · link opsional ke sistem in scope |
+| `name` | VARCHAR(255) NOT NULL DEFAULT '' | objective / nama aktivitas |
+| `content` | TEXT | deskripsi / langkah |
+| `target_minutes` | INT NOT NULL DEFAULT 0 | plan/est duration; 0 = tidak ada target |
+| `start_time` / `end_time` | TIMESTAMP NULL | waktu aktual → `actual_minutes = end − start` |
+| `result` | VARCHAR(20) NOT NULL DEFAULT 'not_met' | **enum**: met / partial / not_met. Bisa "auto from timing" (≤target→met, ≤target×1.25→partial, else not_met) |
 | `comment` | TEXT | |
 | `date_creation` / `date_mod` | TIMESTAMP NULL | |
+
+> **Aturan RTO (0.5.0):** RTO target drill = Σ `target_minutes` objective;
+> RTO actual = Σ `actual_minutes`. Field RTO di `_drills` menang kalau diisi;
+> kalau kosong, laporan §5 pakai total objective. Mapping ke drill CRM 2026:
+> tiap aktivitas runbook (PDF form / xlsx) = 1 objective. Lihat
+> `docs/entering-a-real-drill.md`.
 
 #### `glpi_plugin_drillreport_actions` (komp. 10-12 · Improvement Plan → Finding)
 

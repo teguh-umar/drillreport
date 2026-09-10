@@ -87,10 +87,10 @@ class Sample
         // ---- Objectives / activities (with time budget + actual timing) --
         $y = date('Y');
         foreach ([
-            ['CRM online di DRC dalam RTO 60 menit', 60, "{$y}-08-09 08:12:00", "{$y}-08-09 09:47:00", 'not_met', 'Online 09:47; disaster dideklarasi 08:12 → 95 menit (melewati target).'],
-            ['Integritas data CRM pasca-failover (RPO 15 menit)', 0, null, null, 'met', 'Kehilangan data ~5 menit, dalam toleransi 15 menit.'],
-            ['Eksekusi runbook failover tanpa vendor', 0, "{$y}-08-09 08:12:00", "{$y}-08-09 09:35:00", 'met', 'Seluruh langkah dijalankan tim internal.'],
-        ] as [$name, $target, $start, $end, $result, $comment]) {
+            ['CRM online di DRC dalam RTO 60 menit', 60, "{$y}-08-09 08:12:00", "{$y}-08-09 09:47:00", 'not_met', 'crm_dr_login_0947.png', 'Online 09:47; disaster dideklarasi 08:12 → 95 menit (melewati target).'],
+            ['Integritas data CRM pasca-failover (RPO 15 menit)', 0, null, null, 'met', 'archive_gap_check.png', 'Kehilangan data ~5 menit, dalam toleransi 15 menit.'],
+            ['Eksekusi runbook failover tanpa vendor', 0, "{$y}-08-09 08:12:00", "{$y}-08-09 09:35:00", 'met', '', 'Seluruh langkah dijalankan tim internal.'],
+        ] as [$name, $target, $start, $end, $result, $evidence, $comment]) {
             (new Objective())->add([
                 'plugin_drillreport_drills_id' => $drillId,
                 'name'                         => $name,
@@ -98,6 +98,7 @@ class Sample
                 'start_time'                   => $start ?? 'NULL',
                 'end_time'                     => $end ?? 'NULL',
                 'result'                       => $result,
+                'evidence_ref'                 => $evidence,
                 'comment'                      => $comment,
             ]);
         }
@@ -165,6 +166,7 @@ class Sample
                 'plugin_drillreport_drills_id' => $drillId,
                 'itemtype'                     => $itemtype,
                 'items_id'                     => (int) array_key_first($rows),
+                'dr_target'                    => 'DR_' . strtoupper($itemtype) . ' / 192.168.230.87',
                 'rto_target_minutes'           => 60,
                 'rto_actual_minutes'           => 95,
                 'rpo_target_minutes'           => 15,

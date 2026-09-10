@@ -79,16 +79,17 @@ class Report
             $objTarget += $target;
             $objActual += (int) ($actual ?? 0);
             $objectives[] = [
-                'name'       => (string) $r['name'],
-                'content'    => (string) $r['content'],
-                'result'     => Objective::resultLabels()[$r['result']] ?? $r['result'],
-                'result_key' => (string) $r['result'],
-                'is_met'     => $r['result'] === 'met',
-                'target'     => $target > 0 ? $target : null,
-                'actual'     => $actual,
-                'start_time' => (string) ($r['start_time'] ?? ''),
-                'end_time'   => (string) ($r['end_time'] ?? ''),
-                'comment'    => (string) $r['comment'],
+                'name'         => (string) $r['name'],
+                'content'      => (string) $r['content'],
+                'result'       => Objective::resultLabels()[$r['result']] ?? $r['result'],
+                'result_key'   => (string) $r['result'],
+                'is_met'       => $r['result'] === 'met',
+                'target'       => $target > 0 ? $target : null,
+                'actual'       => $actual,
+                'start_time'   => (string) ($r['start_time'] ?? ''),
+                'end_time'     => (string) ($r['end_time'] ?? ''),
+                'evidence_ref' => (string) ($r['evidence_ref'] ?? ''),
+                'comment'      => (string) $r['comment'],
             ];
         }
 
@@ -121,6 +122,7 @@ class Report
                 'itemtype'   => (string) $r['itemtype'],
                 'type_name'  => is_a($r['itemtype'], \CommonDBTM::class, true) ? $r['itemtype']::getTypeName(1) : $r['itemtype'],
                 'name'       => $assetName,
+                'dr_target'  => (string) ($r['dr_target'] ?? ''),
                 'criticity'  => $criticity,
                 'rto_target' => $rtoTarget,
                 'rto_actual' => $rtoActual,
@@ -244,6 +246,8 @@ class Report
             ],
             'objectives'         => $objectives,
             'has_objective_time' => ($objTarget > 0 || $objActual > 0),
+            'has_objective_evidence' => (bool) array_filter($objectives, static fn ($o) => $o['evidence_ref'] !== ''),
+            'has_dr_target'      => (bool) array_filter($items, static fn ($i) => $i['dr_target'] !== ''),
             'items'              => $items,
             'findings'           => $findings,
             'evidence'           => $evidence,

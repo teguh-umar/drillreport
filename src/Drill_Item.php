@@ -269,6 +269,9 @@ class Drill_Item extends CommonDBRelation
         echo "<input type='hidden' name='" . self::$items_id_1 . "' value='" . (int) ($this->fields[self::$items_id_1] ?? $drills_id) . "'>";
         echo "<table class='tab_cadre_fixe'>";
         echo "<tr class='tab_bg_1'><td>" . __s('Asset') . "</td><td colspan='3'>{$assetLabel}</td></tr>";
+        echo "<tr class='tab_bg_1'><td>" . __s('DR failover target', 'drillreport') . "</td><td colspan='3'>"
+            . Html::input('dr_target', ['value' => $this->fields['dr_target'] ?? '', 'size' => 50, 'placeholder' => 'DR_DBSERVER2 / 192.168.230.87'])
+            . "</td></tr>";
         echo "<tr class='tab_bg_1'><td>" . __s('RTO target (min)', 'drillreport') . "</td><td>"
             . Html::input('rto_target_minutes', ['type' => 'number', 'min' => 0, 'value' => $this->fields['rto_target_minutes'] ?? '']) . "</td>"
             . "<td>" . __s('RTO actual (min)', 'drillreport') . "</td><td>"
@@ -309,6 +312,7 @@ class Drill_Item extends CommonDBRelation
         echo "<div class='spaced'><table class='tab_cadre_fixehov'>";
         echo "<tr>"
             . "<th>" . __s('Asset') . "</th>"
+            . "<th>" . __s('DR failover target', 'drillreport') . "</th>"
             . "<th>" . __s('RTO target/actual (min)', 'drillreport') . "</th>"
             . "<th>" . __s('RPO target/actual (min)', 'drillreport') . "</th>"
             . "<th>" . __s('Recovered', 'drillreport') . "</th>"
@@ -322,6 +326,7 @@ class Drill_Item extends CommonDBRelation
             }
             echo "<tr class='tab_bg_1'>";
             echo "<td>{$label}</td>";
+            echo "<td>" . htmlescape((string) ($r['dr_target'] ?? '') ?: '—') . "</td>";
             echo "<td>" . htmlescape(sprintf('%s / %s', $r['rto_target_minutes'] ?? '—', $r['rto_actual_minutes'] ?? '—')) . "</td>";
             echo "<td>" . htmlescape(sprintf('%s / %s', $r['rpo_target_minutes'] ?? '—', $r['rpo_actual_minutes'] ?? '—')) . "</td>";
             echo "<td>" . ((int) $r['is_recovered'] === 1 ? __('Yes') : __('No')) . "</td>";

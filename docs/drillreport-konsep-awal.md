@@ -250,6 +250,7 @@ PSR-4 (ikut `riskregister`): `GlpiPlugin\Drillreport\Drill`,
 | `target_minutes` | INT NOT NULL DEFAULT 0 | plan/est duration; 0 = tidak ada target |
 | `start_time` / `end_time` | TIMESTAMP NULL | waktu aktual → `actual_minutes = end − start` |
 | `result` | VARCHAR(20) NOT NULL DEFAULT 'not_met' | **enum**: met / partial / not_met. Bisa "auto from timing" (≤target→met, ≤target×1.25→partial, else not_met) |
+| `evidence_ref` | VARCHAR(255) NOT NULL DEFAULT '' | nama file screenshot/bukti aktivitas (0.6.0); file di-attach di tab Documents drill. Lihat `docs/evidence-checklist.md` |
 | `comment` | TEXT | |
 | `date_creation` / `date_mod` | TIMESTAMP NULL | |
 
@@ -292,6 +293,7 @@ PSR-4 (ikut `riskregister`): `GlpiPlugin\Drillreport\Drill`,
 | `plugin_drillreport_drills_id` | INT UNSIGNED NOT NULL DEFAULT 0 | idx |
 | `itemtype` | VARCHAR(100) NOT NULL DEFAULT '' | `Appliance` / `Computer` / … (whitelist config `asset_itemtypes`) |
 | `items_id` | INT UNSIGNED NOT NULL DEFAULT 0 | idx gabungan `(itemtype, items_id)` |
+| `dr_target` | VARCHAR(255) NOT NULL DEFAULT '' | target failover DR (nama replika / IP), mis. `DR_DBSERVER2 / 192.168.230.87` (0.6.0) — kolom di laporan §3, bantu audit |
 | `rto_target_minutes` | INT UNSIGNED NULL | pre-fill soft-read dari `fields` aset — bisa override |
 | `rto_actual_minutes` | INT UNSIGNED NULL | manual |
 | `rpo_target_minutes` | INT UNSIGNED NULL | pre-fill soft-read |

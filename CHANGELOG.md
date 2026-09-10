@@ -6,6 +6,14 @@ Format: [Keep a Changelog](https://keepachangelog.com/); this project uses
 
 ## [Unreleased]
 
+## [0.4.2] - 2026-09-10
+
+### Fixed
+- Printed report kept its navy table headers / colour fills — browsers drop
+  background colours in print by default, which turned the white header text
+  invisible. Added `print-color-adjust: exact` (report-scoped) and `!important`
+  header colours in the `@media print` block, plus `@page { size: A4 portrait }`.
+
 ## [0.4.1] - 2026-09-09
 
 ### Fixed

@@ -9,11 +9,22 @@
 
 include('../../../inc/includes.php');
 
+use GlpiPlugin\Drillreport\Drill;
 use GlpiPlugin\Drillreport\Drill_Item;
 
 Session::checkRight(Drill_Item::$rightname, UPDATE);
 
 $link = new Drill_Item();
+
+// After any mutation, return to the parent drill (its "Systems in scope" tab),
+// not Html::back() — the row's own edit page is stale once it is deleted.
+$backToDrill = static function (): void {
+    $did = (int) ($_POST[Drill_Item::$items_id_1] ?? $_POST['parent_id'] ?? 0);
+    if ($did > 0) {
+        Html::redirect(Drill::getFormURLWithID($did));
+    }
+    Html::back();
+};
 
 if (isset($_POST['add'])) {
     if (!empty($_POST['itemtype']) && (int) ($_POST['items_id'] ?? 0) > 0) {
@@ -21,13 +32,13 @@ if (isset($_POST['add'])) {
     } else {
         Session::addMessageAfterRedirect(__('Pick an asset first.', 'drillreport'), false, ERROR);
     }
-    Html::back();
+    $backToDrill();
 } elseif (isset($_POST['update'])) {
     $link->update($_POST);
-    Html::back();
+    $backToDrill();
 } elseif (isset($_POST['purge']) || isset($_POST['delete'])) {
     $link->delete($_POST, true);
-    Html::back();
+    $backToDrill();
 } elseif (isset($_GET['id'])) {
     $drills_id = (int) ($_GET['parent_id'] ?? 0);
     Html::header(Drill_Item::getTypeName(1), '', 'drillreport', 'drill');

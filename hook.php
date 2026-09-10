@@ -8,6 +8,9 @@ use GlpiPlugin\Drillreport\Seed;
 
 function plugin_drillreport_install(): bool
 {
+    /** @var \DBmysql $DB */
+    global $DB;
+
     $glpiMigration = new \Migration(PLUGIN_DRILLREPORT_VERSION);
 
     // ---- Dropdowns ---------------------------------------------------------

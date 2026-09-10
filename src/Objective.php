@@ -70,6 +70,17 @@ class Objective extends CommonDBChild
                 $input[$s] = trim((string) $input[$s]);
             }
         }
+        // An objective / activity must have a name — a blank one produces a row
+        // that cannot be opened or deleted from the drill's Objectives tab.
+        $nameAfter = $isAdd ? ($input['name'] ?? '') : ($input['name'] ?? $this->fields['name'] ?? '');
+        if (trim((string) $nameAfter) === '') {
+            Session::addMessageAfterRedirect(
+                __s('An objective / activity needs a name.', 'drillreport'),
+                false,
+                ERROR
+            );
+            return false;
+        }
         foreach (['start_time', 'end_time'] as $t) {
             if (array_key_exists($t, $input) && trim((string) $input[$t]) === '') {
                 $input[$t] = 'NULL';
@@ -250,7 +261,10 @@ class Objective extends CommonDBChild
         $sumTarget = 0;
         $sumActual = 0;
         foreach ($rows as $r) {
-            $label = htmlescape($r['name']);
+            $name  = trim((string) $r['name']);
+            $label = $name !== ''
+                ? htmlescape($name)
+                : "<em class='text-muted'>" . sprintf(__s('(untitled #%d)', 'drillreport'), (int) $r['id']) . "</em>";
             if ($canedit) {
                 $label = "<a href='" . htmlescape(self::getFormURLWithID($r['id']) . '&parent_id=' . $drill->getID()) . "'>{$label}</a>";
             }

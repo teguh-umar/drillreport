@@ -17,15 +17,25 @@ Session::checkRight(Action::$rightname, UPDATE);
 
 $action = new Action();
 
+// After any mutation, return to the parent drill — the child's own edit page is
+// stale once the row is deleted.
+$backToDrill = static function (): void {
+    $did = (int) ($_POST[Action::$items_id] ?? $_POST['parent_id'] ?? 0);
+    if ($did > 0) {
+        Html::redirect(Drill::getFormURLWithID($did));
+    }
+    Html::back();
+};
+
 if (isset($_POST['add'])) {
     $action->add($_POST);
-    Html::back();
+    $backToDrill();
 } elseif (isset($_POST['update'])) {
     $action->update($_POST);
-    Html::back();
+    $backToDrill();
 } elseif (isset($_POST['purge']) || isset($_POST['delete'])) {
     $action->delete($_POST, true);
-    Html::back();
+    $backToDrill();
 } elseif (isset($_POST['send_to_riskregister'])) {
     $drills_id = (int) ($_POST[Action::$items_id] ?? 0);
     $drill = new Drill();

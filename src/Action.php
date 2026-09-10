@@ -290,8 +290,13 @@ class Action extends CommonDBChild
         $canedit = Session::haveRight(self::$rightname, UPDATE);
 
         echo "<div class='card'><div class='card-body'>";
+        $backDid = (int) ($this->fields[self::$items_id] ?? $drills_id);
+        if ($ID > 0 && $backDid > 0) {
+            echo "<a class='btn btn-sm btn-ghost-secondary mb-3' href='" . htmlescape(Drill::getFormURLWithID($backDid))
+                . "'><i class='ti ti-arrow-left'></i> " . __s('Back to drill', 'drillreport') . "</a>";
+        }
         echo "<form method='post' action='" . htmlescape(self::getFormURL()) . "' data-track-changes='true'>";
-        echo "<input type='hidden' name='" . self::$items_id . "' value='" . ((int) ($this->fields[self::$items_id] ?? $drills_id)) . "'>";
+        echo "<input type='hidden' name='" . self::$items_id . "' value='" . $backDid . "'>";
         if ($ID > 0) {
             echo "<input type='hidden' name='id' value='" . (int) $ID . "'>";
         }

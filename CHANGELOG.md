@@ -6,14 +6,25 @@ Format: [Keep a Changelog](https://keepachangelog.com/); this project uses
 
 ## [Unreleased]
 
+## [0.6.3] - 2026-09-10
+
+### Fixed
+- Editing or deleting a child row (system in scope / objective / improvement
+  action) from its own page left you on that now-stale page — after a delete,
+  `Html::back()` returned to a dead URL. All three child controllers now
+  redirect to the **parent drill** after add / update / delete.
+
+### Added
+- A **"← Back to drill"** button at the top of every child edit form
+  (system in scope, objective, improvement action).
+
 ### Changed
 - Sample drill (`src/Sample.php`) now carries the **real CRM DRC drill of
   23 Aug 2026**, transcribed from the two source documents — 7 timed runbook
   activities (planned vs actual), 5 improvement findings, full timeline and
-  narrative. Still `[SAMPLE]`-marked and removable from Setup; no schema or
-  version change. The 8-server "Systems in scope" table still can't be seeded
-  (assets may not exist) — one representative row is linked, add the rest per
-  `docs/entering-a-real-drill.md`.
+  narrative. Still `[SAMPLE]`-marked and removable from Setup. The 8-server
+  "Systems in scope" table still can't be seeded (assets may not exist) — one
+  representative row is linked, add the rest per `docs/entering-a-real-drill.md`.
 
 ## [0.6.2] - 2026-09-10
 

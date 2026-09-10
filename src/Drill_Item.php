@@ -264,6 +264,11 @@ class Drill_Item extends CommonDBRelation
         }
 
         echo "<div class='card'><div class='card-body'>";
+        $backDid = (int) ($this->fields[self::$items_id_1] ?? $drills_id);
+        if ($ID > 0 && $backDid > 0) {
+            echo "<a class='btn btn-sm btn-ghost-secondary mb-3' href='" . htmlescape(Drill::getFormURLWithID($backDid))
+                . "'><i class='ti ti-arrow-left'></i> " . __s('Back to drill', 'drillreport') . "</a>";
+        }
         echo "<form method='post' action='" . htmlescape(self::getFormURL()) . "' data-track-changes='true'>";
         echo "<input type='hidden' name='id' value='" . (int) $ID . "'>";
         echo "<input type='hidden' name='" . self::$items_id_1 . "' value='" . (int) ($this->fields[self::$items_id_1] ?? $drills_id) . "'>";

@@ -66,16 +66,19 @@ night ~23:55 per the PDF forms.)
 
 ## 3. Systems in scope tab
 
-Add each asset, then edit its row:
+Add each asset, then edit its row. **DR failover target** = the DR replica
+name / IP from the *DR Component Inventory* (PDF).
 
-| Asset | Recovered | RTO target/actual (min, optional per-asset) | Recovery order | Comment |
+| Asset | DR failover target | Recovered | Recovery order | Comment |
 |---|---|---|---|---|
-| DBSERVER2 (CRM DB) | Yes | — | 1 | Switchover Oracle Data Guard DC↔DRC, tidak ada gap. |
-| CRM_EOM / CRM_AM / CRM_GW | Yes | — | 2 | Test Failover VM Siebel di DRC — Sukses. |
-| CRM_WEB1 | Yes | — | 2 | Sukses; workaround NIC DRCBAY11 → semua VM Siebel di DRCBAY09. |
-| Gapura | Yes | — | 2 | Re-point connection string; transaksi pembayaran Sukses di DRC. |
-| HQAPEX (RMS) | Yes | — | 3 | Sukses; perubahan IP terhambat (Guest OS unsupported, GUI freeze). |
-| *Payment Engine (MyPertamina/PGNMobile)* | **No** | — | 4 | **Gagal** — "Unexpected system error" / "Token is not valid". |
+| DBSERVER2 (CRM DB) | `DR_DBSERVER2 / 192.168.230.87` | Yes | 1 | Switchover Oracle Data Guard DC↔DRC, tidak ada gap. |
+| CRM_EOM | `DR CRM_EOM / 192.168.230.46` | Yes | 2 | Test Failover VM Siebel di DRC — Sukses. |
+| CRM_AM | `DR CRM_AM / 192.168.230.45` | Yes | 2 | Sukses. |
+| CRM_GW | `DR CRM_GW / 192.168.230.44` | Yes | 2 | Sukses. |
+| CRM_WEB1 | `DR CRM_WEB1 / 192.168.230.42` | Yes | 2 | Sukses; workaround NIC DRCBAY11 → semua VM Siebel di DRCBAY09. |
+| Gapura | *(tidak ada replika VM)* | Yes | 2 | Re-point connection string; transaksi pembayaran Sukses di DRC. |
+| HQAPEX (RMS) | `DR_APEX (RMS) / 192.168.230.35` | Yes | 3 | Sukses; perubahan IP terhambat (Guest OS unsupported, GUI freeze). |
+| *Payment Engine (MyPertamina/PGNMobile)* | — | **No** | 4 | **Gagal** — "Unexpected system error" / "Token is not valid". |
 
 ## 4. Objectives / activities tab
 
@@ -85,15 +88,18 @@ you can read the drill's RTO target/actual from. Set **Result** by hand, or tick
 **"auto from timing"** to let the plugin derive met/partial/not-met from
 actual vs target.
 
-| Objective / activity | Target (min) | Start | End | Result | Comment |
-|---|---|---|---|---|---|
-| Backup database & config check | 210 | `2026-08-23 18:00` | `2026-08-23 20:17` | Met | Disk space cukup; selesai lebih cepat. (bukan downtime) |
-| Shutdown aplikasi CRM, RMS & Gapura | 15 | `2026-08-23 21:09` | `2026-08-23 21:18` | Met | Tidak ada sesi aplikasi di database. |
-| Switchover database DC → DRC | 20 | `2026-08-23 21:18` | `2026-08-23 21:30` | Met | Primary ↔ Standby switch, tidak ada gap. |
-| Failover VM CRM/RMS + re-IP + hosts + Gapura conn.string | 50 | `2026-08-23 21:30` | `2026-08-23 22:11` | Partially met | Sukses tapi kendala NIC DRCBAY11 & Guest OS RMS unsupported. |
-| Test CRM, RMS, Gapura & Payment Engine di DRC | 24 | `2026-08-23 22:12` | `2026-08-23 22:45` | Partially met | CRM/RMS/Gapura Sukses; **Payment via PGN Mobile GAGAL**. |
-| Switchover database DRC → DC (fallback) | 14 | `2026-08-23 22:46` | `2026-08-23 22:55` | Met | Delete test-failover VM, gap check, switchover — Sukses. |
-| Startup CRM/RMS di DC + test akhir | 30 | `2026-08-23 22:56` | `2026-08-23 23:10` | Met | CRM, RMS, Gapura Online Payment normal. |
+| Objective / activity | Target (min) | Start | End | Result | Evidence ref | Comment |
+|---|---|---|---|---|---|---|
+| Backup database & config check | 210 | `2026-08-23 18:00` | `2026-08-23 20:17` | Met | `01_backup_disk.png` | Disk space cukup; selesai lebih cepat. (bukan downtime) |
+| Shutdown aplikasi CRM, RMS & Gapura | 15 | `2026-08-23 21:09` | `2026-08-23 21:18` | Met | `02_shutdown_nosessions.png` | Tidak ada sesi aplikasi di database. |
+| Switchover database DC → DRC | 20 | `2026-08-23 21:18` | `2026-08-23 21:30` | Met | `03_switchover_db_2130.png` | Primary ↔ Standby switch, tidak ada gap. |
+| Failover VM CRM/RMS + re-IP + hosts + Gapura conn.string | 50 | `2026-08-23 21:30` | `2026-08-23 22:11` | Partially met | `04_vm_failover.png` | Sukses tapi kendala NIC DRCBAY11 & Guest OS RMS unsupported. |
+| Test CRM, RMS, Gapura & Payment Engine di DRC | 24 | `2026-08-23 22:12` | `2026-08-23 22:45` | Partially met | `05a_crm_test.png; 05b_payment_ok.png; 05c_pgnmobile_fail.png` | CRM/RMS/Gapura Sukses; **Payment via PGN Mobile GAGAL**. |
+| Switchover database DRC → DC (fallback) | 14 | `2026-08-23 22:46` | `2026-08-23 22:55` | Met | `06_fallback_gap0.png` | Delete test-failover VM, gap check (0), switchover — Sukses. |
+| Startup CRM/RMS di DC + test akhir | 30 | `2026-08-23 22:56` | `2026-08-23 23:10` | Met | `07_final_test.png` | CRM, RMS, Gapura Online Payment normal. |
+
+> Attach every referenced file on the drill's **Documents** tab. See
+> `docs/evidence-checklist.md` for the full ISO-oriented evidence set.
 
 > Totals ≈ **target 363 min / actual ~166 min** (with the long backup window) —
 > or, counting only the service-impacting steps (rows 2–7): **target ~153 /

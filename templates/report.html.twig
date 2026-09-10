@@ -158,11 +158,14 @@
 
     {# ------------------------------------------------ 3. Systems in Scope #}
     {% if 'scope' in S %}
+        {% set dr = report.has_dr_target %}
+        {% set cols = 2 + (report.show_criticity ? 1 : 0) + (dr ? 1 : 0) + 1 %}
         <h2>{{ H.scope }}</h2>
         <table>
             <thead><tr>
                 <th>{{ __('Asset') }}</th>
                 <th>{{ __('Type') }}</th>
+                {% if dr %}<th>{{ __('DR failover target', 'drillreport') }}</th>{% endif %}
                 {% if report.show_criticity %}<th>{{ __('Business Criticality') }}</th>{% endif %}
                 <th>{{ __('Recovery Order', 'drillreport') }}</th>
             </tr></thead>
@@ -171,6 +174,7 @@
                 <tr>
                     <td>{{ it.name }}</td>
                     <td>{{ it.type_name }}</td>
+                    {% if dr %}<td>{{ it.dr_target ?: '—' }}</td>{% endif %}
                     {% if report.show_criticity %}
                         <td>{{ it.criticity ?: ('— ' ~ __('(not filled in)', 'drillreport')) }}</td>
                     {% endif %}
@@ -180,7 +184,7 @@
                     </td>
                 </tr>
             {% else %}
-                <tr><td colspan="4" class="dr-muted">{{ __('No systems recorded', 'drillreport') }}</td></tr>
+                <tr><td colspan="{{ cols }}" class="dr-muted">{{ __('No systems recorded', 'drillreport') }}</td></tr>
             {% endfor %}
             </tbody>
         </table>
@@ -269,6 +273,8 @@
     {# --------------------------------------------- 6. Objectives Assessment #}
     {% if 'objectives' in S %}
         {% set any_time = report.has_objective_time %}
+        {% set ev = report.has_objective_evidence %}
+        {% set ocols = 2 + (any_time ? 2 : 0) + (ev ? 1 : 0) %}
         <h2>{{ H.objectives }}</h2>
         <table>
             <thead><tr>
@@ -278,6 +284,7 @@
                     <th>{{ __('Actual (min)', 'drillreport') }}</th>
                 {% endif %}
                 <th>{{ __('Result', 'drillreport') }}</th>
+                {% if ev %}<th>{{ __('Evidence', 'drillreport') }}</th>{% endif %}
                 <th>{{ __('Comment') }}</th>
             </tr></thead>
             <tbody>
@@ -291,17 +298,18 @@
                         </td>
                     {% endif %}
                     <td class="{{ o.result_key == 'met' ? 'dr-ok' : (o.result_key == 'not_met' ? 'dr-bad' : '') }}">{{ o.result }}</td>
+                    {% if ev %}<td>{{ o.evidence_ref ?: '—' }}</td>{% endif %}
                     <td class="dr-narrative">{{ o.comment }}</td>
                 </tr>
             {% else %}
-                <tr><td colspan="{{ any_time ? 5 : 3 }}" class="dr-muted">{{ __('No objectives recorded', 'drillreport') }}</td></tr>
+                <tr><td colspan="{{ ocols }}" class="dr-muted">{{ __('No objectives recorded', 'drillreport') }}</td></tr>
             {% endfor %}
             {% if any_time and (report.drill.obj_target_total or report.drill.obj_actual_total) %}
                 <tr>
                     <th>{{ __('Total', 'drillreport') }}</th>
                     <th>{{ report.drill.obj_target_total ?? '—' }}</th>
                     <th>{{ report.drill.obj_actual_total ?? '—' }}</th>
-                    <th colspan="2"></th>
+                    <th colspan="{{ ocols - 3 }}"></th>
                 </tr>
             {% endif %}
             </tbody>

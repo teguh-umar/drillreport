@@ -104,6 +104,7 @@ function plugin_drillreport_install(): bool
           `start_time` timestamp NULL DEFAULT NULL,
           `end_time` timestamp NULL DEFAULT NULL,
           `result` varchar(20) NOT NULL DEFAULT 'not_met',
+          `evidence_ref` varchar(255) NOT NULL DEFAULT '',
           `comment` text,
           `date_creation` timestamp NULL DEFAULT NULL,
           `date_mod` timestamp NULL DEFAULT NULL,
@@ -151,6 +152,7 @@ function plugin_drillreport_install(): bool
           `plugin_drillreport_drills_id` int unsigned NOT NULL DEFAULT 0,
           `itemtype` varchar(100) NOT NULL DEFAULT '',
           `items_id` int unsigned NOT NULL DEFAULT 0,
+          `dr_target` varchar(255) NOT NULL DEFAULT '',
           `rto_target_minutes` int unsigned DEFAULT NULL,
           `rto_actual_minutes` int unsigned DEFAULT NULL,
           `rpo_target_minutes` int unsigned DEFAULT NULL,
@@ -175,6 +177,12 @@ function plugin_drillreport_install(): bool
         $glpiMigration->addField('glpi_plugin_drillreport_objectives', 'start_time', 'timestamp', ['after' => 'target_minutes']);
         $glpiMigration->addField('glpi_plugin_drillreport_objectives', 'end_time', 'timestamp', ['after' => 'start_time']);
         $glpiMigration->addKey('glpi_plugin_drillreport_objectives', 'plugin_drillreport_drills_items_id');
+        // v0.6.0: evidence reference per activity.
+        $glpiMigration->addField('glpi_plugin_drillreport_objectives', 'evidence_ref', 'string', ['value' => '', 'after' => 'result']);
+    }
+    if ($DB->tableExists('glpi_plugin_drillreport_drills_items')) {
+        // v0.6.0: the DR failover target (name / IP) for this system.
+        $glpiMigration->addField('glpi_plugin_drillreport_drills_items', 'dr_target', 'string', ['value' => '', 'after' => 'items_id']);
     }
 
     DRMigration::install($glpiMigration);

@@ -6,6 +6,21 @@ Format: [Keep a Changelog](https://keepachangelog.com/); this project uses
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-09-10
+
+### Added
+- **`Drill_Item.dr_target`** — the DR failover target (replica name / IP) for a
+  system in scope. Shown on the row form, the "Systems in scope" tab, and as a
+  "DR failover target" column in report §3 when any row has it. Eases audit —
+  the primary→DR pairing is explicit and comparable, not buried in a comment.
+- **`Objective.evidence_ref`** — the screenshot / file name(s) proving that
+  activity. Shown on the objective form, the tab, and report §6 "Evidence"
+  column. Attach the actual files on the drill's Documents tab.
+- `docs/evidence-checklist.md` — the ISO 22398 / ISO 22301 §9.1 evidence set for
+  a live failover drill (before / during / validation / failback / sign-off) and
+  how each artifact maps to the plugin.
+- In-place `addField` migration for both columns (runs on `plugin:install`).
+
 ## [0.5.0] - 2026-09-10
 
 ### Added

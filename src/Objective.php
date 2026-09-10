@@ -65,8 +65,10 @@ class Objective extends CommonDBChild
      */
     private function prepareCommon($input, bool $isAdd)
     {
-        if (isset($input['name'])) {
-            $input['name'] = trim((string) $input['name']);
+        foreach (['name', 'evidence_ref'] as $s) {
+            if (isset($input[$s])) {
+                $input[$s] = trim((string) $input[$s]);
+            }
         }
         foreach (['start_time', 'end_time'] as $t) {
             if (array_key_exists($t, $input) && trim((string) $input[$t]) === '') {
@@ -187,6 +189,9 @@ class Objective extends CommonDBChild
         Html::showDateTimeField('end_time', ['value' => $this->fields['end_time'] ?? '']);
         echo "</td></tr>";
 
+        echo "<tr class='tab_bg_1'><td>" . __s('Evidence reference', 'drillreport') . "</td><td colspan='3'>"
+            . Html::input('evidence_ref', ['value' => $this->fields['evidence_ref'] ?? '', 'size' => 60, 'placeholder' => __('screenshot / file name(s) — attach the files on the drill\'s Documents tab', 'drillreport')])
+            . "</td></tr>";
         echo "<tr class='tab_bg_1'><td>" . __s('Description') . "</td><td colspan='3'>"
             . "<textarea class='form-control' rows='3' name='content'>" . htmlescape($this->fields['content'] ?? '') . "</textarea></td></tr>";
         echo "<tr class='tab_bg_1'><td>" . __s('Comment') . "</td><td colspan='3'>"
@@ -239,6 +244,7 @@ class Objective extends CommonDBChild
             . "<th>" . __s('Target (min)', 'drillreport') . "</th>"
             . "<th>" . __s('Actual (min)', 'drillreport') . "</th>"
             . "<th>" . __s('Result', 'drillreport') . "</th>"
+            . "<th>" . __s('Evidence', 'drillreport') . "</th>"
             . "<th>" . __s('Comment') . "</th>"
             . "</tr>";
         $sumTarget = 0;
@@ -256,11 +262,12 @@ class Objective extends CommonDBChild
             echo "<td>" . ($target > 0 ? $target : '—') . "</td>";
             echo "<td>" . ($actual !== null ? $actual : '—') . "</td>";
             echo "<td>" . htmlescape(self::resultLabels()[$r['result']] ?? $r['result']) . "</td>";
+            echo "<td>" . htmlescape((string) ($r['evidence_ref'] ?? '') ?: '—') . "</td>";
             echo "<td>" . htmlescape((string) $r['comment']) . "</td></tr>";
         }
         if ($sumTarget > 0 || $sumActual > 0) {
             echo "<tr class='tab_bg_2'><th>" . __s('Total', 'drillreport') . "</th>"
-                . "<th>" . ($sumTarget ?: '—') . "</th><th>" . ($sumActual ?: '—') . "</th><th colspan='2'></th></tr>";
+                . "<th>" . ($sumTarget ?: '—') . "</th><th>" . ($sumActual ?: '—') . "</th><th colspan='3'></th></tr>";
         }
         echo "</table></div>";
 

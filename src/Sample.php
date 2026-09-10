@@ -7,7 +7,12 @@ namespace GlpiPlugin\Drillreport;
  * fresh install has a concrete reference. Every row's name is prefixed with
  * {@see self::MARKER} so it is easy to spot and remove.
  *
- * Mirrors the worked example in docs/drillreport-konsep-awal.md §6.6.
+ * Content is the real PT PGN / ICT CRM DRC drill of 23 August 2026, transcribed
+ * from DRILL_CRM_2026_Activities_Plan_v.1.0_Fix.xlsx + DRC-DRILL Agustus 2026
+ * CRM.pdf. See docs/entering-a-real-drill.md for the full field-by-field mapping.
+ * The multi-asset "Systems in scope" table cannot be seeded (the 8 CRM servers
+ * are not guaranteed to exist in the inventory) — one representative asset is
+ * auto-linked; add the rest by hand per the walkthrough.
  */
 class Sample
 {
@@ -43,40 +48,43 @@ class Sample
             return self::drillId();
         }
 
-        $scenarioId = self::dropdownId(new Scenario(), 'Failover CRM ke DRC', $entities_id);
+        $scenarioId = self::dropdownId(new Scenario(), 'CRM Failover to DRC', $entities_id);
         $testTypeId = self::dropdownId(new TestType(), 'Full failover', $entities_id);
-        $catId      = self::dropdownId(new ActionCategory(), 'Backup & recovery', $entities_id);
 
         $drill = new Drill();
         $drillId = (int) $drill->add([
             'entities_id'                     => $entities_id,
-            'name'                            => self::MARKER . 'DR Drill 2026 — Failover CRM ke DRC',
-            'date_drill'                      => date('Y') . '-08-09',
-            'declaration_time'                => date('Y') . '-08-09 08:12:00',
-            'recovery_time'                   => date('Y') . '-08-09 09:47:00',
-            'validation_time'                 => date('Y') . '-08-09 10:35:00',
+            'name'                            => self::MARKER . 'DR Drill 2026 — CRM Failover to DRC',
+            'date_drill'                      => '2026-08-23',
+            'declaration_time'                => '2026-08-23 21:09:00',
+            'recovery_time'                   => '2026-08-23 22:11:00',
+            'validation_time'                 => '2026-08-23 23:10:00',
             'plugin_drillreport_scenarios_id' => $scenarioId,
             'plugin_drillreport_testtypes_id' => $testTypeId,
             'groups_id'                       => 0,
             'users_id_tech'                   => (int) ($_SESSION['glpiID'] ?? 0),
-            'objectives'                      => "1. Buktikan CRM bisa online di DRC dalam RTO 60 menit.\n"
-                                               . "2. Validasi integritas data CRM pasca-failover (RPO 15 menit).\n"
-                                               . "3. Uji runbook failover tanpa bantuan vendor.",
-            'scope_summary'                   => 'Failover terkontrol aplikasi CRM (web + database) dari DC HQ ke DRC. '
-                                               . 'Sistem lain tidak disentuh. Skenario: kehilangan total DC HQ.',
-            'rto_target_minutes'              => 60,
-            'rto_actual_minutes'              => 95,
-            'rpo_target_minutes'              => 15,
-            'rpo_actual_minutes'              => 5,
-            'data_loss_summary'               => 'RPO tercapai — kehilangan data ~5 menit (transaksi in-flight), '
-                                               . 'dalam batas toleransi 15 menit.',
-            'overall_result'                  => 'fail',
-            'executive_summary'               => 'Failover CRM berhasil secara fungsional (aplikasi online, data konsisten) '
-                                               . 'namun RTO MELESET: 95 menit vs target 60 menit. Penyebab utama: tidak ada '
-                                               . 'standby database di DRC sehingga restore full backup 240 GB menjadi jalur kritis. '
-                                               . '1 temuan High + 2 Medium; rencana perbaikan ditargetkan selesai Q4 2026.',
-            'lessons_learned'                 => 'Runbook failover cukup akurat. Bottleneck ada di infrastruktur data, bukan prosedur. '
-                                               . 'Perlu latihan restore terjadwal, bukan hanya saat drill tahunan.',
+            'objectives'                      => "1. CRM (Siebel 8.1) online di DRC pasca-failover, dieksekusi tim internal.\n"
+                                               . "2. Integritas data CRM terjaga — switchover Oracle Data Guard tanpa gap.\n"
+                                               . "3. RMS/HQAPEX dan Gapura Online Payment berfungsi di DRC.\n"
+                                               . "4. Payment Engine (MyPertamina / PGN Mobile) berfungsi di DRC.\n"
+                                               . "5. Fallback DRC → DC bersih dan layanan normal kembali.",
+            'scope_summary'                   => 'Failover terkontrol aplikasi CRM (Siebel 8.1, web + database Oracle Data Guard), '
+                                               . 'RMS/HQAPEX, Gapura Online Payment, dan Payment Engine via MyPertamina/PGNMobile '
+                                               . 'dari Pusat Data Utama (Jl. K.H Zainul Arifin 20, Jakarta) ke DRC Indosat Jatiluhur, '
+                                               . 'lalu dikembalikan. Skenario: kegagalan total DC HQ / DB primary CRM.',
+            'data_loss_summary'               => 'Tidak ada kehilangan data — pengecekan gap primary/standby "Sukses" setelah '
+                                               . 'fallback (no archive gap). RPO tidak dikuantifikasi di sumber. Risiko data-loss '
+                                               . 'untuk step fallback diusulkan masuk risk register.',
+            'overall_result'                  => 'pass_with_exceptions',
+            'executive_summary'               => 'Failover CRM berjalan baik secara fungsional (aplikasi online, data konsisten, '
+                                               . 'tanpa bantuan vendor). RTO meleset: total downtime ~104 menit vs rencana ~65 menit; '
+                                               . 'penyebab utama tidak ada standby database ter-restore di DRC. 1 sub-test gagal: '
+                                               . 'pembayaran via MyPertamina & PGN Mobile (konfigurasi IP API belum diarahkan ke '
+                                               . 'DB DRC). Rencana perbaikan Q4 2026.',
+            'lessons_learned'                 => 'Runbook failover akurat dan dieksekusi tim internal. Bottleneck di infrastruktur '
+                                               . 'data & konfigurasi integrasi, bukan prosedur. Perlu keterlibatan tim MIS untuk '
+                                               . 'konfigurasi API pembayaran, penambahan resource HQAPEX, dan monitoring rutin '
+                                               . 'sinkronisasi archivelog.',
             'status'                          => 'submitted',
         ]);
 
@@ -84,58 +92,72 @@ class Sample
             return 0;
         }
 
-        // ---- Objectives / activities (with time budget + actual timing) --
-        $y = date('Y');
+        // ---- Objectives / activities — the 7 runbook activities, planned
+        //      minutes as target + actual start/end times (xlsx execution log).
         foreach ([
-            ['CRM online di DRC dalam RTO 60 menit', 60, "{$y}-08-09 08:12:00", "{$y}-08-09 09:47:00", 'not_met', 'crm_dr_login_0947.png', 'Online 09:47; disaster dideklarasi 08:12 → 95 menit (melewati target).'],
-            ['Integritas data CRM pasca-failover (RPO 15 menit)', 0, null, null, 'met', 'archive_gap_check.png', 'Kehilangan data ~5 menit, dalam toleransi 15 menit.'],
-            ['Eksekusi runbook failover tanpa vendor', 0, "{$y}-08-09 08:12:00", "{$y}-08-09 09:35:00", 'met', '', 'Seluruh langkah dijalankan tim internal.'],
+            ['Backup database & config check', 210, '2026-08-23 18:00:00', '2026-08-23 20:17:00', 'met', '01_backup_disk.png', 'Disk space cukup; selesai lebih cepat. (bukan downtime)'],
+            ['Shutdown aplikasi CRM, RMS & Gapura', 15, '2026-08-23 21:09:00', '2026-08-23 21:18:00', 'met', '02_shutdown_nosessions.png', 'Tidak ada sesi aplikasi di database.'],
+            ['Switchover database DC → DRC', 20, '2026-08-23 21:18:00', '2026-08-23 21:30:00', 'met', '03_switchover_db_2130.png', 'Primary ↔ Standby switch Oracle Data Guard, tidak ada gap.'],
+            ['Failover VM CRM/RMS + re-IP + hosts + Gapura conn.string', 50, '2026-08-23 21:30:00', '2026-08-23 22:11:00', 'partial', '04_vm_failover.png', 'Sukses tapi kendala NIC DRCBAY11 & Guest OS RMS unsupported.'],
+            ['Test CRM, RMS, Gapura & Payment Engine di DRC', 24, '2026-08-23 22:12:00', '2026-08-23 22:45:00', 'partial', '05a_crm_test.png; 05b_payment_ok.png; 05c_pgnmobile_fail.png', 'CRM/RMS/Gapura Sukses; Payment via PGN Mobile GAGAL.'],
+            ['Switchover database DRC → DC (fallback)', 14, '2026-08-23 22:46:00', '2026-08-23 22:55:00', 'met', '06_fallback_gap0.png', 'Delete test-failover VM, gap check (0), switchover — Sukses.'],
+            ['Startup CRM/RMS di DC + test akhir', 30, '2026-08-23 22:56:00', '2026-08-23 23:10:00', 'met', '07_final_test.png', 'CRM, RMS, Gapura Online Payment normal.'],
         ] as [$name, $target, $start, $end, $result, $evidence, $comment]) {
             (new Objective())->add([
                 'plugin_drillreport_drills_id' => $drillId,
                 'name'                         => $name,
                 'target_minutes'               => $target,
-                'start_time'                   => $start ?? 'NULL',
-                'end_time'                     => $end ?? 'NULL',
+                'start_time'                   => $start,
+                'end_time'                     => $end,
                 'result'                       => $result,
                 'evidence_ref'                 => $evidence,
                 'comment'                      => $comment,
             ]);
         }
 
-        // ---- Improvement actions -------------------------------------
+        // ---- Improvement actions — the 5 findings from the PDF result report.
+        //      No due dates in the source; leave them blank.
+        $infraCat = self::dropdownId(new ActionCategory(), 'Infrastructure / capacity', $entities_id);
         $actions = [
             [
-                'name'           => 'Restore database CRM melebihi RTO — 95 menit vs target 60 menit',
-                'category'       => $catId,
-                'severity'       => 'high',
-                'content'        => 'Saat failover, restore full backup DB CRM (240 GB) ke server DRC memakan 95 menit. '
-                                  . 'RTO target CRM = 60 menit. Aplikasi baru online 09:47; disaster dideklarasi 08:12.',
-                'cause'          => 'Backup CRM hanya full daily, tanpa incremental. Link replikasi DC→DRC 1 Gbps shared, '
-                                  . 'throughput efektif ~35 MB/s di jam kerja. Tidak ada standby DB yang sudah ter-restore di DRC.',
-                'recommendation' => '1) Aktifkan streaming replication PostgreSQL DC→DRC untuk CRM (standby hangat, restore <5 menit). '
-                                  . '2) Jika tidak feasible: jadwalkan restore mingguan ke DRC + apply incremental saat drill. '
-                                  . '3) Usulkan link replikasi CRM dedicated 10 Gbps (capex Q4).',
-                'due'            => date('Y') . '-11-30',
-            ],
-            [
-                'name'           => 'DNS internal CRM belum ter-failover otomatis',
+                'name'           => 'Pembayaran via MyPertamina & PGN Mobile gagal saat test DRC',
                 'category'       => self::dropdownId(new ActionCategory(), 'Network & connectivity', $entities_id),
-                'severity'       => 'medium',
-                'content'        => 'Record DNS crm.internal masih menunjuk IP DC HQ. Diubah manual oleh tim jaringan (12 menit).',
-                'cause'          => 'Tidak ada health-check + DNS failover untuk zona internal.',
-                'recommendation' => 'Pasang DNS failover (mis. keepalived + health check) untuk record layanan kritis, atau '
-                                  . 'skrip switch DNS yang jadi bagian runbook.',
-                'due'            => date('Y') . '-10-31',
+                'severity'       => 'high',
+                'content'        => 'Test Payment Engine via PGN Mobile — Gagal. Error "Unexpected system error", "Token is not valid".',
+                'cause'          => 'Konfigurasi IP pada sisi API (Web Method) belum diarahkan ke IP DB DRC.',
+                'recommendation' => 'Libatkan tim MIS di drill berikutnya untuk menyesuaikan konfigurasi API di Web Method ke IP DB DRC.',
             ],
             [
-                'name'           => 'Kontak eskalasi di runbook sudah usang',
-                'category'       => self::dropdownId(new ActionCategory(), 'Documentation', $entities_id),
+                'name'           => 'HQAPEX (RMS) kekurangan RAM & disk',
+                'category'       => $infraCat,
+                'severity'       => 'medium',
+                'content'        => 'RAM VM DR 1 GB; disk `/` 89% penuh.',
+                'cause'          => 'Alokasi RAM & disk tidak memadai.',
+                'recommendation' => 'Naikkan RAM HQAPEX menjadi 8 GB dan available disk `/` menjadi 100 GB.',
+            ],
+            [
+                'name'           => 'Sinkronisasi archivelog primary → standby perlu diawasi',
+                'category'       => self::dropdownId(new ActionCategory(), 'Monitoring & alerting', $entities_id),
                 'severity'       => 'low',
-                'content'        => '2 dari 6 nomor kontak pada runbook tidak aktif; PIC storage sudah pindah tim.',
-                'cause'          => 'Runbook tidak masuk siklus review berkala.',
-                'recommendation' => 'Tambahkan review runbook DR ke kalender Q1 tiap tahun; simpan kontak di satu sumber (mis. GLPI).',
-                'due'            => date('Y') . '-09-30',
+                'content'        => 'Risiko gap antara primary dan standby.',
+                'cause'          => '',
+                'recommendation' => 'Lakukan monitoring rutin proses sinkronisasi archivelog dari primary ke standby.',
+            ],
+            [
+                'name'           => 'Node DRCBAY11 — NIC VM tidak bisa dikonfigurasi',
+                'category'       => $infraCat,
+                'severity'       => 'medium',
+                'content'        => 'Kendala pada NIC untuk jaringan VM; issue pada modul Onboard Administrator. Workaround: semua VM SIEBEL di DRCBAY09.',
+                'cause'          => 'Fault pada modul Onboard Administrator.',
+                'recommendation' => 'Perbaiki modul Onboard Administrator DRCBAY11.',
+            ],
+            [
+                'name'           => 'VM-RMS — perubahan IP terhambat, Guest OS unsupported',
+                'category'       => $infraCat,
+                'severity'       => 'low',
+                'content'        => 'Kursor GUI freeze/unresponsive saat input konfigurasi.',
+                'cause'          => 'Versi Guest OS sudah tidak didukung oleh Hyper-V.',
+                'recommendation' => 'Upgrade / migrasi Guest OS VM-RMS ke versi yang didukung.',
             ],
         ];
         foreach ($actions as $a) {
@@ -148,11 +170,12 @@ class Sample
                 'content'                                => $a['content'],
                 'cause'                                  => $a['cause'],
                 'recommendation'                         => $a['recommendation'],
-                'date_due'                               => $a['due'],
             ]);
         }
 
-        // ---- One system in scope, if an asset exists ---------------
+        // ---- One representative system in scope, if any asset exists.
+        //      The real drill covered 8 CRM servers (see the walkthrough); seed
+        //      just one — the CRM DB — and add the rest by hand.
         foreach (Drill_Item::getLinkedAssetItemtypes() as $itemtype) {
             if (!class_exists($itemtype)) {
                 continue;
@@ -166,14 +189,11 @@ class Sample
                 'plugin_drillreport_drills_id' => $drillId,
                 'itemtype'                     => $itemtype,
                 'items_id'                     => (int) array_key_first($rows),
-                'dr_target'                    => 'DR_' . strtoupper($itemtype) . ' / 192.168.230.87',
-                'rto_target_minutes'           => 60,
-                'rto_actual_minutes'           => 95,
-                'rpo_target_minutes'           => 15,
-                'rpo_actual_minutes'           => 5,
+                'dr_target'                    => 'DR_DBSERVER2 / 192.168.230.87',
                 'is_recovered'                 => 1,
                 'recovery_order'               => 1,
-                'comment'                     => 'Aset contoh yang ditautkan otomatis oleh sample data.',
+                'comment'                     => 'Contoh — mewakili DBSERVER2 (CRM DB). Switchover Oracle Data Guard DC↔DRC, tidak ada gap. '
+                                              . 'Tambahkan CRM_EOM/AM/GW/WEB1, Gapura, HQAPEX, Payment Engine secara manual (lihat docs/entering-a-real-drill.md).',
             ]);
             break;
         }

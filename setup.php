@@ -17,7 +17,7 @@ use GlpiPlugin\Drillreport\ActionCategory;
 use GlpiPlugin\Drillreport\Menu;
 use GlpiPlugin\Drillreport\Profile as DRProfile;
 
-define('PLUGIN_DRILLREPORT_VERSION', '0.6.3');
+define('PLUGIN_DRILLREPORT_VERSION', '0.7.0');
 define('PLUGIN_DRILLREPORT_MIN_GLPI', '11.0.0');
 define('PLUGIN_DRILLREPORT_MAX_GLPI', '11.9.99');
 
@@ -50,10 +50,17 @@ function plugin_drillreport_check_config(): bool
 
 function plugin_init_drillreport(): void
 {
-    global $PLUGIN_HOOKS;
+    global $PLUGIN_HOOKS, $CFG_GLPI;
 
     // GLPI-managed CSRF — the plugin never calls Session::checkCSRF() itself.
     $PLUGIN_HOOKS['csrf_compliant']['drillreport'] = true;
+
+    // Make Drill / Action selectable as an itemtype in Setup > Notifications
+    // (Notification + NotificationTemplate "add" forms). Resolution to
+    // NotificationTargetDrill / NotificationTargetAction is by naming
+    // convention (NotificationTarget::getInstanceClass()) — no extra hook.
+    $CFG_GLPI['notificationtemplates_types'][] = Drill::class;
+    $CFG_GLPI['notificationtemplates_types'][] = Action::class;
 
     // Dropdowns (Setup > Dropdowns).
     Plugin::registerClass(Scenario::class);

@@ -2,6 +2,7 @@
 
 namespace GlpiPlugin\Drillreport;
 
+use NotificationEvent;
 use Toolbox;
 
 /**
@@ -15,6 +16,12 @@ use Toolbox;
  * Tasks (registered in {@see plugin_drillreport_install()}):
  *   - DrillReminder   daily; acts only in the configured reminder_month
  *   - ActionFollowup  weekly; notifies owners of overdue improvement actions
+ *
+ * Both raise a real GLPI notification event ({@see NotificationEvent::raiseEvent()})
+ * against {@see NotificationTargetDrill} / {@see NotificationTargetAction}.
+ * `raiseEvent()` is a safe no-op (returns false, does nothing) until an admin
+ * configures a matching Notification in Setup > Notifications — see
+ * docs/notifications.md for the one-time setup.
  *
  * GLPI cron return contract: >0 = did work, 0 = nothing to do, <0 = error.
  */
@@ -37,12 +44,16 @@ class Cron
     }
 
     /**
-     * Annual "drill not submitted" reminder.
+     * Annual "drill not submitted" reminder — one notification per entity that
+     * has ever run a drill (so the reminder has an entity/DR-group context to
+     * target) and has none submitted/approved for the current year.
      *
      * @return int >0 = reminders raised, 0 = nothing to do, <0 = error
      */
     public static function cronDrillReminder(\CronTask $task): int
     {
+        global $DB;
+
         try {
             if (!(bool) Config::get('reminder_enabled')) {
                 return 0;
@@ -53,25 +64,69 @@ class Cron
 
             $year = (int) date('Y');
 
-            // A drill counts as "done for this year" once it is submitted/approved
-            // with a date_drill in the current year.
-            $done = countElementsInTable(Drill::getTable(), [
-                'is_deleted' => 0,
-                'status'     => ['submitted', 'approved'],
-                'RAW'        => ['YEAR(`date_drill`)' => $year],
-            ]);
-            if ($done > 0) {
+            $entityIds = [];
+            foreach ($DB->request([
+                'SELECT'   => 'entities_id',
+                'DISTINCT' => true,
+                'FROM'     => Drill::getTable(),
+                'WHERE'    => ['is_deleted' => 0],
+            ]) as $row) {
+                $entityIds[] = (int) $row['entities_id'];
+            }
+            if ($entityIds === []) {
+                // No drill has ever been logged — nothing to root the reminder in.
                 return 0;
             }
 
-            // TODO(mvp): raise a GLPI notification to the DR group(s).
-            // Skeleton stage: log only.
+            $missing = 0;
+            $raised  = 0;
+            foreach ($entityIds as $entities_id) {
+                $done = countElementsInTable(Drill::getTable(), [
+                    'is_deleted'  => 0,
+                    'entities_id' => $entities_id,
+                    'status'      => ['submitted', 'approved'],
+                    'RAW'         => ['YEAR(`date_drill`)' => $year],
+                ]);
+                if ($done > 0) {
+                    continue;
+                }
+                $missing++;
+
+                $last = $DB->request([
+                    'FROM'  => Drill::getTable(),
+                    'WHERE' => ['entities_id' => $entities_id, 'is_deleted' => 0],
+                    'ORDER' => ['date_drill DESC'],
+                    'LIMIT' => 1,
+                ])->current();
+
+                $ok = NotificationEvent::raiseEvent('reminder', new Drill(), [
+                    'entities_id' => $entities_id,
+                    'year'        => $year,
+                    'last_name'   => $last['name'] ?? '',
+                    'last_date'   => $last['date_drill'] ?? '',
+                ]);
+                if ($ok) {
+                    $raised++;
+                    $task->log(sprintf("DrillReminder: raised for entity %d (year %d)\n", $entities_id, $year));
+                }
+            }
+
             Toolbox::logInFile(
                 'drillreport_cron',
-                sprintf("DrillReminder: no submitted drill for %d\n", $year)
+                sprintf(
+                    "DrillReminder: %d/%d entit%s missing a %d drill; %d notification(s) raised\n",
+                    $missing,
+                    count($entityIds),
+                    count($entityIds) === 1 ? 'y' : 'ies',
+                    $year,
+                    $raised
+                )
             );
-            $task->addVolume(1);
-            return 1;
+            if ($raised === 0) {
+                return 0;
+            }
+            $task->addVolume($raised);
+            return $raised;
         } catch (\Throwable $e) {
             Toolbox::logInFile('drillreport_cron', 'cronDrillReminder error: ' . $e->getMessage() . "\n", true);
             return -1;
@@ -79,31 +134,63 @@ class Cron
     }
 
     /**
-     * Weekly overdue-improvement-action notice.
+     * Weekly overdue-improvement-action notice — one notification per entity,
+     * batching that entity's overdue actions ({@see NotificationTargetAction}).
      *
      * @return int
      */
     public static function cronActionFollowup(\CronTask $task): int
     {
+        global $DB;
+
         try {
             $today = date('Y-m-d');
 
-            $overdue = countElementsInTable(Action::getTable(), [
-                'date_due' => ['<', $today],
-                'status'   => ['open', 'in_progress'],
-                'NOT'      => ['date_due' => null],
-            ]);
-            if ($overdue === 0) {
+            $byEntity = [];
+            foreach ($DB->request([
+                'SELECT'    => [
+                    'a.*',
+                    'd.entities_id AS entities_id',
+                    'd.name AS drill_name',
+                ],
+                'FROM'      => Action::getTable() . ' AS a',
+                'INNER JOIN' => [
+                    Drill::getTable() . ' AS d' => ['ON' => ['a' => 'plugin_drillreport_drills_id', 'd' => 'id']],
+                ],
+                'WHERE'     => [
+                    'a.date_due' => ['<', $today],
+                    'a.status'   => ['open', 'in_progress'],
+                    ['NOT' => ['a.date_due' => null]],
+                    'd.is_deleted' => 0,
+                ],
+            ]) as $row) {
+                $byEntity[(int) $row['entities_id']][(int) $row['id']] = $row;
+            }
+
+            if ($byEntity === []) {
                 return 0;
             }
 
-            // TODO(mvp): notify each action's owner group / user.
+            $total  = 0;
+            $raised = 0;
+            foreach ($byEntity as $entities_id => $actions) {
+                $ok = NotificationEvent::raiseEvent('overdue', new Action(), [
+                    'entities_id' => $entities_id,
+                    'items'       => $actions,
+                ]);
+                $total += count($actions);
+                if ($ok) {
+                    $raised++;
+                    $task->log(sprintf("ActionFollowup: %d overdue action(s) for entity %d\n", count($actions), $entities_id));
+                }
+            }
+
             Toolbox::logInFile(
                 'drillreport_cron',
-                sprintf("ActionFollowup: %d overdue action(s)\n", $overdue)
+                sprintf("ActionFollowup: %d overdue action(s) across %d entit%s; %d notification(s) raised\n", $total, count($byEntity), count($byEntity) === 1 ? 'y' : 'ies', $raised)
             );
-            $task->addVolume($overdue);
-            return $overdue;
+            $task->addVolume($total);
+            return $total;
         } catch (\Throwable $e) {
             Toolbox::logInFile('drillreport_cron', 'cronActionFollowup error: ' . $e->getMessage() . "\n", true);
             return -1;

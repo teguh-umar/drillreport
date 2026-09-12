@@ -6,6 +6,19 @@ Format: [Keep a Changelog](https://keepachangelog.com/); this project uses
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-09-12
+
+### Added
+- **Real cron notifications.** `DrillReminder` and `ActionFollowup` now raise
+  GLPI `NotificationEvent`s (`NotificationTargetDrill` / `NotificationTargetAction`,
+  events `reminder` / `overdue`) instead of only logging. `Drill` and `Action`
+  are registered into `$CFG_GLPI['notificationtemplates_types']` so they're
+  selectable itemtypes in Setup → Notifications. Recipients are left to the
+  admin (Group / Profile / Administrator, standard GLPI options) since the DR
+  group differs per entity. `raiseEvent()` no-ops safely until a Notification
+  is configured — see `docs/notifications.md` for the one-time setup + tag
+  reference. No schema or config change.
+
 ## [0.6.3] - 2026-09-10
 
 ### Fixed

@@ -70,6 +70,8 @@ Confirm: `unzip -l ../drillreportv*.zip` → root is `drillreport/`, no `.git/`.
 - [ ] `mysql> SELECT name FROM glpi_profilerights WHERE name LIKE 'plugin_drillreport_%' GROUP BY name;`
       → 4 (`_drill` / `_action` / `_approve` / `_config`)
 - [ ] Setup → Automatic actions → 2 tasks `DrillReminder`, `ActionFollowup` present, state = "Scheduled"
+      (since v0.7.0 these raise real notifications once configured — see
+      `docs/notifications.md` for the one-time Setup → Notifications wiring)
 
 ## 3. UI smoke test (as Super-Admin)
 

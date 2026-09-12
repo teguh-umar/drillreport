@@ -6,6 +6,23 @@ Format: [Keep a Changelog](https://keepachangelog.com/); this project uses
 
 ## [Unreleased]
 
+## [0.7.1] - 2026-09-12
+
+### Added
+- `Seed::seedNotifications()` — install now wires the two v0.7.0 events to a
+  default Notification + NotificationTemplate each (Indonesian subject/body,
+  `is_active=1`, recipient = entity administrator), so `DrillReminder`/
+  `ActionFollowup` send out of the box instead of needing the manual Setup
+  walkthrough first. Idempotent: only creates one if none exists yet for that
+  itemtype+event, and never edits one that already exists (admin-made or
+  previously seeded) — safe to re-run on every upgrade. Wrapped in try/catch
+  in `hook.php`; a failure here logs to `drillreport_install.log` and does
+  not abort the rest of install. **Needs a plugin re-install to take effect
+  on an already-installed site:**
+  `bin/console glpi:plugin:install drillreport --force`.
+  `docs/notifications.md` updated — add a Group recipient if entity admin
+  email isn't the right channel.
+
 ## [0.7.0] - 2026-09-12
 
 ### Added

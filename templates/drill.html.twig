@@ -10,6 +10,10 @@
 
 {% set rand = random() %}
 {% set field_options = {'rand': rand} %}
+{# Existing item's own tab view already shows the title/entity/actions banner
+   above this template — only render header.html.twig's own copy for a brand
+   new item (Add form) or inside a modal, exactly like core forms do. #}
+{% set no_header = not item.isNewItem() and not _get._in_modal|default(false) %}
 
 <div class="asset">
     {{ include('components/form/header.html.twig', {'in_twig': true}) }}
@@ -85,12 +89,23 @@
             </div>
         </div>
 
+        {# dropdownArrayField's exact macro signature isn't confirmed against this
+           GLPI 11 build (it threw here — see CHANGELOG v0.8.1) — fall back to the
+           legacy-proven Dropdown::showFromArray() call itself, captured into a
+           string and shown via fields.htmlField() so it still gets the same
+           label/column layout as every other field on this form. #}
         <div class="row">
             <div class="col-12 col-lg-6">
-                {{ fields.dropdownArrayField('overall_result', item.fields['overall_result'], __('Overall result', 'drillreport'), result_labels, field_options) }}
+                {% set dd_overall_result %}
+                    {% do call('Dropdown::showFromArray', ['overall_result', result_labels, {'value': item.fields['overall_result'], 'rand': rand}]) %}
+                {% endset %}
+                {{ fields.htmlField('overall_result', dd_overall_result, __('Overall result', 'drillreport')) }}
             </div>
             <div class="col-12 col-lg-6">
-                {{ fields.dropdownArrayField('status', item.fields['status'], __('Status'), status_labels, field_options) }}
+                {% set dd_status %}
+                    {% do call('Dropdown::showFromArray', ['status', status_labels, {'value': item.fields['status'], 'rand': rand}]) %}
+                {% endset %}
+                {{ fields.htmlField('status', dd_status, __('Status')) }}
             </div>
         </div>
 

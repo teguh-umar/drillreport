@@ -6,6 +6,32 @@ Format: [Keep a Changelog](https://keepachangelog.com/); this project uses
 
 ## [Unreleased]
 
+## [0.8.1] - 2026-09-13
+
+### Fixed
+- **Drill add/edit form crashed** (`Dropdown::showFromArray(): Argument #2
+  ($elements) must be of type array, string given` at `drill.html.twig:90`) —
+  `fields.dropdownArrayField()`'s real macro signature does not match the
+  `overall_result`/`status` value=>label map I fed it (its one confirmed core
+  call-site passes a plain list of itemtype class names, not an assoc map —
+  a different use case). Replaced both calls with the legacy-proven
+  `Dropdown::showFromArray()` PHP call itself, captured via `{% do call() %}`
+  and shown through `fields.htmlField()` — same call the pre-v0.8.0 form used
+  successfully, no macro-signature guessing left for these two fields.
+  `fields.textField`/`dateField`/`dropdownField` (Scenario/TestType/Group/User)
+  were confirmed correct on the live VM before the crash.
+- **Duplicate title/entity/actions banner** on an existing drill's form — a
+  missing `no_header` computation before including `components/form/header.html.twig`
+  (present in GLPI core's own `generic_show_form.html.twig`, omitted here).
+  Now suppresses the redundant header for existing items, matching core forms
+  (only shown for a brand-new item or inside a modal).
+
+### Still unverified
+- `fields.numberField` (RTO/RPO minutes), `fields.datetimeField` (Timeline),
+  `fields.textareaField` (Objectives/Scope/Data loss/Executive
+  summary/Lessons learned/Comments) were never reached by the v0.8.0 crash —
+  confirm these render correctly on the next live check.
+
 ## [0.8.0] - 2026-09-12
 
 ### Changed

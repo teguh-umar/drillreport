@@ -31,9 +31,12 @@ class NotificationTargetAction extends \NotificationTarget
      */
     public function addDataForTemplate($event, $options = [])
     {
-        $this->data['##action.entity##'] = Dropdown::getDropdownName('glpi_entities', $options['entities_id'] ?? 0);
-        $this->data['##action.action##'] = __('Overdue improvement action(s)', 'drillreport');
-        $this->data['##action.count##']  = (string) count($options['items'] ?? []);
+        $this->data['##action.entity##']    = Dropdown::getDropdownName('glpi_entities', $options['entities_id'] ?? 0);
+        $this->data['##action.action##']    = __('Overdue improvement action(s)', 'drillreport');
+        $this->data['##action.count##']     = (string) count($options['items'] ?? []);
+        // Flat link (no specific action to redirect to at this level) — the
+        // per-item ##action.url## below is only meaningful inside ##actions##.
+        $this->data['##action.list_url##'] = Drill::getSearchURL(true);
 
         foreach (($options['items'] ?? []) as $id => $row) {
             $tmp = [];
@@ -70,6 +73,7 @@ class NotificationTargetAction extends \NotificationTarget
             'action.severity' => __('Severity', 'drillreport'),
             'action.due'      => __('Due date', 'drillreport'),
             'action.url'      => sprintf(__('%1$s: %2$s'), Action::getTypeName(1), __('URL')),
+            'action.list_url' => sprintf(__('%1$s: %2$s'), Drill::getTypeName(2), __('URL')),
         ];
         foreach ($tags as $tag => $label) {
             $this->addTagToList(['tag' => $tag, 'label' => $label, 'value' => true, 'lang' => false]);

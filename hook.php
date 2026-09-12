@@ -192,6 +192,13 @@ function plugin_drillreport_install(): bool
 
     if (class_exists(Seed::class)) {
         Seed::run();
+        try {
+            // Core Notification/NotificationTemplate object graph — defensive:
+            // a failure here must not abort the rest of install().
+            Seed::seedNotifications();
+        } catch (\Throwable $e) {
+            \Toolbox::logInFile('drillreport_install', 'seedNotifications skipped: ' . $e->getMessage() . "\n", true);
+        }
     }
     if (class_exists(Config::class)) {
         Config::setDefaults();

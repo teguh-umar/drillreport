@@ -4,6 +4,16 @@ All notable changes to `drillreport` are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/); this project uses
 [Semantic Versioning](https://semver.org/). License: GPL-3.0-or-later.
 
+> **Branch note:** this is the `v0.7-legacy-form` branch, forked from tag
+> `v0.7.1` — the last release before `Drill::showForm()` moved to Twig
+> (`main`/`master`'s v0.8.0+). It keeps the legacy `showFormHeader()` table
+> form. Every feature/fix landed on `main` from v0.8.1 onward that isn't
+> specific to the Twig form gets backported here too, versioned
+> independently as `0.7.x` (next: `0.7.2`) — so this branch is a live
+> fallback, not a frozen snapshot. Rollback: redeploy whichever
+> `drillreportv0.7.x.zip` is newest on this branch. See hub §7 / memory for
+> the backport checklist.
+
 ## [Unreleased]
 
 ## [0.7.1] - 2026-09-12

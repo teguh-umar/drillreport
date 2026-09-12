@@ -6,6 +6,20 @@ Format: [Keep a Changelog](https://keepachangelog.com/); this project uses
 
 ## [Unreleased]
 
+## [0.8.2] - 2026-09-13
+
+### Changed
+- **Drill form layout tightened** — v0.8.1 worked but felt sparser than the
+  legacy v0.7.1 table (user feedback: fields squeezed with large empty gaps).
+  Root cause: every field macro call was wrapped in its own
+  `<div class="col-lg-...">`, nesting Bootstrap columns — `fields_macros`
+  already emit their own column sizing internally (confirmed by re-reading
+  `generic_show_form.html.twig`: it never wraps a macro call in a `col` div,
+  every field sits directly in one `<div class="row flex-row">`). Removed all
+  manual per-field column wrappers to match. Not yet re-verified live — the
+  macros' own column width classes now drive the layout, unconfirmed how many
+  fields land per row.
+
 ## [0.8.1] - 2026-09-13
 
 ### Fixed

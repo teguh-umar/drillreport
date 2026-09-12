@@ -5,6 +5,11 @@
  # fields_macros, buttons, dates) — the same building blocks core itemtype
  # forms (Software, Contract, SoftwareLicense, ...) use, so it inherits the
  # modern card/grid look instead of the legacy showFormHeader() table.
+ #
+ # Field macros bring their own grid column (see generic_show_form.html.twig —
+ # it never wraps a macro call in a <div class="col-..."> of its own); doing
+ # so here nested Bootstrap columns and squeezed every input down (v0.8.1
+ # feedback). Every macro call below sits directly in the single flex row.
  #}
 {% import 'components/form/fields_macros.html.twig' as fields %}
 
@@ -26,141 +31,82 @@
         </div>
     {% endif %}
 
-    <div class="card-body">
-        <div class="row">
-            <div class="col-12 col-lg-6">
-                {{ fields.textField('name', item.fields['name'], __('Name'), field_options) }}
-            </div>
-            <div class="col-12 col-lg-6">
-                {{ fields.dateField('date_drill', item.fields['date_drill'], __('Drill date', 'drillreport'), field_options) }}
-            </div>
-        </div>
+    <div class="card-body d-flex flex-wrap">
+        <div class="row flex-row flex-grow-1">
+            {{ fields.textField('name', item.fields['name'], __('Name'), field_options) }}
+            {{ fields.dateField('date_drill', item.fields['date_drill'], __('Drill date', 'drillreport'), field_options) }}
 
-        {% if item.isNewItem() %}
-            <div class="row">
-                <div class="col-12 col-lg-6">
-                    {{ fields.dropdownField('Entity', 'entities_id', item.fields['entities_id'], 'Entity'|itemtype_name, field_options) }}
-                </div>
-            </div>
-        {% endif %}
+            {% if item.isNewItem() %}
+                {{ fields.dropdownField('Entity', 'entities_id', item.fields['entities_id'], 'Entity'|itemtype_name, field_options) }}
+            {% endif %}
 
-        <div class="row">
-            <div class="col-12 col-lg-6">
-                {{ fields.dropdownField(
-                    'GlpiPlugin\\Drillreport\\Scenario',
-                    'plugin_drillreport_scenarios_id',
-                    item.fields['plugin_drillreport_scenarios_id'],
-                    'GlpiPlugin\\Drillreport\\Scenario'|itemtype_name,
-                    field_options
-                ) }}
-            </div>
-            <div class="col-12 col-lg-6">
-                {{ fields.dropdownField(
-                    'GlpiPlugin\\Drillreport\\TestType',
-                    'plugin_drillreport_testtypes_id',
-                    item.fields['plugin_drillreport_testtypes_id'],
-                    'GlpiPlugin\\Drillreport\\TestType'|itemtype_name,
-                    field_options
-                ) }}
-            </div>
-        </div>
+            {{ fields.dropdownField(
+                'GlpiPlugin\\Drillreport\\Scenario',
+                'plugin_drillreport_scenarios_id',
+                item.fields['plugin_drillreport_scenarios_id'],
+                'GlpiPlugin\\Drillreport\\Scenario'|itemtype_name,
+                field_options
+            ) }}
+            {{ fields.dropdownField(
+                'GlpiPlugin\\Drillreport\\TestType',
+                'plugin_drillreport_testtypes_id',
+                item.fields['plugin_drillreport_testtypes_id'],
+                'GlpiPlugin\\Drillreport\\TestType'|itemtype_name,
+                field_options
+            ) }}
 
-        <div class="row">
-            <div class="col-12 col-lg-6">
-                {{ fields.dropdownField(
-                    'Group',
-                    'groups_id',
-                    item.fields['groups_id'],
-                    __('Group in charge'),
-                    field_options|merge({
-                        'entity': item.fields['entities_id']|default(-1),
-                        'condition': {'is_assign': 1}
-                    })
-                ) }}
-            </div>
-            <div class="col-12 col-lg-6">
-                {{ fields.dropdownField(
-                    'User',
-                    'users_id_tech',
-                    item.fields['users_id_tech'],
-                    __('Drill coordinator', 'drillreport'),
-                    field_options|merge({'right': 'all'})
-                ) }}
-            </div>
-        </div>
+            {{ fields.dropdownField(
+                'Group',
+                'groups_id',
+                item.fields['groups_id'],
+                __('Group in charge'),
+                field_options|merge({
+                    'entity': item.fields['entities_id']|default(-1),
+                    'condition': {'is_assign': 1}
+                })
+            ) }}
+            {{ fields.dropdownField(
+                'User',
+                'users_id_tech',
+                item.fields['users_id_tech'],
+                __('Drill coordinator', 'drillreport'),
+                field_options|merge({'right': 'all'})
+            ) }}
 
-        {# dropdownArrayField's exact macro signature isn't confirmed against this
-           GLPI 11 build (it threw here — see CHANGELOG v0.8.1) — fall back to the
-           legacy-proven Dropdown::showFromArray() call itself, captured into a
-           string and shown via fields.htmlField() so it still gets the same
-           label/column layout as every other field on this form. #}
-        <div class="row">
-            <div class="col-12 col-lg-6">
-                {% set dd_overall_result %}
-                    {% do call('Dropdown::showFromArray', ['overall_result', result_labels, {'value': item.fields['overall_result'], 'rand': rand}]) %}
-                {% endset %}
-                {{ fields.htmlField('overall_result', dd_overall_result, __('Overall result', 'drillreport')) }}
-            </div>
-            <div class="col-12 col-lg-6">
-                {% set dd_status %}
-                    {% do call('Dropdown::showFromArray', ['status', status_labels, {'value': item.fields['status'], 'rand': rand}]) %}
-                {% endset %}
-                {{ fields.htmlField('status', dd_status, __('Status')) }}
-            </div>
-        </div>
+            {# dropdownArrayField's exact macro signature isn't confirmed against
+               this GLPI 11 build (it threw in v0.8.0 — see CHANGELOG v0.8.1) —
+               fall back to the legacy-proven Dropdown::showFromArray() call
+               itself, captured and shown through fields.htmlField(). #}
+            {% set dd_overall_result %}
+                {% do call('Dropdown::showFromArray', ['overall_result', result_labels, {'value': item.fields['overall_result'], 'rand': rand}]) %}
+            {% endset %}
+            {{ fields.htmlField('overall_result', dd_overall_result, __('Overall result', 'drillreport')) }}
+            {% set dd_status %}
+                {% do call('Dropdown::showFromArray', ['status', status_labels, {'value': item.fields['status'], 'rand': rand}]) %}
+            {% endset %}
+            {{ fields.htmlField('status', dd_status, __('Status')) }}
 
-        <div class="row">
-            <div class="col-12 col-lg-3">
-                {{ fields.numberField('rto_target_minutes', item.fields['rto_target_minutes'], __('RTO target (min)', 'drillreport'), field_options|merge({'min': 0})) }}
-            </div>
-            <div class="col-12 col-lg-3">
-                {{ fields.numberField('rto_actual_minutes', item.fields['rto_actual_minutes'], __('RTO actual (min)', 'drillreport'), field_options|merge({'min': 0})) }}
-            </div>
-            <div class="col-12 col-lg-3">
-                {{ fields.numberField('rpo_target_minutes', item.fields['rpo_target_minutes'], __('RPO target (min)', 'drillreport'), field_options|merge({'min': 0})) }}
-            </div>
-            <div class="col-12 col-lg-3">
-                {{ fields.numberField('rpo_actual_minutes', item.fields['rpo_actual_minutes'], __('RPO actual (min)', 'drillreport'), field_options|merge({'min': 0})) }}
-            </div>
-        </div>
+            {{ fields.numberField('rto_target_minutes', item.fields['rto_target_minutes'], __('RTO target (min)', 'drillreport'), field_options|merge({'min': 0})) }}
+            {{ fields.numberField('rto_actual_minutes', item.fields['rto_actual_minutes'], __('RTO actual (min)', 'drillreport'), field_options|merge({'min': 0})) }}
+            {{ fields.numberField('rpo_target_minutes', item.fields['rpo_target_minutes'], __('RPO target (min)', 'drillreport'), field_options|merge({'min': 0})) }}
+            {{ fields.numberField('rpo_actual_minutes', item.fields['rpo_actual_minutes'], __('RPO actual (min)', 'drillreport'), field_options|merge({'min': 0})) }}
 
-        <div class="row">
             <div class="col-12">
                 <h5 class="mt-3 mb-0">
                     {{ __('Timeline', 'drillreport') }}
                     <span class="fw-normal text-muted">({{ __('optional', 'drillreport') }})</span>
                 </h5>
             </div>
-            <div class="col-12 col-lg-4">
-                {{ fields.datetimeField('declaration_time', item.fields['declaration_time'], __('Disaster declared', 'drillreport'), field_options) }}
-            </div>
-            <div class="col-12 col-lg-4">
-                {{ fields.datetimeField('recovery_time', item.fields['recovery_time'], __('Service recovered', 'drillreport'), field_options) }}
-            </div>
-            <div class="col-12 col-lg-4">
-                {{ fields.datetimeField('validation_time', item.fields['validation_time'], __('Validation complete', 'drillreport'), field_options) }}
-            </div>
-        </div>
+            {{ fields.datetimeField('declaration_time', item.fields['declaration_time'], __('Disaster declared', 'drillreport'), field_options) }}
+            {{ fields.datetimeField('recovery_time', item.fields['recovery_time'], __('Service recovered', 'drillreport'), field_options) }}
+            {{ fields.datetimeField('validation_time', item.fields['validation_time'], __('Validation complete', 'drillreport'), field_options) }}
 
-        <div class="row">
-            <div class="col-12">
-                {{ fields.textareaField('objectives', item.fields['objectives'], __('Objectives', 'drillreport'), field_options) }}
-            </div>
-            <div class="col-12">
-                {{ fields.textareaField('scope_summary', item.fields['scope_summary'], __('Scope summary', 'drillreport'), field_options) }}
-            </div>
-            <div class="col-12">
-                {{ fields.textareaField('data_loss_summary', item.fields['data_loss_summary'], __('Data loss summary', 'drillreport'), field_options) }}
-            </div>
-            <div class="col-12">
-                {{ fields.textareaField('executive_summary', item.fields['executive_summary'], __('Executive summary', 'drillreport'), field_options) }}
-            </div>
-            <div class="col-12">
-                {{ fields.textareaField('lessons_learned', item.fields['lessons_learned'], __('Lessons learned', 'drillreport'), field_options) }}
-            </div>
-            <div class="col-12">
-                {{ fields.textareaField('comment', item.fields['comment'], _n('Comment', 'Comments', get_plural_number()), field_options) }}
-            </div>
+            {{ fields.textareaField('objectives', item.fields['objectives'], __('Objectives', 'drillreport'), field_options) }}
+            {{ fields.textareaField('scope_summary', item.fields['scope_summary'], __('Scope summary', 'drillreport'), field_options) }}
+            {{ fields.textareaField('data_loss_summary', item.fields['data_loss_summary'], __('Data loss summary', 'drillreport'), field_options) }}
+            {{ fields.textareaField('executive_summary', item.fields['executive_summary'], __('Executive summary', 'drillreport'), field_options) }}
+            {{ fields.textareaField('lessons_learned', item.fields['lessons_learned'], __('Lessons learned', 'drillreport'), field_options) }}
+            {{ fields.textareaField('comment', item.fields['comment'], _n('Comment', 'Comments', get_plural_number()), field_options) }}
         </div>
     </div>
 

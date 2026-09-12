@@ -1,0 +1,156 @@
+{#
+ # DR Drill Report — Drill add/edit form.
+ #
+ # Uses GLPI 11's own generic form scaffolding (components/form/header,
+ # fields_macros, buttons, dates) — the same building blocks core itemtype
+ # forms (Software, Contract, SoftwareLicense, ...) use, so it inherits the
+ # modern card/grid look instead of the legacy showFormHeader() table.
+ #}
+{% import 'components/form/fields_macros.html.twig' as fields %}
+
+{% set rand = random() %}
+{% set field_options = {'rand': rand} %}
+
+<div class="asset">
+    {{ include('components/form/header.html.twig', {'in_twig': true}) }}
+
+    {% if report_url %}
+        <div class="mb-2 text-end">
+            <a class="btn btn-outline-primary btn-sm" target="_blank" href="{{ report_url }}">
+                <i class="ti ti-file-text"></i> {{ __('View / print report', 'drillreport') }}
+            </a>
+        </div>
+    {% endif %}
+
+    <div class="card-body">
+        <div class="row">
+            <div class="col-12 col-lg-6">
+                {{ fields.textField('name', item.fields['name'], __('Name'), field_options) }}
+            </div>
+            <div class="col-12 col-lg-6">
+                {{ fields.dateField('date_drill', item.fields['date_drill'], __('Drill date', 'drillreport'), field_options) }}
+            </div>
+        </div>
+
+        {% if item.isNewItem() %}
+            <div class="row">
+                <div class="col-12 col-lg-6">
+                    {{ fields.dropdownField('Entity', 'entities_id', item.fields['entities_id'], 'Entity'|itemtype_name, field_options) }}
+                </div>
+            </div>
+        {% endif %}
+
+        <div class="row">
+            <div class="col-12 col-lg-6">
+                {{ fields.dropdownField(
+                    'GlpiPlugin\\Drillreport\\Scenario',
+                    'plugin_drillreport_scenarios_id',
+                    item.fields['plugin_drillreport_scenarios_id'],
+                    'GlpiPlugin\\Drillreport\\Scenario'|itemtype_name,
+                    field_options
+                ) }}
+            </div>
+            <div class="col-12 col-lg-6">
+                {{ fields.dropdownField(
+                    'GlpiPlugin\\Drillreport\\TestType',
+                    'plugin_drillreport_testtypes_id',
+                    item.fields['plugin_drillreport_testtypes_id'],
+                    'GlpiPlugin\\Drillreport\\TestType'|itemtype_name,
+                    field_options
+                ) }}
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-12 col-lg-6">
+                {{ fields.dropdownField(
+                    'Group',
+                    'groups_id',
+                    item.fields['groups_id'],
+                    __('Group in charge'),
+                    field_options|merge({
+                        'entity': item.fields['entities_id']|default(-1),
+                        'condition': {'is_assign': 1}
+                    })
+                ) }}
+            </div>
+            <div class="col-12 col-lg-6">
+                {{ fields.dropdownField(
+                    'User',
+                    'users_id_tech',
+                    item.fields['users_id_tech'],
+                    __('Drill coordinator', 'drillreport'),
+                    field_options|merge({'right': 'all'})
+                ) }}
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-12 col-lg-6">
+                {{ fields.dropdownArrayField('overall_result', item.fields['overall_result'], __('Overall result', 'drillreport'), result_labels, field_options) }}
+            </div>
+            <div class="col-12 col-lg-6">
+                {{ fields.dropdownArrayField('status', item.fields['status'], __('Status'), status_labels, field_options) }}
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-12 col-lg-3">
+                {{ fields.numberField('rto_target_minutes', item.fields['rto_target_minutes'], __('RTO target (min)', 'drillreport'), field_options|merge({'min': 0})) }}
+            </div>
+            <div class="col-12 col-lg-3">
+                {{ fields.numberField('rto_actual_minutes', item.fields['rto_actual_minutes'], __('RTO actual (min)', 'drillreport'), field_options|merge({'min': 0})) }}
+            </div>
+            <div class="col-12 col-lg-3">
+                {{ fields.numberField('rpo_target_minutes', item.fields['rpo_target_minutes'], __('RPO target (min)', 'drillreport'), field_options|merge({'min': 0})) }}
+            </div>
+            <div class="col-12 col-lg-3">
+                {{ fields.numberField('rpo_actual_minutes', item.fields['rpo_actual_minutes'], __('RPO actual (min)', 'drillreport'), field_options|merge({'min': 0})) }}
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-12">
+                <h5 class="mt-3 mb-0">
+                    {{ __('Timeline', 'drillreport') }}
+                    <span class="fw-normal text-muted">({{ __('optional', 'drillreport') }})</span>
+                </h5>
+            </div>
+            <div class="col-12 col-lg-4">
+                {{ fields.datetimeField('declaration_time', item.fields['declaration_time'], __('Disaster declared', 'drillreport'), field_options) }}
+            </div>
+            <div class="col-12 col-lg-4">
+                {{ fields.datetimeField('recovery_time', item.fields['recovery_time'], __('Service recovered', 'drillreport'), field_options) }}
+            </div>
+            <div class="col-12 col-lg-4">
+                {{ fields.datetimeField('validation_time', item.fields['validation_time'], __('Validation complete', 'drillreport'), field_options) }}
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-12">
+                {{ fields.textareaField('objectives', item.fields['objectives'], __('Objectives', 'drillreport'), field_options) }}
+            </div>
+            <div class="col-12">
+                {{ fields.textareaField('scope_summary', item.fields['scope_summary'], __('Scope summary', 'drillreport'), field_options) }}
+            </div>
+            <div class="col-12">
+                {{ fields.textareaField('data_loss_summary', item.fields['data_loss_summary'], __('Data loss summary', 'drillreport'), field_options) }}
+            </div>
+            <div class="col-12">
+                {{ fields.textareaField('executive_summary', item.fields['executive_summary'], __('Executive summary', 'drillreport'), field_options) }}
+            </div>
+            <div class="col-12">
+                {{ fields.textareaField('lessons_learned', item.fields['lessons_learned'], __('Lessons learned', 'drillreport'), field_options) }}
+            </div>
+            <div class="col-12">
+                {{ fields.textareaField('comment', item.fields['comment'], _n('Comment', 'Comments', get_plural_number()), field_options) }}
+            </div>
+        </div>
+    </div>
+
+    {{ include('components/form/buttons.html.twig') }}
+    <div class="card-footer mx-n2 mb-n2">
+        {{ include('components/form/dates.html.twig') }}
+    </div>
+</div>

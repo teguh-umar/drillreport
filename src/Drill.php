@@ -5,7 +5,7 @@ namespace GlpiPlugin\Drillreport;
 use CommonDBTM;
 use CommonGLPI;
 use Dropdown;
-use Entity;
+use Glpi\Application\View\TemplateRenderer;
 use Html;
 use Session;
 
@@ -264,114 +264,25 @@ class Drill extends CommonDBTM
     }
 
     /**
-     * Skeleton form — legacy showFormHeader() layout (still valid in GLPI 11,
-     * see docs/drillreport-konsep-awal.md §7.3). Twig-macro migration is planned
-     * for the MVP; child records (Objective / Action / Drill_Item) already render
-     * as their own tabs.
+     * Twig form — GLPI 11's generic form scaffolding (components/form/header,
+     * fields_macros, buttons, dates), the same building blocks core itemtype
+     * forms use (see templates/drill.html.twig). Child records (Objective /
+     * Action / Drill_Item) render as their own tabs, unaffected by this.
      */
     public function showForm($ID, array $options = [])
     {
         $this->initForm($ID, $options);
 
-        $isNew = $this->isNewID($ID);
-
-        if (!$isNew) {
-            echo "<div class='mb-2 text-end'>";
-            echo "<a class='btn btn-outline-primary btn-sm' target='_blank' href='"
-                . htmlescape('/plugins/drillreport/front/report.php?id=' . (int) $ID) . "'>"
-                . "<i class='ti ti-file-text'></i> " . __s('View / print report', 'drillreport') . "</a>";
-            echo "</div>";
-        }
-
-        $this->showFormHeader($options);
-
-        echo "<tr class='tab_bg_1'>";
-        echo "<td>" . __s('Name') . "</td>";
-        echo "<td>" . Html::input('name', ['value' => $this->fields['name'] ?? '']) . "</td>";
-        echo "<td>" . __s('Drill date', 'drillreport') . "</td>";
-        echo "<td>";
-        Html::showDateField('date_drill', ['value' => $this->fields['date_drill'] ?? '']);
-        echo "</td>";
-        echo "</tr>";
-
-        if ($isNew) {
-            echo "<tr class='tab_bg_1'><td>" . htmlescape(Entity::getTypeName(1)) . "</td><td colspan='3'>";
-            Entity::dropdown([
-                'name'  => 'entities_id',
-                'value' => $this->fields['entities_id'] ?? $_SESSION['glpiactive_entity'],
-            ]);
-            echo "</td></tr>";
-        }
-
-        echo "<tr class='tab_bg_1'>";
-        echo "<td>" . htmlescape(Scenario::getTypeName(1)) . "</td><td>";
-        Scenario::dropdown(['name' => 'plugin_drillreport_scenarios_id', 'value' => $this->fields['plugin_drillreport_scenarios_id'] ?? 0]);
-        echo "</td>";
-        echo "<td>" . htmlescape(TestType::getTypeName(1)) . "</td><td>";
-        TestType::dropdown(['name' => 'plugin_drillreport_testtypes_id', 'value' => $this->fields['plugin_drillreport_testtypes_id'] ?? 0]);
-        echo "</td></tr>";
-
-        echo "<tr class='tab_bg_1'>";
-        echo "<td>" . __s('Group in charge') . "</td><td>";
-        \Group::dropdown(['name' => 'groups_id', 'value' => $this->fields['groups_id'] ?? 0, 'entity' => $this->fields['entities_id'] ?? -1, 'condition' => ['is_assign' => 1]]);
-        echo "</td>";
-        echo "<td>" . __s('Drill coordinator', 'drillreport') . "</td><td>";
-        \User::dropdown(['name' => 'users_id_tech', 'value' => $this->fields['users_id_tech'] ?? 0, 'right' => 'all']);
-        echo "</td></tr>";
-
-        echo "<tr class='tab_bg_1'>";
-        echo "<td>" . __s('Overall result', 'drillreport') . "</td><td>";
-        Dropdown::showFromArray('overall_result', self::resultLabels(), ['value' => $this->fields['overall_result'] ?? 'pending']);
-        echo "</td>";
-        echo "<td>" . __s('Status') . "</td><td>";
-        Dropdown::showFromArray('status', self::statusLabels(), ['value' => $this->fields['status'] ?? 'draft']);
-        echo "</td></tr>";
-
-        $num = fn (string $f): string => Html::input($f, [
-            'value' => $this->fields[$f] ?? '',
-            'type'  => 'number',
-            'min'   => '0',
+        TemplateRenderer::getInstance()->display('@drillreport/drill.html.twig', [
+            'item'          => $this,
+            'params'        => $options,
+            'result_labels' => self::resultLabels(),
+            'status_labels' => self::statusLabels(),
+            'report_url'    => !$this->isNewID($ID)
+                ? (Html::getPrefixedUrl('/plugins/drillreport/front/report.php') . '?id=' . (int) $ID)
+                : null,
         ]);
-        echo "<tr class='tab_bg_1'>";
-        echo "<td>" . __s('RTO target (min)', 'drillreport') . "</td><td>" . $num('rto_target_minutes') . "</td>";
-        echo "<td>" . __s('RTO actual (min)', 'drillreport') . "</td><td>" . $num('rto_actual_minutes') . "</td>";
-        echo "</tr>";
-        echo "<tr class='tab_bg_1'>";
-        echo "<td>" . __s('RPO target (min)', 'drillreport') . "</td><td>" . $num('rpo_target_minutes') . "</td>";
-        echo "<td>" . __s('RPO actual (min)', 'drillreport') . "</td><td>" . $num('rpo_actual_minutes') . "</td>";
-        echo "</tr>";
 
-        // Timeline — optional; drives the report's Timeline section (shown when
-        // Config 'show_timeline_fields' is on) and can back the RTO/RPO numbers.
-        echo "<tr class='tab_bg_2'><th colspan='4' class='text-start'>"
-            . __s('Timeline', 'drillreport')
-            . " <span class='fw-normal text-muted'>(" . __s('optional', 'drillreport') . ")</span></th></tr>";
-        echo "<tr class='tab_bg_1'>";
-        echo "<td>" . __s('Disaster declared', 'drillreport') . "</td><td>";
-        Html::showDateTimeField('declaration_time', ['value' => $this->fields['declaration_time'] ?? '']);
-        echo "</td>";
-        echo "<td>" . __s('Service recovered', 'drillreport') . "</td><td>";
-        Html::showDateTimeField('recovery_time', ['value' => $this->fields['recovery_time'] ?? '']);
-        echo "</td></tr>";
-        echo "<tr class='tab_bg_1'>";
-        echo "<td>" . __s('Validation complete', 'drillreport') . "</td><td>";
-        Html::showDateTimeField('validation_time', ['value' => $this->fields['validation_time'] ?? '']);
-        echo "</td><td colspan='2'></td></tr>";
-
-        foreach ([
-            'objectives'        => __s('Objectives', 'drillreport'),
-            'scope_summary'     => __s('Scope summary', 'drillreport'),
-            'data_loss_summary' => __s('Data loss summary', 'drillreport'),
-            'executive_summary' => __s('Executive summary', 'drillreport'),
-            'lessons_learned'   => __s('Lessons learned', 'drillreport'),
-            'comment'           => __s('Comments'),
-        ] as $f => $label) {
-            echo "<tr class='tab_bg_1'><td>{$label}</td><td colspan='3'>"
-                . "<textarea class='form-control' rows='3' name='{$f}'>" . htmlescape($this->fields[$f] ?? '') . "</textarea>"
-                . "</td></tr>";
-        }
-
-        $this->showFormButtons($options);
         return true;
     }
 }

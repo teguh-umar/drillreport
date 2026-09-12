@@ -73,6 +73,13 @@
                 field_options|merge({'right': 'all'})
             ) }}
 
+            {# fields.htmlField() sizes its column differently from
+               dropdownField/numberField — mixed into the same flex-wrap row
+               it staggers everything that follows (v0.8.2 feedback). Force a
+               line break before/after this differently-sized pair so it
+               can't throw off the RTO/RPO group's alignment. #}
+            <div class="w-100"></div>
+
             {# dropdownArrayField's exact macro signature isn't confirmed against
                this GLPI 11 build (it threw in v0.8.0 — see CHANGELOG v0.8.1) —
                fall back to the legacy-proven Dropdown::showFromArray() call
@@ -85,6 +92,8 @@
                 {% do call('Dropdown::showFromArray', ['status', status_labels, {'value': item.fields['status'], 'rand': rand}]) %}
             {% endset %}
             {{ fields.htmlField('status', dd_status, __('Status')) }}
+
+            <div class="w-100"></div>
 
             {{ fields.numberField('rto_target_minutes', item.fields['rto_target_minutes'], __('RTO target (min)', 'drillreport'), field_options|merge({'min': 0})) }}
             {{ fields.numberField('rto_actual_minutes', item.fields['rto_actual_minutes'], __('RTO actual (min)', 'drillreport'), field_options|merge({'min': 0})) }}

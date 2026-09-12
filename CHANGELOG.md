@@ -13,6 +13,18 @@ Format: [Keep a Changelog](https://keepachangelog.com/); this project uses
 
 ## [Unreleased]
 
+## [0.8.3] - 2026-09-13
+
+### Fixed
+- **Drill form field alignment** — Overall result / Status (rendered via
+  `fields.htmlField()`) sit in a differently-sized grid column than
+  `numberField`/`dropdownField`; mixed into one continuous flex-wrap row they
+  staggered every field after them (RTO/RPO boxes misaligned, uneven widths).
+  Forced a line break (`<div class="w-100">`) before and after that pair —
+  standard Bootstrap flex-wrap technique, no macro internals to guess at this
+  time. Twig-template-only change — not backported to `v0.7-legacy-form`
+  (that branch never uses this template).
+
 ## [0.8.2] - 2026-09-13
 
 ### Changed

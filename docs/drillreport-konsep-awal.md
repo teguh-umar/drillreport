@@ -797,8 +797,8 @@ Sudah ada:
 
 Belum ada (MVP berikutnya):
 
-- [ ] Form entry Twig macro (ganti `Drill::showForm()` legacy) — §7.3
-- [ ] Notifikasi GLPI untuk kedua cron (sekarang cuma `Toolbox::logInFile`)
+- [x] ~~Form entry Twig macro (ganti `Drill::showForm()` legacy) — §7.3~~ v0.8.0
+- [x] ~~Notifikasi GLPI untuk kedua cron (sekarang cuma `Toolbox::logInFile`)~~ v0.7.0–0.7.1
 
 Fase 2: heatmap aset × tahun (§9.3), dashboard cards (§9.2).
 

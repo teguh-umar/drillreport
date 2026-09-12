@@ -6,7 +6,22 @@ Format: [Keep a Changelog](https://keepachangelog.com/); this project uses
 
 ## [Unreleased]
 
-## [0.7.1] - 2026-09-12
+## [0.8.0] - 2026-09-12
+
+### Changed
+- **Drill form migrated to Twig.** `Drill::showForm()` now renders
+  `templates/drill.html.twig` via `TemplateRenderer`, built from GLPI 11's own
+  generic form scaffolding (`components/form/header.html.twig` +
+  `fields_macros.html.twig` + `buttons.html.twig` + `dates.html.twig`) — the
+  same building blocks core forms (Software, Contract, SoftwareLicense, ...)
+  use — instead of the legacy `showFormHeader()`/`Html::input()` table. Same
+  fields, same order, same behavior; only the rendering layer changed.
+  **Higher-risk change than usual**: the exact `fields_macros` macro
+  signatures were inferred from real call-sites in GLPI 11 core
+  (`templates/generic_show_form.html.twig`), not from the macro definitions
+  themselves (not present in the sparse local GLPI checkout) — **verify the
+  Drill add/edit form immediately after deploying this version.** Rollback is
+  one command: redeploy `drillreportv0.7.1.zip`.
 
 ### Added
 - `Seed::seedNotifications()` — install now wires the two v0.7.0 events to a

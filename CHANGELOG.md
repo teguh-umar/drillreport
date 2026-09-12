@@ -13,6 +13,21 @@ Format: [Keep a Changelog](https://keepachangelog.com/); this project uses
 
 ## [Unreleased]
 
+## [0.8.4] - 2026-09-13
+
+### Fixed
+- **"Timeline" heading too small** — `<h5>` → `<h4>`, "(optional)" kept
+  smaller/muted inline.
+- **The 6 long-text fields (Objectives, Scope summary, Data loss summary,
+  Executive summary, Lessons learned, Comments) were half-width and hard to
+  read/edit** — `fields.textareaField()` defaults to the same half-width
+  column as `htmlField`/other macros (not full-width as assumed). Rather than
+  guess at the macro's column-width option a third time, hand-rolled these 6
+  as plain full-width `<div class="col-12">` + `<label>` + `<textarea
+  class="form-control">` rows — no macro involved, width fully guaranteed.
+  Order unchanged (matches the pre-Twig v0.7.1 form). Twig-template-only;
+  not backported to `v0.7-legacy-form`.
+
 ## [0.8.3] - 2026-09-13
 
 ### Fixed

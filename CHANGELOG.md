@@ -16,6 +16,18 @@ Format: [Keep a Changelog](https://keepachangelog.com/); this project uses
 
 ## [Unreleased]
 
+## [0.7.2] - 2026-09-13
+
+### Fixed
+- **Signed foreign key** — backported from `main` v0.8.5 (suite-wide unsigned-
+  keys audit). `glpi_plugin_drillreport_objectives.plugin_drillreport_drills_items_id`
+  was created as signed `INT` — the v0.5.0 `addField(..., 'integer', ...)`
+  call used GLPI's plain-integer type instead of `'fkey'` (resolves to
+  `INT UNSIGNED`). Every other `*_id`/`id` column across all 8 tables is
+  already `int unsigned`; no negative sentinel values found anywhere.
+  `addField()` now uses `'fkey'` and a `changeField()` retrofit converts
+  already-existing installs (safe no-op if already unsigned).
+
 ## [0.7.1] - 2026-09-12
 
 ### Added

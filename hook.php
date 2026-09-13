@@ -175,13 +175,25 @@ function plugin_drillreport_install(): bool
     if ($DB->tableExists('glpi_plugin_drillreport_objectives')) {
         // v0.5.0: objectives gain a time budget + actual start/end + an optional
         // asset link, so an objective doubles as a timed runbook activity.
-        $glpiMigration->addField('glpi_plugin_drillreport_objectives', 'plugin_drillreport_drills_items_id', 'integer', ['after' => 'plugin_drillreport_drills_id']);
+        // 'fkey' (not 'integer') — GLPI 11's unsigned-keys convention: every
+        // *_id column must be INT UNSIGNED. addField() no-ops on an existing
+        // column, so this alone only gets fresh installs right.
+        $glpiMigration->addField('glpi_plugin_drillreport_objectives', 'plugin_drillreport_drills_items_id', 'fkey', ['after' => 'plugin_drillreport_drills_id']);
         $glpiMigration->addField('glpi_plugin_drillreport_objectives', 'target_minutes', 'integer', ['after' => 'content']); // 0 = no target
         $glpiMigration->addField('glpi_plugin_drillreport_objectives', 'start_time', 'timestamp', ['after' => 'target_minutes']);
         $glpiMigration->addField('glpi_plugin_drillreport_objectives', 'end_time', 'timestamp', ['after' => 'start_time']);
         $glpiMigration->addKey('glpi_plugin_drillreport_objectives', 'plugin_drillreport_drills_items_id');
         // v0.6.0: evidence reference per activity.
         $glpiMigration->addField('glpi_plugin_drillreport_objectives', 'evidence_ref', 'string', ['value' => '', 'after' => 'result']);
+        // v0.8.5: retrofit for installs upgraded from before this fix — the
+        // column above was created as signed INT (addField('integer', ...)).
+        // changeField() no-ops safely if it's already unsigned.
+        $glpiMigration->changeField(
+            'glpi_plugin_drillreport_objectives',
+            'plugin_drillreport_drills_items_id',
+            'plugin_drillreport_drills_items_id',
+            'fkey'
+        );
     }
     if ($DB->tableExists('glpi_plugin_drillreport_drills_items')) {
         // v0.6.0: the DR failover target (name / IP) for this system.

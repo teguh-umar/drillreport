@@ -13,6 +13,24 @@ Format: [Keep a Changelog](https://keepachangelog.com/); this project uses
 
 ## [Unreleased]
 
+## [0.8.5] - 2026-09-13
+
+### Fixed
+- **Signed foreign key** — suite-wide audit (all 8 `glpi_plugin_drillreport_*`
+  tables must have `INT UNSIGNED` id/`*_id` columns, no negative sentinels).
+  `glpi_plugin_drillreport_objectives.plugin_drillreport_drills_items_id` was
+  created as signed `INT` — the v0.5.0 `addField(..., 'integer', ...)` call
+  used GLPI's plain-integer type instead of `'fkey'` (which resolves to
+  `INT UNSIGNED` via `Migration::getDefaultPrimaryKeySignOption()`). Every
+  other `*_id`/`id` column across all 8 tables is `int unsigned` in the
+  original `CREATE TABLE` DDL — this was the only offender, and no negative
+  sentinel values (`-1` etc.) were found in any key column anywhere in the
+  codebase. Fixed both ends: `addField()` now uses `'fkey'` (fresh installs
+  get it right from the start) and a `changeField()` retrofit converts
+  already-existing installs (safe no-op if already unsigned). **Backported to
+  `v0.7-legacy-form`** as `0.7.2` — this is a schema fix, not Twig-form-
+  specific.
+
 ## [0.8.4] - 2026-09-13
 
 ### Fixed

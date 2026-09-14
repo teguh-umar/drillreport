@@ -13,6 +13,17 @@ Format: [Keep a Changelog](https://keepachangelog.com/); this project uses
 
 ## [Unreleased]
 
+## [0.9.2] - 2026-09-14
+
+### Fixed
+- **`lib/pgnsuite/ConfigTab.php` updated to canonical r2** (SHA-256
+  `347d56c91508e53326c8d4de74105628d0fd535bde619fe8a94eb147a448cbd6`, read
+  and diffed against r1 before vendoring). Visual-only: the active sub-tab
+  was unreadable (pale-yellow `.nav-pills` active state) — now uses GLPI's
+  own `--glpi-tabs-*` CSS variables so it matches core's vertical tabs in
+  every palette. `CONTRACT_VERSION` unchanged (still 1); no change to
+  `SuiteConfig`/wiring.
+
 ## [0.9.1] - 2026-09-14
 
 ### Fixed

@@ -13,22 +13,26 @@
 
 include('../../../inc/includes.php');
 
-use GlpiPlugin\Drillreport\ActionCategory;
 use GlpiPlugin\Drillreport\Config;
 use GlpiPlugin\Drillreport\Drill;
-use GlpiPlugin\Drillreport\Drill_Item;
 use GlpiPlugin\Drillreport\Sample;
-use GlpiPlugin\Drillreport\Scenario;
-use GlpiPlugin\Drillreport\TestType;
+use GlpiPlugin\Pgnsuite\ConfigTab;
 
 Session::checkRight('plugin_drillreport_config', READ);
 $can_update = Session::haveRight('plugin_drillreport_config', UPDATE);
 
-// GLPI 11: $_SERVER['PHP_SELF'] points at public/index.php, not this file —
-// a form posting there hits the native inventory endpoint. Build the real URL.
-$self = Html::getPrefixedUrl('/plugins/drillreport/front/config.php');
-
 $clamp = static fn (int $v, int $min, int $max): int => max($min, min($max, $v));
+
+// Users with core `config` READ reach this via the "PGN Suite" tab on
+// Setup > General — bounce a save back there. Plugin-right-only users (no
+// core `config` right, so that tab is unreachable to them) keep the
+// standalone page they've always had.
+$backToSuiteOrHere = static function (): void {
+    if (Session::haveRight('config', READ) && class_exists(ConfigTab::class)) {
+        Html::redirect(ConfigTab::getReturnUrl('drillreport'));
+    }
+    Html::back();
+};
 
 if (isset($_POST['update'])) {
     Session::checkRight('plugin_drillreport_config', UPDATE);
@@ -50,7 +54,7 @@ if (isset($_POST['update'])) {
         'fields_rpo_key'          => trim((string) ($_POST['fields_rpo_key'] ?? '')),
     ]);
     Session::addMessageAfterRedirect(__s('Configuration updated.', 'drillreport'));
-    Html::back();
+    $backToSuiteOrHere();
 }
 
 if (isset($_POST['create_sample'])) {
@@ -64,7 +68,7 @@ if (isset($_POST['create_sample'])) {
         false,
         $id > 0 ? INFO : ERROR
     );
-    Html::back();
+    $backToSuiteOrHere();
 }
 
 if (isset($_POST['remove_sample'])) {
@@ -75,7 +79,7 @@ if (isset($_POST['remove_sample'])) {
         _n('%d sample drill removed.', '%d sample drills removed.', $n, 'drillreport'),
         $n
     ));
-    Html::back();
+    $backToSuiteOrHere();
 }
 
 Html::header(__('DR Drill Report — Setup', 'drillreport'), '', 'drillreport', 'setup');

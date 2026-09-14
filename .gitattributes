@@ -1,3 +1,10 @@
 # Normalize to LF — this plugin is deployed on Linux (VM-HQ-GLPI).
 * text=auto eol=lf
 *.png binary
+
+# PGN Suite shared files ship byte-identical across every plugin, verified by
+# SHA-256 against a canonical copy — text=auto/eol=lf normalization (even a
+# no-op in theory for an already-LF file) has been observed to flip line
+# endings on a commit+checkout round trip (hit SAC first). Treat as opaque
+# binary so git never touches it.
+lib/pgnsuite/ConfigTab.php -text

@@ -16,6 +16,23 @@ Format: [Keep a Changelog](https://keepachangelog.com/); this project uses
 
 ## [Unreleased]
 
+## [0.7.3] - 2026-09-14
+
+### Added
+- **"PGN Suite" shared config tab** — backported from `main` v0.9.0 (not
+  Twig-form-specific). `lib/pgnsuite/ConfigTab.php` (byte-identical vendored
+  copy, SHA-256 verified:
+  `89e864d926385ebb09f463a5968fe0e5971503b8e9567540feba56371637ac40`,
+  `.gitattributes` marks it `-text` so line-ending normalization never
+  touches it — a commit+checkout round trip was seen to flip LF→CRLF on an
+  already-LF file for another plugin, SAC, despite `eol=lf`) +
+  `src/SuiteConfig.php` (section provider, gated on
+  `plugin_drillreport_config` READ). `Config::showForm()` extracted so the
+  standalone `front/config.php` page and the tab section share one
+  implementation. Sidebar "Setup" menu entry removed (`src/Menu.php`); the
+  page stays reachable directly, with core-config-READ users redirected back
+  to the PGN Suite tab after saving.
+
 ## [0.7.2] - 2026-09-13
 
 ### Fixed

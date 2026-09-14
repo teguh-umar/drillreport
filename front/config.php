@@ -82,6 +82,14 @@ if (isset($_POST['remove_sample'])) {
     $backToSuiteOrHere();
 }
 
+// A core-config-READ user (e.g. the "Config" cog in Setup > Plugins, or this
+// URL bookmarked from before v0.9.0) always lands on the PGN Suite tab now,
+// GET included — the standalone page below is only for plugin-right-only
+// users, for whom that tab is unreachable.
+if (Session::haveRight('config', READ) && class_exists(ConfigTab::class)) {
+    Html::redirect(ConfigTab::getReturnUrl('drillreport'));
+}
+
 Html::header(__('DR Drill Report — Setup', 'drillreport'), '', 'drillreport', 'setup');
 
 Config::showForm();

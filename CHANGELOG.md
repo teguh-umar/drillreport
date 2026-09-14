@@ -13,6 +13,17 @@ Format: [Keep a Changelog](https://keepachangelog.com/); this project uses
 
 ## [Unreleased]
 
+## [0.9.1] - 2026-09-14
+
+### Fixed
+- **`front/config.php` GET path missed the PGN Suite redirect** — v0.9.0
+  only redirected core-`config`-READ users back to the tab after a POST
+  (save); opening the page directly (the "Config" cog in Setup → Plugins,
+  or a bookmarked URL) still showed the standalone page for those users.
+  Added the same `Session::haveRight('config', READ)` redirect before
+  `Html::header()` so GET and POST behave identically. Caught by peer
+  review before VM deploy — not yet live-verified.
+
 ## [0.9.0] - 2026-09-14
 
 ### Added

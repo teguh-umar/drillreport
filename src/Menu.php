@@ -72,13 +72,11 @@ class Menu extends CommonGLPI
             ];
         }
 
-        if (Session::haveRight('plugin_drillreport_config', READ)) {
-            $entries['setup'] = [
-                'title' => __('Setup', 'drillreport'),
-                'page'  => '/plugins/drillreport/front/config.php',
-                'icon'  => 'ti ti-settings',
-            ];
-        }
+        // No "Setup" sidebar entry — config now lives in the shared "PGN Suite"
+        // tab on Setup > General ({@see SuiteConfig}). front/config.php is
+        // still a real, reachable page (direct URL, and the Setup > Plugins
+        // cog) for users who hold only plugin_drillreport_config, not core
+        // config — see that file's redirect logic.
 
         if ($entries === []) {
             return false;

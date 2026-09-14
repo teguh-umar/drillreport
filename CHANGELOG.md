@@ -16,6 +16,21 @@ Format: [Keep a Changelog](https://keepachangelog.com/); this project uses
 
 ## [Unreleased]
 
+## [0.7.4] - 2026-09-14
+
+### Fixed
+- **v0.7.3's backport was incomplete**: `Config::showForm()` was added to
+  `src/Config.php` but `front/config.php`'s body was never actually replaced
+  with a call to it — the page kept rendering its own duplicate inline copy
+  (worked fine on its own, but not what the v0.7.3 changelog claimed, and
+  not shared with the PGN Suite tab section as documented). Fixed now: the
+  body is a single `Config::showForm();` call, same as `main`.
+- **Missing GET redirect to the PGN Suite tab** (same gap as `main` v0.9.1,
+  caught by peer review): opening `front/config.php` directly (the "Config"
+  cog in Setup → Plugins) still showed the standalone page for a
+  core-`config`-READ user; only the POST/save paths redirected. Added the
+  same `Session::haveRight('config', READ)` redirect before `Html::header()`.
+
 ## [0.7.3] - 2026-09-14
 
 ### Added

@@ -16,8 +16,10 @@ use GlpiPlugin\Drillreport\TestType;
 use GlpiPlugin\Drillreport\ActionCategory;
 use GlpiPlugin\Drillreport\Menu;
 use GlpiPlugin\Drillreport\Profile as DRProfile;
+use GlpiPlugin\Drillreport\SuiteConfig;
+use GlpiPlugin\Pgnsuite\ConfigTab;
 
-define('PLUGIN_DRILLREPORT_VERSION', '0.8.5');
+define('PLUGIN_DRILLREPORT_VERSION', '0.9.0');
 define('PLUGIN_DRILLREPORT_MIN_GLPI', '11.0.0');
 define('PLUGIN_DRILLREPORT_MAX_GLPI', '11.9.99');
 
@@ -99,6 +101,17 @@ function plugin_init_drillreport(): void
 
     // Rights-management tab on the core Setup > Profiles form.
     Plugin::registerClass(DRProfile::class, ['addtabon' => 'Profile']);
+
+    // Shared "PGN Suite" tab on Setup > General (lib/pgnsuite/ConfigTab.php,
+    // byte-identical copy from every PGN plugin — see hub file §5). Never
+    // edit this plugin's copy on its own; the class only defines the tab
+    // shell + reads $PLUGIN_HOOKS[ConfigTab::HOOK], it does not depend on
+    // anything else drillreport-specific.
+    if (!class_exists(ConfigTab::class, false)) {
+        require_once __DIR__ . '/lib/pgnsuite/ConfigTab.php';
+    }
+    ConfigTab::register();
+    $PLUGIN_HOOKS[ConfigTab::HOOK]['drillreport'] = SuiteConfig::class . '::section';
 }
 
 /**

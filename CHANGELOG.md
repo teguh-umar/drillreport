@@ -13,6 +13,35 @@ Format: [Keep a Changelog](https://keepachangelog.com/); this project uses
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-09-14
+
+### Added
+- **"PGN Suite" shared config tab.** drillreport now joins the suite-wide
+  "PGN Suite" tab on Setup → General (`lib/pgnsuite/ConfigTab.php` — a
+  byte-identical, unedited copy shipped by every PGN plugin; SHA-256
+  `89e864d926385ebb09f463a5968fe0e5971503b8e9567540feba56371637ac40`, read
+  and verified against the canonical copy before vendoring). `src/SuiteConfig.php` provides drillreport's section (gated on
+  `plugin_drillreport_config` READ, returns `null` — hidden — otherwise).
+  The section renders the exact same body as the standalone Setup page
+  (`Config::showForm()`, extracted from `front/config.php` so both share one
+  implementation) and posts to the same controller.
+
+### Changed
+- `front/config.php`'s "DR Drill Report" **sidebar Setup entry removed**
+  (`src/Menu.php`) — config now lives in the shared tab. The page itself is
+  still fully reachable (direct URL, Setup → Plugins cog): a user with core
+  `config` READ is redirected back to the PGN Suite tab after saving
+  (`ConfigTab::getReturnUrl('drillreport')`); a user who holds only
+  `plugin_drillreport_config` (no core `config` right, so that tab is
+  unreachable to them) keeps the standalone page exactly as before.
+
+Verified via `glpi-plugin-development` skill + GLPI 11 core source
+(`Plugin::registerClass()`/`isPluginItemType()`/`registerStandardTab()`)
+before wiring — confirmed `addtabon` on a shared class name across multiple
+plugins collapses to exactly one tab, no duplication risk. **Not yet
+live-verified on VM-HQ-GLPI** — check after deploy that exactly one "PGN
+Suite" tab appears with both icofr's and drillreport's sections inside.
+
 ## [0.8.5] - 2026-09-13
 
 ### Fixed

@@ -243,6 +243,14 @@ function plugin_drillreport_install(): bool
         \ProfileRight::addProfileRights($toAdd);
     }
 
+    // Seed sensible defaults ONLY for rights that didn't exist before this
+    // run (i.e. once, the very first time each right is introduced). Every
+    // plugin:install after that is a no-op here — an admin's hand-tuned
+    // matrix must survive `plugin:install --force` on a routine upgrade,
+    // not get silently overwritten back to the "derived from core rights"
+    // guess every time. Super-Admin is the one deliberate exception: it
+    // always gets full rights on every run (standard GLPI plugin
+    // convention — nobody intentionally under-provisions Super-Admin).
     foreach ((new \Profile())->find() as $p) {
         $pid = (int) $p['id'];
 
@@ -256,8 +264,8 @@ function plugin_drillreport_install(): bool
             continue;
         }
 
-        if (($p['interface'] ?? '') !== 'central') {
-            continue; // simplified-interface profiles get nothing
+        if ($toAdd === [] || ($p['interface'] ?? '') !== 'central') {
+            continue; // nothing newly introduced this run, or a simplified-interface profile
         }
 
         $core         = \ProfileRight::getProfileRights($pid, ['config', 'computer']);
@@ -276,6 +284,9 @@ function plugin_drillreport_install(): bool
             $grant['plugin_drillreport_drill']  = READ;
             $grant['plugin_drillreport_action'] = READ;
         }
+        // Only set rights that are actually new this run — never touch a
+        // right the admin may have since customized by hand.
+        $grant = array_intersect_key($grant, array_flip($toAdd));
         if ($grant !== []) {
             \ProfileRight::updateProfileRights($pid, $grant);
         }

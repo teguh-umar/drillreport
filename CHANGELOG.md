@@ -16,6 +16,16 @@ Format: [Keep a Changelog](https://keepachangelog.com/); this project uses
 
 ## [Unreleased]
 
+## [0.7.5] - 2026-09-15
+
+### Fixed
+- **Profile rights overwritten on every `plugin:install --force` upgrade** —
+  backported from `main` v0.9.3. Same `hook.php` code, same fix: the
+  per-profile default-grant loop is now gated on `$toAdd` (rights newly
+  created this run) instead of running unconditionally on every install, so
+  a hand-tuned rights matrix survives routine upgrades. Super-Admin stays
+  unconditional.
+
 ## [0.7.4] - 2026-09-14
 
 ### Fixed

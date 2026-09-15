@@ -19,7 +19,7 @@ use GlpiPlugin\Drillreport\Profile as DRProfile;
 use GlpiPlugin\Drillreport\SuiteConfig;
 use GlpiPlugin\Pgnsuite\ConfigTab;
 
-define('PLUGIN_DRILLREPORT_VERSION', '0.9.2');
+define('PLUGIN_DRILLREPORT_VERSION', '0.9.3');
 define('PLUGIN_DRILLREPORT_MIN_GLPI', '11.0.0');
 define('PLUGIN_DRILLREPORT_MAX_GLPI', '11.9.99');
 

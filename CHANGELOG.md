@@ -16,6 +16,22 @@ Format: [Keep a Changelog](https://keepachangelog.com/); this project uses
 
 ## [Unreleased]
 
+## [0.7.6] - 2026-09-15
+
+### Fixed
+- **`lib/pgnsuite/ConfigTab.php` was still r1 on this branch** — v0.9.2's
+  canonical-r2 update (readable active sub-tab, `--glpi-tabs-*` CSS vars)
+  was only applied to `main`. Re-vendored here too: SHA-256
+  `347d56c91508e53326c8d4de74105628d0fd535bde619fe8a94eb147a448cbd6`,
+  verified inside the built zip. `CONTRACT_VERSION` unchanged.
+- `docs/deploy-checklist.md` stale content, found while writing the user
+  manual: table count said 8 (actually 7), the sidebar "Setup" sub-entry it
+  checked for was removed in v0.7.3, the Setup-page save-flow check didn't
+  account for the v0.7.3+ PGN Suite tab redirect, `Administration →
+  Profiles` (not `Setup → Profiles`) is GLPI 11's actual location, and the
+  `report_sections` check told testers to set it from a Setup field that
+  doesn't exist (flagged, not built here — no UI for it yet).
+
 ## [0.7.5] - 2026-09-15
 
 ### Fixed

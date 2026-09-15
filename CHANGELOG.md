@@ -13,6 +13,23 @@ Format: [Keep a Changelog](https://keepachangelog.com/); this project uses
 
 ## [Unreleased]
 
+## [0.9.3] - 2026-09-15
+
+### Fixed
+- **Profile rights overwritten on every `plugin:install --force` upgrade**
+  (verified, `hook.php:246–281`). The per-profile default-grant loop
+  (`plugin_drillreport_drill`/`_action`/`_approve`/`_config`, derived from
+  core `config`/`computer` masks) ran unconditionally on every install, so
+  any hand-tuned rights matrix value got silently reset back to the derived
+  guess on the next routine upgrade — and given how often this plugin gets
+  re-installed for schema/seed changes, this would have bitten fast. Now
+  gated on `$toAdd` (rights newly created *this run*, i.e. only the very
+  first time each right is introduced) — every subsequent install is a
+  no-op for these grants. Super-Admin stays unconditional (standard
+  convention: always full rights on every run). Found while a peer session
+  was writing the user manual; landed before shipping this version over the
+  VM's v0.8.5.
+
 ## [0.9.2] - 2026-09-14
 
 ### Fixed

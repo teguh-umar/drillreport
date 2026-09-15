@@ -60,9 +60,10 @@ Confirm: `unzip -l ../drillreportv*.zip` → root is `drillreport/`, no `.git/`.
 > `glpi:cache:clear` + `systemctl reload php-fpm`, no re-install.
 - [ ] **Open the GLPI login page** — confirm it still loads (guards against a
       class-load fatal).
-- [ ] Open **Setup → Profiles → (any profile) → DR Drill Report tab** — confirm it
+- [ ] Open **Administration → Profiles → (any profile) → DR Drill Report tab**
+      (GLPI 11 moved Profiles under Administration, not Setup) — confirm it
       renders (guards against the `getTabNameForItem` static/instance fatal).
-- [ ] `mysql> SHOW TABLES LIKE 'glpi\_plugin\_drillreport\_%';` → **8 rows**
+- [ ] `mysql> SHOW TABLES LIKE 'glpi\_plugin\_drillreport\_%';` → **7 rows**
       (`drills`, `objectives`, `actions`, `drills_items`, `scenarios`,
       `testtypes`, `actioncategories`)
 - [ ] `mysql> SELECT name FROM glpi_plugin_drillreport_testtypes ORDER BY id;`
@@ -76,8 +77,10 @@ Confirm: `unzip -l ../drillreportv*.zip` → root is `drillreport/`, no `.git/`.
 ## 3. UI smoke test (as Super-Admin)
 
 - [ ] **"DR Drill Report" appears as its own top-level sidebar sector** (with the
-      `ti-refresh-alert` icon), expanding to **Drills / Improvement actions /
-      Setup** — NOT collapsed to a single "DR Drill Report → DR Drill Report" line
+      `ti-refresh-alert` icon), expanding to **Drills / Improvement actions**
+      — NOT collapsed to a single "DR Drill Report → DR Drill Report" line.
+      (Since v0.9.0 / v0.7.3 there's no "Setup" sub-entry here anymore —
+      config moved to the shared "PGN Suite" tab, see below.)
 - [ ] On the **Drills** list page — the breadcrumb reads "DR Drill Report ›
       DR drills" and a **"+ Add"** button is present (guards against the menu
       `content`/`is_multi_entries` regression)
@@ -89,18 +92,35 @@ Confirm: `unzip -l ../drillreportv*.zip` → root is `drillreport/`, no `.git/`.
 - [ ] Systems in scope → asset picker lists `Appliance` + `Computer`; add one →
       row appears with RTO/RPO columns
 - [ ] Open the linked `Appliance` / `Computer` → **"DR drill history"** tab shows the drill
-- [ ] Setup screen (`front/config.php`) loads; toggle a value, **Save** → the page
-      reloads on `/plugins/drillreport/front/config.php` with "Configuration
-      updated." (NOT a redirect to `/` or an inventory-XML error), value persisted
+- [ ] **Setup → General → "PGN Suite" tab** — exactly **one** tab appears
+      (shared with every other PGN plugin installed, not one per plugin);
+      drillreport's section is in the left sub-nav, opens, and its active
+      sub-tab text is readable in whatever GLPI palette is active
+      (since v0.9.2 / v0.7.6, uses `--glpi-tabs-*` CSS vars — a pale/washed-out
+      active tab means `lib/pgnsuite/ConfigTab.php` is stale, re-vendor it)
+- [ ] In that section, toggle a value, **Save** → lands back on the same PGN
+      Suite tab / drillreport section with "Configuration updated."
+      (`ConfigTab::getReturnUrl()` — NOT a redirect to `/` or an inventory-XML
+      error), value persisted
+- [ ] Open `/plugins/drillreport/front/config.php` directly as a user who
+      holds **only** `plugin_drillreport_config` (no core `config` right) —
+      the old standalone page still renders and works (this is its only
+      remaining audience; a core-`config`-READ user gets redirected to the
+      PGN Suite tab instead, GET included)
 - [ ] Drill form → **"View / print report"** button → `front/report.php` renders
       all sections (summary, overview, participants, scope, timeline if enabled,
       RTO/RPO with met/not-met marks, objectives, findings, evidence, approval)
 - [ ] Report **"Print / Save as PDF"** button opens the browser print dialog; the
       toolbar / GLPI chrome are hidden in the print preview
-- [ ] Setup → set `report_sections` to a subset (e.g. `summary,findings`) → the
-      report shows only those sections
-- [ ] Setup → `show_business_criticity = No` → the report's "Systems in scope"
-      table drops the Business Criticality column
+- [ ] `report_sections` has **no field on the config screen yet** (known gap —
+      it's only settable by calling
+      `\Config::setConfigurationValues('plugin:drillreport', ['report_sections' => '…'])`
+      directly, e.g. from a one-off PHP script) — skip this check until a UI
+      toggle exists, or verify by editing `glpi_configs` for context
+      `plugin:drillreport` directly and confirming the report shows only the
+      listed sections
+- [ ] PGN Suite tab → `show_business_criticity = No` → the report's "Systems in
+      scope" table drops the Business Criticality column
 
 ## 4. `fields` plugin soft-read (optional, if `fields` v1.23.2 is configured)
 

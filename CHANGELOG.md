@@ -16,6 +16,22 @@ Format: [Keep a Changelog](https://keepachangelog.com/); this project uses
 
 ## [Unreleased]
 
+## [0.7.7] - 2026-09-16
+
+### Fixed
+- **Super-Admin identified by profile name, not capability** — backported
+  from `main` v0.9.4. `hook.php`'s full-rights seeding matched the literal
+  string `'Super-Admin'`, which is renameable and localised; on a renamed
+  profile the check silently matched nothing and that profile lost the
+  "always full rights on upgrade" guarantee with no error. Now identifies
+  the full-rights profile by testing the core `config` UPDATE right
+  instead. If no profile passes that test, nothing extra is seeded — never
+  falls back to granting everyone full rights. Flagged by
+  `pgn-glpi-suite-70` (hub §4, 2026-09-16); riskregister's equivalent fix
+  went the other direction (filters Super-Admin through the same
+  new-rights-only path as every other profile) after the user decided
+  drillreport's "always full" convention is the one the suite follows.
+
 ## [0.7.6] - 2026-09-15
 
 ### Fixed

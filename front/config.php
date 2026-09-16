@@ -92,6 +92,6 @@ if (Session::haveRight('config', READ) && class_exists(ConfigTab::class)) {
 
 Html::header(__('DR Drill Report — Setup', 'drillreport'), '', 'drillreport', 'setup');
 
-Config::showForm();
+(new Config())->showForm();
 
 Html::footer();

@@ -16,6 +16,21 @@ Format: [Keep a Changelog](https://keepachangelog.com/); this project uses
 
 ## [Unreleased]
 
+## [0.7.8] - 2026-09-16
+
+### Fixed
+- **PRODUCTION-DOWN HOTFIX — `Config::showForm()` static fatal.** Backported
+  from `main` v0.9.5. `Config extends CommonDBTM`, whose `showForm($ID,
+  $options)` is an instance method — declaring the override `static`
+  fatals on class load, aborting `Plugin::load()` for drillreport and
+  breaking every core page that calls it (confirmed live on VM-HQ-GLPI:
+  search pages down, not just drillreport's own screens, right after
+  deploying `main`'s v0.9.4 — this branch was never actually deployed with
+  the bug, but shipped the same broken code and would have hit identically
+  the moment it was). Fixed: `showForm()` is now a proper instance method;
+  both call sites (`front/config.php`, `src/SuiteConfig.php`) updated to
+  `(new Config())->showForm()` in this same commit.
+
 ## [0.7.7] - 2026-09-16
 
 ### Fixed

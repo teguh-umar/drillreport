@@ -248,13 +248,23 @@ function plugin_drillreport_install(): bool
     // plugin:install after that is a no-op here — an admin's hand-tuned
     // matrix must survive `plugin:install --force` on a routine upgrade,
     // not get silently overwritten back to the "derived from core rights"
-    // guess every time. Super-Admin is the one deliberate exception: it
-    // always gets full rights on every run (standard GLPI plugin
-    // convention — nobody intentionally under-provisions Super-Admin).
+    // guess every time. A full-rights profile is the one deliberate
+    // exception: it always gets full plugin rights on every run (standard
+    // GLPI plugin convention — nobody intentionally under-provisions
+    // Super-Admin). Identified by the core `config` UPDATE right, NOT the
+    // profile's display name — names are renameable and localised, and
+    // matching the literal string 'Super-Admin' silently matches nothing
+    // once an admin renames it (suite rule, hub §4, 2026-09-16). If no
+    // profile has core config UPDATE, nothing extra is seeded here — never
+    // fall back to granting everyone full rights.
     foreach ((new \Profile())->find() as $p) {
         $pid = (int) $p['id'];
 
-        if (($p['name'] ?? '') === 'Super-Admin') {
+        $core         = \ProfileRight::getProfileRights($pid, ['config', 'computer']);
+        $configMask   = (int) ($core['config'] ?? 0);
+        $computerMask = (int) ($core['computer'] ?? 0);
+
+        if (($configMask & UPDATE) === UPDATE) {
             \ProfileRight::updateProfileRights($pid, [
                 'plugin_drillreport_drill'   => ALLSTANDARDRIGHT,
                 'plugin_drillreport_action'  => ALLSTANDARDRIGHT,
@@ -268,15 +278,7 @@ function plugin_drillreport_install(): bool
             continue; // nothing newly introduced this run, or a simplified-interface profile
         }
 
-        $core         = \ProfileRight::getProfileRights($pid, ['config', 'computer']);
-        $configMask   = (int) ($core['config'] ?? 0);
-        $computerMask = (int) ($core['computer'] ?? 0);
-
         $grant = [];
-        if (($configMask & UPDATE) === UPDATE) {
-            $grant['plugin_drillreport_config']  = READ | UPDATE;
-            $grant['plugin_drillreport_approve'] = UPDATE;
-        }
         if (($computerMask & UPDATE) === UPDATE) {
             $grant['plugin_drillreport_drill']  = ALLSTANDARDRIGHT;
             $grant['plugin_drillreport_action'] = ALLSTANDARDRIGHT;

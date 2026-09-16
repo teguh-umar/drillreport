@@ -13,6 +13,24 @@ Format: [Keep a Changelog](https://keepachangelog.com/); this project uses
 
 ## [Unreleased]
 
+## [0.9.4] - 2026-09-16
+
+### Fixed
+- **Super-Admin identified by profile name, not capability** —
+  `hook.php`'s full-rights seeding matched the literal string
+  `'Super-Admin'`, which is renameable and localised; on a renamed profile
+  the check silently matched nothing and that profile lost the "always
+  full rights on upgrade" guarantee with no error — exactly the
+  "looks-correct-does-nothing" failure class the suite keeps running into.
+  Now identifies the full-rights profile by testing the core `config`
+  UPDATE right instead. If no profile passes that test, nothing extra is
+  seeded — never falls back to granting everyone full rights. Flagged by
+  `pgn-glpi-suite-70` (hub §4, 2026-09-16), decided against riskregister's
+  alternative (filter Super-Admin through the same new-rights-only path as
+  every other profile) — user chose drillreport's "always full" convention
+  as the one the suite follows. **Backported to `v0.7-legacy-form`** as
+  `0.7.7` — not Twig-specific.
+
 ## [0.9.3] - 2026-09-15
 
 ### Fixed

@@ -12,7 +12,9 @@ use Session;
  *   $PLUGIN_HOOKS[ConfigTab::HOOK]['drillreport'] = SuiteConfig::class . '::section';
  *
  * The section renders the same body as the standalone `front/config.php`
- * page ({@see Config::showForm()}) — both post to that same controller.
+ * page ({@see Config::showForm()}, called as `(new Config())->showForm()` —
+ * see the class docblock there for why it must be an instance call) — both
+ * post to that same controller.
  */
 final class SuiteConfig
 {
@@ -36,6 +38,6 @@ final class SuiteConfig
 
     public static function render(): void
     {
-        Config::showForm();
+        (new Config())->showForm();
     }
 }

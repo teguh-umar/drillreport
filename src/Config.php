@@ -139,7 +139,13 @@ class Config extends CommonDBTM
      * tab section ({@see SuiteConfig::render()}). Both post to the same
      * controller (`front/config.php`), so this only renders, never handles POST.
      */
-    public static function showForm(): void
+    // Instance method to match the parent: CommonDBTM::showForm($ID, array
+    // $options = []) is an instance method, not static (11.0/bugfixes
+    // src/CommonDBTM.php:543) — declaring this static fatals on class load
+    // ("Cannot make non static method static"), which aborts hook.php
+    // before plugin_drillreport_install() is defined. Caller must use
+    // (new Config())->showForm() — see front/config.php and SuiteConfig.php.
+    public function showForm($ID = 0, array $options = []): void
     {
         $can_update = Session::haveRight('plugin_drillreport_config', UPDATE);
         // GLPI 11: $_SERVER['PHP_SELF'] points at public/index.php, not the

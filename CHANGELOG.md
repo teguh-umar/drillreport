@@ -13,6 +13,34 @@ Format: [Keep a Changelog](https://keepachangelog.com/); this project uses
 
 ## [Unreleased]
 
+## [0.9.5] - 2026-09-16
+
+### Fixed
+- **PRODUCTION-DOWN HOTFIX — `Config::showForm()` fatal broke every GLPI
+  page that touches `Plugin::load()`, not just drillreport's own pages**
+  (found live on VM-HQ-GLPI immediately after deploying v0.9.4: `Setup >
+  Plugins > Install` failed with "function plugin_drillreport_install is
+  missing", and the real error in `files/_log/php-errors.log` was
+  `*** Error while loading plugin drillreport: syntax error, unexpected
+  token "("` at `src/Config.php:142`). Root cause (verified against
+  `11.0/bugfixes` core source by `pgn-glpi-suite-70`): `Config extends
+  CommonDBTM`, and `CommonDBTM::showForm($ID, array $options = [])` is an
+  **instance** method — declaring the override `static` fatals on class
+  load. Because `hook.php` and `setup.php` both reference
+  `GlpiPlugin\Drillreport\Config`/`Drill_Item` early, the fatal happened
+  during `Plugin::load()`, which core's search engine calls broadly — so
+  the whole VM-HQ-GLPI search page (and anything else touching
+  `Plugin::getSpecificValueToDisplay()`) was affected, not just this
+  plugin's own screens. Fixed: `showForm()` is now a proper instance
+  method matching the parent signature; both call sites
+  (`front/config.php`, `src/SuiteConfig.php`) updated to
+  `(new Config())->showForm()` in this same commit. This is also almost
+  certainly what the uncommitted, half-converted diff found at session
+  start (2026-09-16) was mid-fixing before it got interrupted — reverted
+  at the time as looking broken/unrelated; redone properly here.
+  **Backported to `v0.7-legacy-form`** as `0.7.8` — not Twig-specific
+  (that branch's `front/config.php` calls the same `Config` class).
+
 ## [0.9.4] - 2026-09-16
 
 ### Fixed

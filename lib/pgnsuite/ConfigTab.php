@@ -70,23 +70,30 @@ final class ConfigTab extends CommonGLPI
             . '.pgnsuite-subnav .nav-link:hover{color:var(--glpi-tabs-active-fg)}'
             . '.pgnsuite-subnav .nav-link.active{background:var(--glpi-tabs-active-bg);'
             . 'color:var(--glpi-tabs-active-fg);border-left-color:var(--glpi-tabs-active-fg);font-weight:bold}'
+            // The sub-nav is as wide as its longest title (capped), not a quarter of the page.
+            . '.pgnsuite-config-nav{flex:0 0 auto}'
+            . '.pgnsuite-config-nav .nav-link{white-space:nowrap}'
+            . '@media (min-width:768px){.pgnsuite-config-nav{width:max-content;max-width:16rem}'
+            . '.pgnsuite-config-nav .nav-link{overflow:hidden;text-overflow:ellipsis}}'
+            . '.pgnsuite-config-body{flex:1 1 auto;min-width:0}'
             . '</style>';
-        echo '<div class="row g-3 pgnsuite-config">';
-        echo '<div class="col-12 col-md-3"><div class="nav flex-column pgnsuite-subnav" role="tablist">';
+        echo '<div class="d-flex flex-column flex-md-row gap-3 pgnsuite-config">';
+        echo '<div class="pgnsuite-config-nav"><div class="nav flex-column pgnsuite-subnav" role="tablist">';
         foreach ($sections as $key => $section) {
             $is_active = $key === $active;
             echo sprintf(
-                '<button type="button" class="nav-link%s" data-bs-toggle="pill" data-bs-target="#pgnsuite-%s" role="tab" aria-selected="%s"><i class="%s me-2"></i>%s</button>',
+                '<button type="button" class="nav-link%s" data-bs-toggle="pill" data-bs-target="#pgnsuite-%s" role="tab" aria-selected="%s" title="%s"><i class="%s me-2"></i>%s</button>',
                 $is_active ? ' active' : '',
                 htmlescape($key),
                 $is_active ? 'true' : 'false',
+                htmlescape($section['title']),
                 htmlescape($section['icon']),
                 htmlescape($section['title'])
             );
         }
         echo '</div></div>';
 
-        echo '<div class="col-12 col-md-9"><div class="tab-content">';
+        echo '<div class="pgnsuite-config-body"><div class="tab-content">';
         foreach ($sections as $key => $section) {
             echo sprintf(
                 '<div class="tab-pane fade%s" id="pgnsuite-%s" role="tabpanel">',

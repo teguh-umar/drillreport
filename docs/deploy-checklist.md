@@ -91,7 +91,9 @@ Confirm: `unzip -l ../drillreportv*.zip` → root is `drillreport/`, no `.git/`.
 - [ ] Add an improvement action (severity, owner group, due date) → saved
 - [ ] Systems in scope → asset picker lists `Appliance` + `Computer`; add one →
       row appears with RTO/RPO columns
-- [ ] Open the linked `Appliance` / `Computer` → **"DR drill history"** tab shows the drill
+- [ ] Open the linked `Appliance` / `Computer` → **"PGN Suite"** tab → **"DR drill history"**
+      sub-tab shows the drill; there is **no** separate "DR drill history" tab any more,
+      and exactly **one** "PGN Suite" tab even with other PGN plugins installed
 - [ ] **Setup → General → "PGN Suite" tab** — exactly **one** tab appears
       (shared with every other PGN plugin installed, not one per plugin);
       drillreport's section is in the left sub-nav, opens, and its active

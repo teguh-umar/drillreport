@@ -17,9 +17,11 @@ use GlpiPlugin\Drillreport\ActionCategory;
 use GlpiPlugin\Drillreport\Menu;
 use GlpiPlugin\Drillreport\Profile as DRProfile;
 use GlpiPlugin\Drillreport\SuiteConfig;
+use GlpiPlugin\Drillreport\AssetSections;
+use GlpiPlugin\Pgnsuite\AssetTab;
 use GlpiPlugin\Pgnsuite\ConfigTab;
 
-define('PLUGIN_DRILLREPORT_VERSION', '0.7.8');
+define('PLUGIN_DRILLREPORT_VERSION', '0.7.9');
 define('PLUGIN_DRILLREPORT_MIN_GLPI', '11.0.0');
 define('PLUGIN_DRILLREPORT_MAX_GLPI', '11.9.99');
 
@@ -74,12 +76,10 @@ function plugin_init_drillreport(): void
     Plugin::registerClass(Objective::class, ['addtabon' => Drill::class]);
     Plugin::registerClass(Action::class, ['addtabon' => Drill::class]);
 
-    // Drill <-> asset polymorphic link: "DR Drill history" tab on every
-    // supported asset + a "Systems in scope" tab on the drill.
+    // Drill <-> asset polymorphic link: "Systems in scope" tab on the drill.
+    // The asset side ("DR drill history") is a section of the shared
+    // "PGN Suite" asset tab, wired below — not a tab of its own.
     Plugin::registerClass(Drill_Item::class, ['addtabon' => Drill::class]);
-    foreach (Drill_Item::getLinkedAssetItemtypes() as $itemtype) {
-        Plugin::registerClass(Drill_Item::class, ['addtabon' => $itemtype]);
-    }
 
     // GLPI core does not auto-clean plugin polymorphic link tables — wire the
     // purge cascade for Drill_Item ourselves.
@@ -112,6 +112,15 @@ function plugin_init_drillreport(): void
     }
     ConfigTab::register();
     $PLUGIN_HOOKS[ConfigTab::HOOK]['drillreport'] = SuiteConfig::class . '::section';
+
+    // Shared "PGN Suite" tab on asset forms (lib/pgnsuite/AssetTab.php, same
+    // byte-identical rule as ConfigTab above — hub file §5). drillreport adds
+    // its "DR drill history" section on every configured asset itemtype.
+    if (!class_exists(AssetTab::class, false)) {
+        require_once __DIR__ . '/lib/pgnsuite/AssetTab.php';
+    }
+    AssetTab::register(Drill_Item::getLinkedAssetItemtypes());
+    $PLUGIN_HOOKS[AssetTab::HOOK]['drillreport'] = AssetSections::class . '::sections';
 }
 
 /**

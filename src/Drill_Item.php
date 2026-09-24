@@ -215,20 +215,8 @@ class Drill_Item extends CommonDBRelation
             return self::createTabEntry(self::getTypeName(Session::getPluralNumber()), $nb, $item::class);
         }
 
-        // "DR drill history" tab on a supported asset.
-        if (in_array($item::class, self::getLinkedAssetItemtypes(), true) && Drill::canView()) {
-            $nb = countElementsInTable(self::getTable(), [
-                'itemtype' => $item::class,
-                'items_id' => $item->getID(),
-            ]);
-            return self::createTabEntry(
-                __('DR drill history', 'drillreport'),
-                $nb,
-                $item::class,
-                Drill::getIcon()
-            );
-        }
-
+        // "DR drill history" on an asset is a section of the shared "PGN Suite"
+        // asset tab now ({@see AssetSections}), not a tab of this class.
         return '';
     }
 
@@ -236,10 +224,6 @@ class Drill_Item extends CommonDBRelation
     {
         if ($item instanceof Drill) {
             self::showForDrill($item);
-            return true;
-        }
-        if ($item instanceof CommonDBTM && in_array($item::class, self::getLinkedAssetItemtypes(), true)) {
-            self::showForAsset($item);
             return true;
         }
         return false;
@@ -363,7 +347,11 @@ class Drill_Item extends CommonDBRelation
         echo "<p class='text-muted'>" . __s('RTO/RPO targets are pre-filled from the asset\'s custom fields when available.', 'drillreport') . "</p>";
     }
 
-    private static function showForAsset(CommonDBTM $item): void
+    /**
+     * "DR drill history" body — rendered as the drillreport section of the
+     * shared "PGN Suite" asset tab ({@see AssetSections::renderDrills()}).
+     */
+    public static function showForAsset(CommonDBTM $item): void
     {
         global $DB;
 

@@ -16,6 +16,31 @@ Format: [Keep a Changelog](https://keepachangelog.com/); this project uses
 
 ## [Unreleased]
 
+## [0.7.9] - 2026-09-24
+
+### Changed
+- Backported from `main` v0.10.0 (not Twig-form-specific).
+- **"DR drill history" moved into the shared "PGN Suite" asset tab** (suite
+  contract v1 r1, user decision 2026-09-24, hub §5/§7). On every configured
+  asset itemtype (`asset_itemtypes`, default `Appliance`, `Computer`) the
+  PGN plugins' tabs now collapse into one "PGN Suite" tab with horizontal
+  sub-tabs; drillreport's is "DR drill history" (order 40). `Drill_Item` no
+  longer `addtabon`s asset itemtypes — only `Drill` ("Systems in scope").
+  The rights tab on `Profile` is unchanged.
+- The section renders the same `Drill_Item::showForAsset()` body the old tab
+  did (now public). It is read-only (no POST, no pager, no DOM ids), so
+  `rememberSection()`/`getItemUrl()` have nothing to hook into; there were no
+  `forcetab=…Drill_Item$1` links to rewrite. The old tab's row-count number
+  is gone (sections carry no count — suite UI rule).
+
+### Added
+- `lib/pgnsuite/AssetTab.php` — vendored byte-identical from the canonical
+  `shared/pgnsuite/AssetTab.php` r1 (SHA-256
+  `C7F6C88B58BE9A7AAF172F3A2F2DBAAFBB07B0CE1898BA5A74A0EDB61EA143A9`),
+  marked `-text` in `.gitattributes`. Never edit this copy.
+- `src/AssetSections.php` — section provider: `[]` unless the itemtype is in
+  `asset_itemtypes` and the user has `plugin_drillreport_drill` READ.
+
 ## [0.7.8] - 2026-09-16
 
 ### Fixed

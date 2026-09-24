@@ -8,3 +8,4 @@
 # endings on a commit+checkout round trip (hit SAC first). Treat as opaque
 # binary so git never touches it.
 lib/pgnsuite/ConfigTab.php -text
+lib/pgnsuite/AssetTab.php -text

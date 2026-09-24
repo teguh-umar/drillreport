@@ -16,6 +16,14 @@ Format: [Keep a Changelog](https://keepachangelog.com/); this project uses
 
 ## [Unreleased]
 
+## [0.7.11] - 2026-09-24
+
+### Changed
+- Backported from `main` v0.10.2. `lib/pgnsuite/ConfigTab.php` updated to canonical
+  **r3** (SHA-256 `008C4C817DB2E42040915136108CD41917C34760A8F4CDDC60E46BDB208F39D0`).
+  Visual only: Setup > General "PGN Suite" sub-nav sized to its longest title
+  (max 16rem, title as tooltip) instead of `col-md-3`. `CONTRACT_VERSION` unchanged.
+
 ## [0.7.10] - 2026-09-24
 
 ### Fixed

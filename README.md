@@ -24,7 +24,8 @@ are the MVP work items — see `docs/drillreport-konsep-awal.md` §10.
   per-asset RTO/RPO/recovery).
 - **`Drill_Item`** links a drill to `Appliance` (web applications) and `Computer`
   by default — configurable via `plugin:drillreport` / `asset_itemtypes`. Every
-  supported asset gets a **"DR drill history"** tab.
+  supported asset gets a **"DR drill history"** section inside the shared **"PGN Suite"**
+  asset tab (one tab for all PGN plugins, horizontal sub-tabs — hub §5).
 - **Dropdowns** (Setup → Dropdowns): DR scenario, test type (seeded with the five
   NIST 800-84 types), action category.
 - **Cron**: `DrillReminder` (annual "not submitted" reminder),

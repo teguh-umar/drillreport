@@ -21,7 +21,7 @@ use GlpiPlugin\Drillreport\AssetSections;
 use GlpiPlugin\Pgnsuite\AssetTab;
 use GlpiPlugin\Pgnsuite\ConfigTab;
 
-define('PLUGIN_DRILLREPORT_VERSION', '0.10.1');
+define('PLUGIN_DRILLREPORT_VERSION', '0.10.2');
 define('PLUGIN_DRILLREPORT_MIN_GLPI', '11.0.0');
 define('PLUGIN_DRILLREPORT_MAX_GLPI', '11.9.99');
 

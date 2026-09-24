@@ -4,6 +4,7 @@ namespace GlpiPlugin\Drillreport;
 
 use CommonDBTM;
 use Dropdown;
+use Glpi\Asset\AssetDefinition;
 use Html;
 use Session;
 
@@ -129,8 +130,37 @@ class Config extends CommonDBTM
             }
             $out[$class] = $class::getTypeName(1);
         }
+        $out += self::customAssetItemtypes();
         asort($out);
         return $cache = $out;
+    }
+
+    /**
+     * Active GLPI 11 custom asset definitions (Setup > Asset definitions), read
+     * straight from the definitions table. plugin_init runs before core boots
+     * custom objects (InitializePlugins 110 > CustomObjectsBoot 100, 11.0/bugfixes
+     * ListenersPriority), so at that point they are neither in
+     * $CFG_GLPI['asset_types'] nor autoloadable — class_exists() is false and
+     * they would be silently dropped from tabs, the picker and the purge hook.
+     *
+     * @return array<class-string, string> itemtype => label
+     */
+    private static function customAssetItemtypes(): array
+    {
+        global $DB;
+
+        $out = [];
+        $rows = $DB->request([
+            'SELECT' => ['system_name', 'label'],
+            'FROM'   => AssetDefinition::getTable(),
+            'WHERE'  => ['is_active' => 1],
+        ]);
+        foreach ($rows as $r) {
+            $class = AssetDefinition::getCustomObjectNamespace() . '\\' . $r['system_name']
+                . AssetDefinition::getCustomObjectClassSuffix();
+            $out[$class] = (string) ($r['label'] ?: $r['system_name']);
+        }
+        return $out;
     }
 
     /**

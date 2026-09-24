@@ -16,6 +16,21 @@ Format: [Keep a Changelog](https://keepachangelog.com/); this project uses
 
 ## [Unreleased]
 
+## [0.7.10] - 2026-09-24
+
+### Fixed
+- Backported from `main` v0.10.1.
+- **GLPI 11 custom assets (e.g. Security, Storage) could never be used as
+  drill assets** - not selectable in Setup, no "PGN Suite" section on their
+  form, no purge cascade. `plugin_init` runs before core boots custom asset
+  definitions (`InitializePlugins` priority 110 > `CustomObjectsBoot` 100,
+  `11.0/bugfixes` `ListenersPriority`), so at that moment they are neither in
+  `$CFG_GLPI['asset_types']` nor autoloadable; `Config::assetItemtypeChoices()`
+  (statically cached for the request) silently dropped them. It now also
+  reads active definitions straight from `glpi_assets_assetdefinitions`
+  (`Glpi\CustomAsset\<system_name>Asset`, label from the `label` column).
+  Found while answering VM check 2 of the PGN Suite asset-tab contract.
+  After deploying, add them in drillreport Setup > Asset itemtypes.
 ## [0.7.9] - 2026-09-24
 
 ### Changed

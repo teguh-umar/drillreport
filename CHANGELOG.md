@@ -16,6 +16,20 @@ Format: [Keep a Changelog](https://keepachangelog.com/); this project uses
 
 ## [Unreleased]
 
+## [0.7.13] - 2026-10-04
+
+### Added
+- Backported from `main` v0.11.1.
+- **Setup: "Sections shown in the printable report"** — a multi-select for the
+  `report_sections` config value, which until now had no field and could only
+  be changed in `glpi_configs`. Lists the 9 report sections; the report keeps
+  their fixed order and renumbers the headings. Saving with nothing selected
+  stores every section. Unknown keys are dropped on save.
+
+### Changed
+- `Report::sectionTitles()` is public (the Setup field uses it for labels);
+  the enabled-section logic moved to `Config::reportSections()`.
+
 ## [0.7.12] - 2026-10-04
 
 ### Changed

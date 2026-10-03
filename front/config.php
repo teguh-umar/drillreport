@@ -15,6 +15,7 @@ include('../../../inc/includes.php');
 
 use GlpiPlugin\Drillreport\Config;
 use GlpiPlugin\Drillreport\Drill;
+use GlpiPlugin\Drillreport\Report;
 use GlpiPlugin\Drillreport\Sample;
 use GlpiPlugin\Pgnsuite\ConfigTab;
 use GlpiPlugin\Pgnsuite\Menu as SuiteMenu;
@@ -45,9 +46,17 @@ if (isset($_POST['update'])) {
         (array) ($_POST['asset_itemtypes'] ?? [])
     ));
 
+    // report_sections: multi-select → known keys only, in report order;
+    // nothing picked means every section.
+    $sections = array_values(array_intersect(
+        Report::SECTIONS,
+        (array) ($_POST['report_sections'] ?? [])
+    ));
+
     \Config::setConfigurationValues('plugin:drillreport', [
         'show_business_criticity' => !empty($_POST['show_business_criticity']) ? 1 : 0,
         'show_timeline_fields'    => !empty($_POST['show_timeline_fields']) ? 1 : 0,
+        'report_sections'         => implode(',', $sections ?: Report::SECTIONS),
         'reminder_enabled'        => !empty($_POST['reminder_enabled']) ? 1 : 0,
         'reminder_month'          => $clamp((int) ($_POST['reminder_month'] ?? 11), 1, 12),
         'asset_itemtypes'         => implode(',', $picked ?: ['Appliance', 'Computer']),

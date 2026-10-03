@@ -23,8 +23,8 @@ class Report
     /** Severity display order for the remediation summary. */
     private const SEVERITY_ORDER = ['critical' => 0, 'high' => 1, 'medium' => 2, 'low' => 3, 'info' => 4];
 
-    /** @return array<string,string> section key => English title */
-    private static function sectionTitles(): array
+    /** @return array<string,string> section key => title, in report order */
+    public static function sectionTitles(): array
     {
         return [
             'summary'     => __('Executive Summary', 'drillreport'),
@@ -49,10 +49,7 @@ class Report
         $f   = $drill->fields;
         $eid = (int) $f['entities_id'];
 
-        $enabled = array_values(array_intersect(
-            self::SECTIONS,
-            array_map('trim', explode(',', (string) Config::get('report_sections')))
-        )) ?: self::SECTIONS;
+        $enabled = Config::reportSections();
 
         // Numbered headings for the enabled sections, in order.
         $titles      = self::sectionTitles();

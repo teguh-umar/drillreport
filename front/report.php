@@ -15,6 +15,7 @@ include('../../../inc/includes.php');
 use Glpi\Application\View\TemplateRenderer;
 use GlpiPlugin\Drillreport\Drill;
 use GlpiPlugin\Drillreport\Report;
+use GlpiPlugin\Pgnsuite\Menu as SuiteMenu;
 
 Session::checkRight(Drill::$rightname, READ);
 
@@ -27,13 +28,19 @@ if ($id <= 0 || !$drill->getFromDB($id) || !$drill->can($id, READ)) {
 Html::header(
     sprintf(__('%s — report', 'drillreport'), $drill->fields['name']),
     '',
+    SuiteMenu::SECTOR,
     'drillreport',
     'drill'
 );
 
+$print_mode = (($_GET['print'] ?? '') === '1');
+if (!$print_mode) {
+    SuiteMenu::renderSubNav('drillreport', 'drill');
+}
+
 TemplateRenderer::getInstance()->display('@drillreport/report.html.twig', [
     'report'     => Report::build($drill),
-    'print_mode' => (($_GET['print'] ?? '') === '1'),
+    'print_mode' => $print_mode,
 ]);
 
 Html::footer();

@@ -3,7 +3,7 @@
 /**
  * DR Drill Report — configuration screen.
  *
- * Reachable from the "DR Drill Report" sidebar sector → Setup and the "Config"
+ * Reachable from the shared suite tab on Setup → General and the "Config"
  * cog in Setup → Plugins. Manages the `plugin:drillreport` config keys
  * (Config::DEFAULTS).
  *
@@ -17,6 +17,7 @@ use GlpiPlugin\Drillreport\Config;
 use GlpiPlugin\Drillreport\Drill;
 use GlpiPlugin\Drillreport\Sample;
 use GlpiPlugin\Pgnsuite\ConfigTab;
+use GlpiPlugin\Pgnsuite\Menu as SuiteMenu;
 
 Session::checkRight('plugin_drillreport_config', READ);
 $can_update = Session::haveRight('plugin_drillreport_config', UPDATE);
@@ -90,7 +91,7 @@ if (Session::haveRight('config', READ) && class_exists(ConfigTab::class)) {
     Html::redirect(ConfigTab::getReturnUrl('drillreport'));
 }
 
-Html::header(__('DR Drill Report — Setup', 'drillreport'), '', 'drillreport', 'setup');
+Html::header(__('DR Drill Report — Setup', 'drillreport'), '', SuiteMenu::SECTOR, 'drillreport');
 
 (new Config())->showForm();
 

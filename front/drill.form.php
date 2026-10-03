@@ -11,6 +11,7 @@ include('../../../inc/includes.php');
 
 use Glpi\Event;
 use GlpiPlugin\Drillreport\Drill;
+use GlpiPlugin\Pgnsuite\Menu as SuiteMenu;
 
 if (!isset($_GET['id'])) {
     $_GET['id'] = '';
@@ -47,7 +48,7 @@ if (isset($_POST['add'])) {
     Event::log($_POST['id'], 'drills', 4, 'management', sprintf(__('%s purges an item'), $_SESSION['glpiname']));
     $drill->redirectToList();
 } else {
-    $menus = ['central' => ['drillreport', 'drill'], 'helpdesk' => []];
+    $menus = ['central' => [SuiteMenu::SECTOR, 'drillreport', 'drill'], 'helpdesk' => []];
     Drill::displayFullPageForItem($_GET['id'], $menus, [
         'formoptions' => 'data-track-changes=true',
     ]);

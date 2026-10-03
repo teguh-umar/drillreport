@@ -20,8 +20,9 @@ use GlpiPlugin\Drillreport\SuiteConfig;
 use GlpiPlugin\Drillreport\AssetSections;
 use GlpiPlugin\Pgnsuite\AssetTab;
 use GlpiPlugin\Pgnsuite\ConfigTab;
+use GlpiPlugin\Pgnsuite\Menu as SuiteMenu;
 
-define('PLUGIN_DRILLREPORT_VERSION', '0.10.2');
+define('PLUGIN_DRILLREPORT_VERSION', '0.11.0');
 define('PLUGIN_DRILLREPORT_MIN_GLPI', '11.0.0');
 define('PLUGIN_DRILLREPORT_MAX_GLPI', '11.9.99');
 
@@ -30,7 +31,7 @@ function plugin_version_drillreport(): array
     return [
         'name'         => 'DR Drill Report',
         'version'      => PLUGIN_DRILLREPORT_VERSION,
-        'author'       => 'PGN ICT',
+        'author'       => 'ICT',
         'license'      => 'GPL-3.0-or-later',
         'homepage'     => '',
         'requirements' => [
@@ -78,7 +79,7 @@ function plugin_init_drillreport(): void
 
     // Drill <-> asset polymorphic link: "Systems in scope" tab on the drill.
     // The asset side ("DR drill history") is a section of the shared
-    // "PGN Suite" asset tab, wired below — not a tab of its own.
+    // suite asset tab, wired below — not a tab of its own.
     Plugin::registerClass(Drill_Item::class, ['addtabon' => Drill::class]);
 
     // GLPI core does not auto-clean plugin polymorphic link tables — wire the
@@ -91,10 +92,15 @@ function plugin_init_drillreport(): void
     }
     $PLUGIN_HOOKS['item_purge']['drillreport'][Drill::class] = $dr_item_purge;
 
-    // "DR Drill Report" as its own top-level sidebar sector.
-    // Array-of-classes value => NEW sector; a bare string only appends to one.
-    Plugin::registerClass(Menu::class);
-    $PLUGIN_HOOKS['menu_toadd']['drillreport'] = ['drillreport' => [Menu::class]];
+    // One entry in the suite's shared sidebar sector (lib/pgnsuite/Menu.php,
+    // same byte-identical rule as ConfigTab / AssetTab below — hub file §5).
+    // Menu::entry() supplies the entry and its options (DR drills /
+    // Improvement actions). Users must log in again to see a menu change.
+    if (!class_exists(SuiteMenu::class, false)) {
+        require_once __DIR__ . '/lib/pgnsuite/Menu.php';
+    }
+    SuiteMenu::register('drillreport');
+    $PLUGIN_HOOKS[SuiteMenu::HOOK]['drillreport'] = Menu::class . '::entry';
 
     // Setup landing page (cog next to the plugin in Setup > Plugins).
     $PLUGIN_HOOKS['config_page']['drillreport'] = 'front/config.php';
@@ -102,7 +108,7 @@ function plugin_init_drillreport(): void
     // Rights-management tab on the core Setup > Profiles form.
     Plugin::registerClass(DRProfile::class, ['addtabon' => 'Profile']);
 
-    // Shared "PGN Suite" tab on Setup > General (lib/pgnsuite/ConfigTab.php,
+    // Shared suite tab on Setup > General (lib/pgnsuite/ConfigTab.php,
     // byte-identical copy from every PGN plugin — see hub file §5). Never
     // edit this plugin's copy on its own; the class only defines the tab
     // shell + reads $PLUGIN_HOOKS[ConfigTab::HOOK], it does not depend on
@@ -113,7 +119,7 @@ function plugin_init_drillreport(): void
     ConfigTab::register();
     $PLUGIN_HOOKS[ConfigTab::HOOK]['drillreport'] = SuiteConfig::class . '::section';
 
-    // Shared "PGN Suite" tab on asset forms (lib/pgnsuite/AssetTab.php, same
+    // Shared suite tab on asset forms (lib/pgnsuite/AssetTab.php, same
     // byte-identical rule as ConfigTab above — hub file §5). drillreport adds
     // its "DR drill history" section on every configured asset itemtype.
     if (!class_exists(AssetTab::class, false)) {

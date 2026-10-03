@@ -86,6 +86,20 @@ class Config extends CommonDBTM
         return false;
     }
 
+    /**
+     * Enabled report sections from `report_sections`, in report order. Unknown
+     * keys are dropped; nothing left means every section.
+     *
+     * @return list<string>
+     */
+    public static function reportSections(): array
+    {
+        return array_values(array_intersect(
+            Report::SECTIONS,
+            array_map('trim', explode(',', (string) self::get('report_sections')))
+        )) ?: Report::SECTIONS;
+    }
+
     /** @return list<class-string> resolved, existing itemtypes from `asset_itemtypes` */
     public static function assetItemtypes(): array
     {
@@ -197,6 +211,16 @@ class Config extends CommonDBTM
         echo "</td></tr>";
         echo "<tr class='tab_bg_1'><td>" . __s('Show timeline fields (declaration / recovery / validation time)', 'drillreport') . "</td><td>";
         Dropdown::showYesNo('show_timeline_fields', (int) $get('show_timeline_fields'), -1, ['readonly' => !$can_update]);
+        echo "</td></tr>";
+        // Report sections — multi-select of Report::SECTIONS (no free text).
+        echo "<tr class='tab_bg_1'><td>" . __s('Sections shown in the printable report', 'drillreport')
+            . "<br><span class='text-muted'>" . __s('Sections keep their fixed order and are renumbered. Leave empty to show all.', 'drillreport') . "</span></td><td>";
+        Dropdown::showFromArray('report_sections', Report::sectionTitles(), [
+            'values'   => self::reportSections(),
+            'multiple' => true,
+            'width'    => '100%',
+            'readonly' => !$can_update,
+        ]);
         echo "</td></tr>";
         echo "</table></div></div>";
 

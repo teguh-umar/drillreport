@@ -120,13 +120,11 @@ Confirm: `unzip -l ../drillreportv*.zip` → root is `drillreport/`, no `.git/`.
       RTO/RPO with met/not-met marks, objectives, findings, evidence, approval)
 - [ ] Report **"Print / Save as PDF"** button opens the browser print dialog; the
       toolbar / GLPI chrome are hidden in the print preview
-- [ ] `report_sections` has **no field on the config screen yet** (known gap —
-      it's only settable by calling
-      `\Config::setConfigurationValues('plugin:drillreport', ['report_sections' => '…'])`
-      directly, e.g. from a one-off PHP script) — skip this check until a UI
-      toggle exists, or verify by editing `glpi_configs` for context
-      `plugin:drillreport` directly and confirming the report shows only the
-      listed sections
+- [ ] Setup → **"Sections shown in the printable report"** (multi-select, since
+      v0.11.1 / v0.7.13) lists all 9 sections, all selected by default. Remove
+      one (e.g. Timeline) → Save → the report no longer shows it and the
+      remaining headings are renumbered 1..8. Remove **all** → Save → all 9
+      come back (empty means every section)
 - [ ] PGN Suite tab → `show_business_criticity = No` → the report's "Systems in
       scope" table drops the Business Criticality column
 

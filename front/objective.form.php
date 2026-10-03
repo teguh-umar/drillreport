@@ -11,6 +11,7 @@ include('../../../inc/includes.php');
 
 use GlpiPlugin\Drillreport\Drill;
 use GlpiPlugin\Drillreport\Objective;
+use GlpiPlugin\Pgnsuite\Menu as SuiteMenu;
 
 Session::checkRight(Objective::$rightname, UPDATE);
 
@@ -37,8 +38,8 @@ if (isset($_POST['add'])) {
     $backToDrill();
 } elseif (isset($_GET['id'])) {
     $drills_id = (int) ($_GET['parent_id'] ?? 0);
-    $menus = ['central' => ['management', ''], 'helpdesk' => []];
-    Html::header(Objective::getTypeName(1), '', 'drillreport', 'drill');
+    Html::header(Objective::getTypeName(1), '', SuiteMenu::SECTOR, 'drillreport', 'drill');
+    SuiteMenu::renderSubNav('drillreport', 'drill');
     (new Objective())->showForm((int) $_GET['id'], ['parent_id' => $drills_id]);
     Html::footer();
 } else {

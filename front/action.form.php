@@ -12,6 +12,7 @@ include('../../../inc/includes.php');
 
 use GlpiPlugin\Drillreport\Action;
 use GlpiPlugin\Drillreport\Drill;
+use GlpiPlugin\Pgnsuite\Menu as SuiteMenu;
 
 Session::checkRight(Action::$rightname, UPDATE);
 
@@ -60,7 +61,8 @@ if (isset($_POST['add'])) {
     Html::back();
 } elseif (isset($_GET['id'])) {
     $drills_id = (int) ($_GET['parent_id'] ?? 0);
-    Html::header(Action::getTypeName(1), '', 'drillreport', 'action');
+    Html::header(Action::getTypeName(1), '', SuiteMenu::SECTOR, 'drillreport', 'action');
+    SuiteMenu::renderSubNav('drillreport', 'action');
     (new Action())->showForm((int) $_GET['id'], ['parent_id' => $drills_id]);
     Html::footer();
 } else {

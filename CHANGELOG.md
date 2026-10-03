@@ -16,6 +16,34 @@ Format: [Keep a Changelog](https://keepachangelog.com/); this project uses
 
 ## [Unreleased]
 
+## [0.7.12] - 2026-10-04
+
+### Changed
+- Backported from `main` v0.11.0.
+- **Sidebar: "DR Drill Report" is now one entry in the suite's shared menu
+  sector** (default label "ICT Tools", order 30) instead of a top-level sector
+  of its own. `lib/pgnsuite/Menu.php` **r1** (SHA-256
+  `FC0B96219DD489639DEECD720197BA6B9810F6303A28CE7DB891139E7913CBFE`) is
+  vendored byte-identical and marked `-text`. `Menu::entry()` supplies the
+  entry; its options are **DR drills** and **Improvement actions**, shown as a
+  sub-nav at the top of the plugin's pages. The entry opens the first page the
+  user may read, and is hidden for a user with neither right. **Users must log
+  in again** after the upgrade to see the new menu.
+- All 8 front controllers pass the shared sector to `Html::header()` /
+  `displayFullPageForItem()`. The printable report skips the sub-nav with
+  `?print=1` and hides it in the browser's print output.
+- `lib/pgnsuite/ConfigTab.php` updated to canonical **r4** (SHA-256
+  `F94A80C1C813A951919A20D2521DE35B431F9C836BBCCE89BAC70E544D0B80FA`): the
+  Setup > General tab is titled with the suite label and has a "General"
+  section where a core-config admin renames it.
+- `lib/pgnsuite/AssetTab.php` updated to canonical **r2** (SHA-256
+  `F8629CCA6D141B1E9271686C8D7F9D65E4FC84E39CF07E85B10FBC849A0B2466`): the
+  asset tab is titled with the same suite label.
+- Plugin author is now `ICT` (suite convention).
+
+### Removed
+- The plugin's own `drillreport` sidebar sector.
+
 ## [0.7.11] - 2026-09-24
 
 ### Changed

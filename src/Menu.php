@@ -2,69 +2,64 @@
 
 namespace GlpiPlugin\Drillreport;
 
-use CommonGLPI;
 use Session;
 
 /**
- * "DR Drill Report" — its own top-level sidebar sector (GLPI 11).
+ * "DR Drill Report" — this plugin's single entry in the suite's shared sidebar
+ * sector (GlpiPlugin\Pgnsuite\Menu, shipped byte-identical at
+ * lib/pgnsuite/Menu.php; hub file §5). Until v0.7.11 the plugin had a
+ * top-level sector of its own.
  *
  * Wired in {@see plugin_init_drillreport()} via
- *   $PLUGIN_HOOKS['menu_toadd']['drillreport'] = ['drillreport' => [Menu::class]];
- * The ARRAY-of-classes value creates a NEW sector `drillreport`; a bare class
- * string would only append to an existing sector. `menu.html.twig` renders only
- * `content` entries that carry a `page`, never an `options` array — so a
- * multi-page plugin must return `is_multi_entries` (see getMenuContent()).
+ *   SuiteMenu::register('drillreport');
+ *   $PLUGIN_HOOKS[SuiteMenu::HOOK]['drillreport'] = Menu::class . '::entry';
+ * The provider must be a "Class::method" *string* — the shared Menu drops
+ * anything else.
+ *
+ * The plugin's own pages (DR drills / Improvement actions) are the entry's
+ * `options`: they feed the breadcrumb, the "+ Add" / search links and
+ * SuiteMenu::renderSubNav(). The sidebar itself shows only the entry.
+ *
+ * Front controllers select the active page with
+ *   Html::header($title, '', SuiteMenu::SECTOR, 'drillreport', '<option>')
+ * where `<option>` is `drill` or `action`.
  *
  * Not a persisted itemtype — no table.
  */
-class Menu extends CommonGLPI
+class Menu
 {
-    public static function getTypeName($nb = 0)
-    {
-        return __('DR Drill Report', 'drillreport');
-    }
+    /** Suite-wide sidebar position (hub file §7, 2026-10-03). */
+    private const ORDER = 30;
 
-    public static function getMenuName()
-    {
-        return self::getTypeName();
-    }
-
-    public static function getIcon()
+    public static function getIcon(): string
     {
         return 'ti ti-refresh-alert';
     }
 
-    public static function canView(): bool
-    {
-        return Session::haveRight(Drill::$rightname, READ)
-            || Session::haveRight(Action::$rightname, READ);
-    }
-
     /**
-     * @return array<string,mixed>|false
+     * Provider for \GlpiPlugin\Pgnsuite\Menu::HOOK. Null hides the entry when
+     * the current user may open none of the plugin's pages.
+     *
+     * @return array<string,mixed>|null
      */
-    public static function getMenuContent()
+    public static function entry(): ?array
     {
-        if (!self::canView()) {
-            return false;
-        }
-
-        $entries = [];
+        $options = [];
 
         if (Session::haveRight(Drill::$rightname, READ)) {
-            $entries['drill'] = [
+            $options['drill'] = [
                 'title' => Drill::getTypeName(Session::getPluralNumber()),
                 'page'  => Drill::getSearchURL(false),
                 'icon'  => Drill::getIcon(),
                 'links' => ['search' => Drill::getSearchURL(false)],
             ];
             if (Session::haveRight(Drill::$rightname, CREATE)) {
-                $entries['drill']['links']['add'] = Drill::getFormURL(false);
+                $options['drill']['links']['add'] = Drill::getFormURL(false);
             }
         }
 
         if (Session::haveRight(Action::$rightname, READ)) {
-            $entries['action'] = [
+            $options['action'] = [
                 'title' => Action::getTypeName(Session::getPluralNumber()),
                 'page'  => Action::getSearchURL(false),
                 'icon'  => Action::getIcon(),
@@ -72,16 +67,24 @@ class Menu extends CommonGLPI
             ];
         }
 
-        // No "Setup" sidebar entry — config now lives in the shared "PGN Suite"
-        // tab on Setup > General ({@see SuiteConfig}). front/config.php is
-        // still a real, reachable page (direct URL, and the Setup > Plugins
-        // cog) for users who hold only plugin_drillreport_config, not core
-        // config — see that file's redirect logic.
+        // No "Setup" option — config lives in the shared suite tab on
+        // Setup > General ({@see SuiteConfig}). front/config.php is still a
+        // real, reachable page (direct URL, and the Setup > Plugins cog) for
+        // users who hold only plugin_drillreport_config, not core config —
+        // see that file's redirect logic.
 
-        if ($entries === []) {
-            return false;
+        if ($options === []) {
+            return null;
         }
 
-        return ['is_multi_entries' => true, 'title' => self::getTypeName()] + $entries;
+        // The entry lands on the first page this user may open, so a user who
+        // holds only the action right is not sent to a page that denies them.
+        return [
+            'title'   => __('DR Drill Report', 'drillreport'),
+            'icon'    => self::getIcon(),
+            'page'    => reset($options)['page'],
+            'order'   => self::ORDER,
+            'options' => $options,
+        ];
     }
 }

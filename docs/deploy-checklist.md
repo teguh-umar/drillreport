@@ -76,14 +76,20 @@ Confirm: `unzip -l ../drillreportv*.zip` → root is `drillreport/`, no `.git/`.
 
 ## 3. UI smoke test (as Super-Admin)
 
-- [ ] **"DR Drill Report" appears as its own top-level sidebar sector** (with the
-      `ti-refresh-alert` icon), expanding to **Drills / Improvement actions**
-      — NOT collapsed to a single "DR Drill Report → DR Drill Report" line.
-      (Since v0.9.0 / v0.7.3 there's no "Setup" sub-entry here anymore —
-      config moved to the shared "PGN Suite" tab, see below.)
-- [ ] On the **Drills** list page — the breadcrumb reads "DR Drill Report ›
-      DR drills" and a **"+ Add"** button is present (guards against the menu
-      `content`/`is_multi_entries` regression)
+- [ ] **Log out and back in first** — the sidebar is cached per session.
+- [ ] **"DR Drill Report" is one entry in the shared suite sector** (default
+      label "ICT Tools"; production calls it "Tools ICT"), with the
+      `ti-refresh-alert` icon, placed by its `order` 30 (after Risk Register).
+      The old top-level "DR Drill Report" sector is **gone**. (Since v0.11.0 /
+      v0.7.12; before that the plugin had a sector of its own.)
+- [ ] On the **Drills** list page — a sub-nav **DR drills / Improvement
+      actions** is at the top with the current page active, the breadcrumb
+      reads "<suite label> › DR Drill Report › DR drills", and a **"+ Add"**
+      button is present
+- [ ] The printable report (`?print=1`, and the browser print preview) shows
+      **no** sub-nav
+- [ ] A user with neither the drill nor the action right does **not** see the
+      "DR Drill Report" entry
 - [ ] Create a drill (name, date, scenario, test type, group in charge, result = `fail`)
 - [ ] Drill form tabs: **Objectives**, **Improvement actions**, **Systems in scope** —
       each shows its add form
@@ -169,7 +175,8 @@ Confirm: `unzip -l ../drillreportv*.zip` → root is `drillreport/`, no `.git/`.
   - `getTabNameForItem()` is a non-static instance method (only
     `displayTabContentForItem()` is static). `static` override = fatal.
   - `menu.html.twig` renders only `content` entries with a `page` — a multi-page
-    plugin menu must be its own sector + `is_multi_entries`.
+    plugin menu must be a sector + `is_multi_entries` (since v0.11.0 that is the
+    shared `lib/pgnsuite/Menu.php` sector, not one of our own).
   - `$_SERVER['PHP_SELF']` / `REQUEST_URI` / `SCRIPT_NAME` point at
     `public/index.php`, not the running `front/*.php`. Use
     `Html::getPrefixedUrl('/plugins/drillreport/front/x.php')` for hand-rolled

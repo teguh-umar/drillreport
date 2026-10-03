@@ -10,15 +10,18 @@
 include('../../../inc/includes.php');
 
 use GlpiPlugin\Drillreport\Drill;
+use GlpiPlugin\Pgnsuite\Menu as SuiteMenu;
 
 Session::checkRight(Drill::$rightname, READ);
 
 Html::header(
     Drill::getTypeName(Session::getPluralNumber()),
     '',
+    SuiteMenu::SECTOR,
     'drillreport',
     'drill'
 );
+SuiteMenu::renderSubNav('drillreport', 'drill');
 
 Search::show(Drill::class);
 

@@ -11,6 +11,7 @@ include('../../../inc/includes.php');
 
 use GlpiPlugin\Drillreport\Drill;
 use GlpiPlugin\Drillreport\Drill_Item;
+use GlpiPlugin\Pgnsuite\Menu as SuiteMenu;
 
 Session::checkRight(Drill_Item::$rightname, UPDATE);
 
@@ -41,7 +42,8 @@ if (isset($_POST['add'])) {
     $backToDrill();
 } elseif (isset($_GET['id'])) {
     $drills_id = (int) ($_GET['parent_id'] ?? 0);
-    Html::header(Drill_Item::getTypeName(1), '', 'drillreport', 'drill');
+    Html::header(Drill_Item::getTypeName(1), '', SuiteMenu::SECTOR, 'drillreport', 'drill');
+    SuiteMenu::renderSubNav('drillreport', 'drill');
     (new Drill_Item())->showForm((int) $_GET['id'], ['parent_id' => $drills_id]);
     Html::footer();
 } else {

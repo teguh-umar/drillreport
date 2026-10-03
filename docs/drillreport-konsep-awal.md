@@ -791,7 +791,7 @@ Sudah ada:
 | **Laporan cetak** | `src/Report.php` (assembler) + `templates/report.html.twig` (14 komponen §6, print CSS, section toggle `report_sections`, kolom Business Criticity ikut `show_business_criticity`) + `front/report.php` · tombol "View / print report" di form drill |
 | Dropdown | `Scenario.php`, `TestType.php`, `ActionCategory.php`, `Seed.php` (seed 5 test type) |
 | Rights | `RightDefinition.php` (4 right), grant per profil di `hook.php` |
-| Menu / Setup | `Menu.php` (**sektor sidebar sendiri**, `is_multi_entries`), `Profile.php`, `front/config.php` |
+| Menu / Setup | `Menu.php` (sejak v0.11.0: **satu entry di sektor bersama suite**, `lib/pgnsuite/Menu.php`; sebelumnya sektor sidebar sendiri), `Profile.php`, `front/config.php` |
 | Cron | `Cron.php` (`DrillReminder`, `ActionFollowup` — log-only stub) |
 | Asset picker | `Dropdown::showSelectItemFromItemtypes` di tab "Systems in scope" |
 

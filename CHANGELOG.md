@@ -16,6 +16,19 @@ Format: [Keep a Changelog](https://keepachangelog.com/); this project uses
 
 ## [Unreleased]
 
+## [0.7.15] - 2026-10-04
+
+Backported from `main` v0.12.1. Supersedes 0.7.14 (never deployed). Same upgrade step:
+`bin/console glpi:plugin:install drillreport --force`.
+
+### Fixed
+- **Moving an action that was already sent to Risk Register to a drill of
+  another entity is now refused**, with a message pointing to carry-over.
+  riskregister finds a Finding by entity + code, so a re-send from the other
+  entity would have created a second Finding without saying so. A move within
+  the same entity is unchanged.
+- A refused action update stays on the action's page instead of redirecting
+  to the drill.
 ## [0.7.14] - 2026-10-04
 
 Backported from `main` v0.12.0.

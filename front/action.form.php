@@ -2,7 +2,7 @@
 
 /**
  * DR Drill Report — improvement-action controller (child of Drill), plus the
- * "Send findings to Risk Register" bulk action.
+ * "Carry over" and "Send findings to Risk Register" actions.
  *
  * CSRF is validated by core before this legacy file runs — never call
  * Session::checkCSRF() here; Html::closeForm() emits the token.
@@ -36,6 +36,17 @@ if (isset($_POST['add'])) {
     $backToDrill();
 } elseif (isset($_POST['purge']) || isset($_POST['delete'])) {
     $action->delete($_POST, true);
+    $backToDrill();
+} elseif (isset($_POST['carry_over'])) {
+    $drills_id = (int) ($_POST[Action::$items_id] ?? 0);
+    $drill = new Drill();
+    if ($drills_id > 0 && $drill->getFromDB($drills_id) && $drill->can($drills_id, READ)) {
+        if (Action::carryOver((int) ($_POST['source_actions_id'] ?? 0), $drill) > 0) {
+            Session::addMessageAfterRedirect(__s('Improvement action carried over.', 'drillreport'));
+        } else {
+            Session::addMessageAfterRedirect(__s('Nothing was carried over — pick an action first.', 'drillreport'), false, WARNING);
+        }
+    }
     $backToDrill();
 } elseif (isset($_POST['send_to_riskregister'])) {
     $drills_id = (int) ($_POST[Action::$items_id] ?? 0);

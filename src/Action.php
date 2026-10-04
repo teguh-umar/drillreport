@@ -56,6 +56,17 @@ class Action extends CommonDBChild
 
     public function prepareInputForUpdate($input)
     {
+        // Moving the action to another drill: never detach it (no drill), and
+        // drop the asset link, which points at a row of the old drill.
+        if (is_array($input) && array_key_exists(self::$items_id, $input)) {
+            $new = (int) $input[self::$items_id];
+            if ($new <= 0) {
+                unset($input[self::$items_id]);
+            } elseif ($new !== (int) ($this->fields[self::$items_id] ?? 0)) {
+                $input['plugin_drillreport_drills_items_id'] = 0;
+            }
+        }
+
         $input = parent::prepareInputForUpdate($input);
         return is_array($input) ? $this->prepareCommon($input) : $input;
     }
@@ -145,7 +156,11 @@ class Action extends CommonDBChild
     ): array {
         $input = [
             'entities_id'    => $eid,
-            'code'           => sprintf('DRILL-%d-%d', (int) $row['plugin_drillreport_drills_id'], (int) $row['id']),
+            // An action already sent keeps its code, so moving it to another
+            // drill updates the same Finding instead of creating a second one.
+            'code'           => trim((string) ($row['riskregister_code'] ?? '')) !== ''
+                ? (string) $row['riskregister_code']
+                : sprintf('DRILL-%d-%d', (int) $row['plugin_drillreport_drills_id'], (int) $row['id']),
             'scope_label'    => $scope !== '' ? $scope : __('DR drill', 'drillreport'),
             'name'           => ($row['name'] ?: __('Drill finding', 'drillreport')),
             'severity'       => ucfirst((string) $row['severity']),
@@ -278,6 +293,119 @@ class Action extends CommonDBChild
     }
 
     // ---------------------------------------------------------------------
+    // Carry-over (copy an action from another drill)
+    // ---------------------------------------------------------------------
+
+    /** Fields copied by carryOver(). Not copied: the asset link and the Risk Register link. */
+    private const CARRY_FIELDS = [
+        'plugin_drillreport_actioncategories_id', 'name', 'content', 'cause',
+        'recommendation', 'severity', 'groups_id', 'users_id', 'date_due', 'status',
+    ];
+
+    /**
+     * Actions of other drills the user may see, not yet carried into $drill.
+     *
+     * @return array<int,string> action id => "drill (date) — finding [status]"
+     */
+    public static function carryOverChoices(Drill $drill): array
+    {
+        global $DB;
+
+        $at = self::getTable();
+        $dt = Drill::getTable();
+
+        $already = [];
+        foreach ($DB->request([
+            'SELECT' => ['source_actions_id'],
+            'FROM'   => $at,
+            'WHERE'  => [self::$items_id => $drill->getID(), 'source_actions_id' => ['>', 0]],
+        ]) as $r) {
+            $already[] = (int) $r['source_actions_id'];
+        }
+
+        $where = [
+            "$at." . self::$items_id => ['<>', $drill->getID()],
+            "$dt.is_deleted"         => 0,
+        ] + getEntitiesRestrictCriteria($dt, '', '', true);
+        if ($already !== []) {
+            $where[] = ['NOT' => ["$at.id" => $already]];
+        }
+
+        $out    = [];
+        $status = self::statusLabels();
+        foreach ($DB->request([
+            'SELECT'     => ["$at.id", "$at.name", "$at.status", "$dt.name AS drill_name", "$dt.date_drill"],
+            'FROM'       => $at,
+            'INNER JOIN' => [$dt => ['ON' => [$at => self::$items_id, $dt => 'id']]],
+            'WHERE'      => $where,
+            'ORDER'      => ["$dt.date_drill DESC", "$at.id"],
+        ]) as $r) {
+            $out[(int) $r['id']] = sprintf(
+                '%s%s — %s [%s]',
+                (string) $r['drill_name'],
+                $r['date_drill'] ? ' (' . $r['date_drill'] . ')' : '',
+                (string) $r['name'],
+                $status[$r['status']] ?? (string) $r['status']
+            );
+        }
+        return $out;
+    }
+
+    /**
+     * Copy an action of another drill into $target. The original stays where
+     * it is; the copy remembers it in `source_actions_id`.
+     *
+     * @return int new action id, 0 when nothing was copied
+     */
+    public static function carryOver(int $sourceId, Drill $target): int
+    {
+        $source = new self();
+        if ($sourceId <= 0 || !$source->getFromDB($sourceId)) {
+            return 0;
+        }
+        $from = (int) $source->fields[self::$items_id];
+        if ($from === (int) $target->getID() || !(new Drill())->can($from, READ)) {
+            return 0;
+        }
+        if (
+            countElementsInTable(self::getTable(), [
+                self::$items_id     => $target->getID(),
+                'source_actions_id' => $sourceId,
+            ]) > 0
+        ) {
+            return 0;
+        }
+
+        $input = [self::$items_id => (int) $target->getID(), 'source_actions_id' => $sourceId];
+        foreach (self::CARRY_FIELDS as $f) {
+            if (($source->fields[$f] ?? null) !== null) {
+                $input[$f] = $source->fields[$f];
+            }
+        }
+
+        return (int) (new self())->add($input);
+    }
+
+    /**
+     * "drill name (date)" of the action this one was carried over from; ''
+     * when it was created here, or the original no longer exists.
+     */
+    public static function originLabel(int $sourceId): string
+    {
+        $source = new self();
+        $drill  = new Drill();
+        if (
+            $sourceId <= 0
+            || !$source->getFromDB($sourceId)
+            || !$drill->getFromDB((int) $source->fields[self::$items_id])
+        ) {
+            return '';
+        }
+        $date = (string) ($drill->fields['date_drill'] ?? '');
+        return (string) $drill->fields['name'] . ($date !== '' ? ' (' . $date . ')' : '');
+    }
+
+    // ---------------------------------------------------------------------
     // Forms
     // ---------------------------------------------------------------------
 
@@ -296,12 +424,39 @@ class Action extends CommonDBChild
                 . "'><i class='ti ti-arrow-left'></i> " . __s('Back to drill', 'drillreport') . "</a>";
         }
         echo "<form method='post' action='" . htmlescape(self::getFormURL()) . "' data-track-changes='true'>";
-        echo "<input type='hidden' name='" . self::$items_id . "' value='" . $backDid . "'>";
+        // An existing action can be moved to another drill (the dropdown
+        // below); a new one always belongs to the drill it is added from.
+        // Core treats a parent change as create + purge
+        // (CommonDBConnexity::checkAttachedItemChangesAllowed()), so offer the
+        // dropdown only to users who hold both.
+        $canMove = $ID > 0 && $canedit
+            && Session::haveRight(self::$rightname, CREATE)
+            && Session::haveRight(self::$rightname, PURGE);
+        if (!$canMove) {
+            echo "<input type='hidden' name='" . self::$items_id . "' value='" . $backDid . "'>";
+        }
         if ($ID > 0) {
             echo "<input type='hidden' name='id' value='" . (int) $ID . "'>";
         }
 
         echo "<table class='tab_cadre_fixe'>";
+        if ($canMove) {
+            echo "<tr class='tab_bg_1'><td>" . htmlescape(Drill::getTypeName(1)) . "</td><td colspan='3'>";
+            Drill::dropdown([
+                'name'                => self::$items_id,
+                'value'               => $backDid,
+                'display_emptychoice' => false,
+                'comments'            => false,
+                'width'               => '100%',
+            ]);
+            echo "<div class='text-muted mt-1'>" . __s('Pick another drill to move this action there.', 'drillreport') . "</div>";
+            echo "</td></tr>";
+        }
+        $origin = self::originLabel((int) ($this->fields['source_actions_id'] ?? 0));
+        if ($origin !== '') {
+            echo "<tr class='tab_bg_1'><td>" . __s('Carried over from', 'drillreport') . "</td><td colspan='3'>"
+                . htmlescape($origin) . "</td></tr>";
+        }
         echo "<tr class='tab_bg_1'><td>" . __s('Finding', 'drillreport') . "</td><td>"
             . Html::input('name', ['value' => $this->fields['name'] ?? '']) . "</td>"
             . "<td>" . htmlescape(ActionCategory::getTypeName(1)) . "</td><td>";
@@ -379,6 +534,10 @@ class Action extends CommonDBChild
             if ($canedit) {
                 $label = "<a href='" . htmlescape(self::getFormURLWithID($r['id']) . '&parent_id=' . $drill->getID()) . "'>{$label}</a>";
             }
+            $origin = self::originLabel((int) ($r['source_actions_id'] ?? 0));
+            if ($origin !== '') {
+                $label .= "<div class='text-muted'>" . htmlescape(sprintf(__('Carried over from %s', 'drillreport'), $origin)) . "</div>";
+            }
             echo "<tr class='tab_bg_1'><td>{$label}</td>";
             echo "<td>" . htmlescape(self::severityLabels()[$r['severity']] ?? $r['severity']) . "</td>";
             echo "<td>" . htmlescape(self::statusLabels()[$r['status']] ?? $r['status']) . "</td>";
@@ -405,6 +564,24 @@ class Action extends CommonDBChild
         }
 
         if ($canedit) {
+            $choices = self::carryOverChoices($drill);
+            if ($choices !== []) {
+                echo "<h4 class='mt-3'>" . __s('Carry over an action from another drill', 'drillreport') . "</h4>";
+                echo "<div class='card mb-3'><div class='card-body'>";
+                echo "<form method='post' action='" . htmlescape(self::getFormURL()) . "'>";
+                echo "<input type='hidden' name='" . self::$items_id . "' value='" . (int) $drill->getID() . "'>";
+                echo "<div class='d-flex align-items-center gap-2'><div class='flex-grow-1'>";
+                Dropdown::showFromArray('source_actions_id', $choices, [
+                    'display_emptychoice' => true,
+                    'width'               => '100%',
+                ]);
+                echo "</div>" . Html::submit(__s('Carry over', 'drillreport'), ['name' => 'carry_over', 'class' => 'btn btn-outline-primary']) . "</div>";
+                echo "<div class='text-muted mt-2'>"
+                    . __s('Copies the action into this drill. The original stays on its own drill.', 'drillreport') . "</div>";
+                Html::closeForm();
+                echo "</div></div>";
+            }
+
             echo "<h4 class='mt-3'>" . __s('Add an improvement action', 'drillreport') . "</h4>";
             (new self())->showForm(0, ['parent_id' => (int) $drill->getID()]);
         }

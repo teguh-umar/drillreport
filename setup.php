@@ -22,7 +22,7 @@ use GlpiPlugin\Pgnsuite\AssetTab;
 use GlpiPlugin\Pgnsuite\ConfigTab;
 use GlpiPlugin\Pgnsuite\Menu as SuiteMenu;
 
-define('PLUGIN_DRILLREPORT_VERSION', '0.7.13');
+define('PLUGIN_DRILLREPORT_VERSION', '0.7.14');
 define('PLUGIN_DRILLREPORT_MIN_GLPI', '11.0.0');
 define('PLUGIN_DRILLREPORT_MAX_GLPI', '11.9.99');
 

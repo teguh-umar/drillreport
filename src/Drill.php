@@ -38,12 +38,110 @@ class Drill extends CommonDBTM
 
     public function prepareInputForAdd($input)
     {
+        $entity = (int) ($input['entities_id'] ?? $_SESSION['glpiactive_entity'] ?? 0);
+        if (!$this->scenarioAllowed($input, $entity)) {
+            return false;
+        }
         return $this->prepareCommon($input);
     }
 
     public function prepareInputForUpdate($input)
     {
+        $entity = (int) $this->fields['entities_id'];
+
+        // The entity of a drill changes only through GLPI's Transfer
+        // (Administration > Entities > Transfer); never from a posted value.
+        if (array_key_exists('entities_id', $input) && (int) $input['entities_id'] !== $entity) {
+            if (empty($input['_transfer'])) {
+                unset($input['entities_id']);
+            } else {
+                // The scenario may not be visible from the destination: use
+                // the one of the same name there, or a copy of it.
+                $input['plugin_drillreport_scenarios_id'] = Scenario::forEntity(
+                    (int) $this->fields['plugin_drillreport_scenarios_id'],
+                    (int) $input['entities_id']
+                );
+                return $this->prepareCommon($input);
+            }
+        }
+
+        if (!$this->scenarioAllowed($input, $entity)) {
+            return false;
+        }
         return $this->prepareCommon($input);
+    }
+
+    /**
+     * A newly picked scenario must be visible from the drill's entity. The
+     * form's dropdown already filters like this; a posted value is checked
+     * again here.
+     *
+     * @param array<string,mixed> $input
+     */
+    private function scenarioAllowed($input, int $entity): bool
+    {
+        $picked = (int) ($input['plugin_drillreport_scenarios_id'] ?? 0);
+        if (
+            $picked <= 0
+            || $picked === (int) ($this->fields['plugin_drillreport_scenarios_id'] ?? 0)
+            || Scenario::visibleFrom($picked, $entity)
+        ) {
+            return true;
+        }
+        Session::addMessageAfterRedirect(
+            __s('This DR scenario is not available in the drill\'s entity.', 'drillreport'),
+            false,
+            ERROR
+        );
+        return false;
+    }
+
+    /**
+     * After a transfer, the actions' categories follow the drill: a category
+     * the new entity cannot see is replaced by the one of the same name
+     * there, or by a copy of it. Objectives, actions and systems in scope
+     * carry no entity of their own, so they move with the drill as they are.
+     */
+    public function post_updateItem($history = true)
+    {
+        global $DB;
+
+        parent::post_updateItem($history);
+
+        if (!in_array('entities_id', $this->updates, true)) {
+            return;
+        }
+        $to = (int) $this->fields['entities_id'];
+        foreach ($DB->request([
+            'SELECT' => ['id', 'plugin_drillreport_actioncategories_id'],
+            'FROM'   => Action::getTable(),
+            'WHERE'  => [
+                Action::$items_id                        => $this->getID(),
+                'plugin_drillreport_actioncategories_id' => ['>', 0],
+            ],
+        ]) as $r) {
+            $new = ActionCategory::forEntity((int) $r['plugin_drillreport_actioncategories_id'], $to);
+            if ($new !== (int) $r['plugin_drillreport_actioncategories_id']) {
+                $DB->update(
+                    Action::getTable(),
+                    ['plugin_drillreport_actioncategories_id' => $new],
+                    ['id' => (int) $r['id']]
+                );
+            }
+        }
+    }
+
+    /**
+     * "Add to transfer list" on the drills list and on a drill. Core offers
+     * it only to a user with the Transfer right, in multi-entity mode.
+     */
+    public function getSpecificMassiveActions($checkitem = null)
+    {
+        $actions = parent::getSpecificMassiveActions($checkitem);
+        if (static::canUpdate()) {
+            \MassiveAction::getAddTransferList($actions);
+        }
+        return $actions;
     }
 
     /**
@@ -275,6 +373,12 @@ class Drill extends CommonDBTM
 
         $isNew = $this->isNewID($ID);
 
+        $movedNotice = !$isNew ? Drill_Item::movedNotice($this) : '';
+        if ($movedNotice !== '') {
+            echo "<div class='alert alert-warning mb-2' role='alert'>"
+                . "<i class='ti ti-corner-right-up'></i> " . htmlescape($movedNotice) . "</div>";
+        }
+
         if (!$isNew) {
             echo "<div class='mb-2 text-end'>";
             echo "<a class='btn btn-outline-primary btn-sm' target='_blank' href='"
@@ -305,7 +409,7 @@ class Drill extends CommonDBTM
 
         echo "<tr class='tab_bg_1'>";
         echo "<td>" . htmlescape(Scenario::getTypeName(1)) . "</td><td>";
-        Scenario::dropdown(['name' => 'plugin_drillreport_scenarios_id', 'value' => $this->fields['plugin_drillreport_scenarios_id'] ?? 0]);
+        Scenario::dropdown(['name' => 'plugin_drillreport_scenarios_id', 'value' => $this->fields['plugin_drillreport_scenarios_id'] ?? 0, 'entity' => $this->fields['entities_id'] ?? -1]);
         echo "</td>";
         echo "<td>" . htmlescape(TestType::getTypeName(1)) . "</td><td>";
         TestType::dropdown(['name' => 'plugin_drillreport_testtypes_id', 'value' => $this->fields['plugin_drillreport_testtypes_id'] ?? 0]);

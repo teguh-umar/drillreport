@@ -22,7 +22,7 @@ use GlpiPlugin\Pgnsuite\AssetTab;
 use GlpiPlugin\Pgnsuite\ConfigTab;
 use GlpiPlugin\Pgnsuite\Menu as SuiteMenu;
 
-define('PLUGIN_DRILLREPORT_VERSION', '0.7.16');
+define('PLUGIN_DRILLREPORT_VERSION', '0.7.17');
 define('PLUGIN_DRILLREPORT_MIN_GLPI', '11.0.0');
 define('PLUGIN_DRILLREPORT_MAX_GLPI', '11.9.99');
 
@@ -91,6 +91,13 @@ function plugin_init_drillreport(): void
         $PLUGIN_HOOKS['item_purge']['drillreport'][$itemtype] = $dr_item_purge;
     }
     $PLUGIN_HOOKS['item_purge']['drillreport'][Drill::class] = $dr_item_purge;
+
+    // A linked asset that is renamed or changes entity (GLPI Transfer):
+    // refresh the name / entity stored on its drill links. The drill stays
+    // where it is and keeps the link (Drill_Item::assetView()).
+    foreach (Drill_Item::getLinkedAssetItemtypes() as $itemtype) {
+        $PLUGIN_HOOKS['item_update']['drillreport'][$itemtype] = [Drill_Item::class, 'refreshSnapshot'];
+    }
 
     // One entry in the suite's shared sidebar sector (lib/pgnsuite/Menu.php,
     // same byte-identical rule as ConfigTab / AssetTab below — hub file §5).

@@ -26,8 +26,12 @@ are the MVP work items — see `docs/drillreport-konsep-awal.md` §10.
   by default — configurable via `plugin:drillreport` / `asset_itemtypes`. Every
   supported asset gets a **"DR drill history"** section inside the shared **"PGN Suite"**
   asset tab (one tab for all PGN plugins, horizontal sub-tabs — hub §5).
-- **Dropdowns** (Setup → Dropdowns): DR scenario, test type (seeded with the five
-  NIST 800-84 types), action category.
+- **Dropdowns** (Setup → Dropdowns): DR scenario (per entity), test type (global,
+  seeded with the five NIST 800-84 types, edited from the root entity only),
+  action category (shared defaults in the root entity, plus an entity's own).
+- **Entities**: a drill can be transferred to another entity with GLPI's
+  Transfer; a drill keeps its link to an asset that moved to another entity and
+  shows the stored name and the entity it went to, not the asset's live data.
 - **Cron**: `DrillReminder` (annual "not submitted" reminder),
   `ActionFollowup` (overdue improvement actions).
 - **Optional** manual "Send to Risk Register" — when `riskregister` is active,

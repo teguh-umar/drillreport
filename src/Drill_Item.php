@@ -79,27 +79,181 @@ class Drill_Item extends CommonDBRelation
      */
     public static function assetLinkable(string $itemtype, int $items_id, int $drills_id): bool
     {
+        return self::linkableAsset($itemtype, $items_id, $drills_id) !== null;
+    }
+
+    /** The asset when it can be linked to the drill ({@see assetLinkable()}), else null. */
+    private static function linkableAsset(string $itemtype, int $items_id, int $drills_id): ?CommonDBTM
+    {
         if (!in_array($itemtype, self::getLinkedAssetItemtypes(), true)) {
-            return false;
+            return null;
         }
         $asset = getItemForItemtype($itemtype);
         $drill = new Drill();
         if (!$asset || $items_id <= 0 || !$asset->getFromDB($items_id) || !$drill->getFromDB($drills_id)) {
-            return false;
+            return null;
         }
-        return $asset->isAccessibleFromEntities([(int) $drill->fields['entities_id']]);
+        return $asset->isAccessibleFromEntities([(int) $drill->fields['entities_id']]) ? $asset : null;
+    }
+
+    // ---------------------------------------------------------------------
+    // Asset snapshot (an asset that moved to an entity the drill cannot see)
+    // ---------------------------------------------------------------------
+
+    /**
+     * Snapshot columns of a link row: the asset's name and the entity it
+     * belongs to, as stored values.
+     *
+     * @return array{asset_name:string, asset_entities_id:int}
+     */
+    private static function snapshotOf(CommonDBTM $asset): array
+    {
+        return [
+            'asset_name'        => (string) $asset->getName(),
+            'asset_entities_id' => $asset->isEntityAssign() ? (int) $asset->getEntityID() : 0,
+        ];
+    }
+
+    /**
+     * `item_update` hook of the linked asset itemtypes (setup.php): keep the
+     * snapshot of every link to this asset. The entity is always stored. The
+     * name is stored while the drill can still see the asset, and one last
+     * time when the asset changes entity; after that the drill keeps the name
+     * it knew, not the other entity's live data.
+     */
+    public static function refreshSnapshot(CommonDBTM $asset): void
+    {
+        global $DB;
+
+        $updates = is_array($asset->updates ?? null) ? $asset->updates : [];
+        if (array_intersect(['entities_id', 'is_recursive', 'name'], $updates) === []) {
+            return;
+        }
+        $moved    = in_array('entities_id', $updates, true);
+        $snapshot = self::snapshotOf($asset);
+
+        foreach ($DB->request([
+            'SELECT'     => ['i.id', 'd.entities_id AS drill_entity'],
+            'FROM'       => self::getTable() . ' AS i',
+            'INNER JOIN' => [
+                Drill::getTable() . ' AS d' => ['ON' => ['i' => self::$items_id_1, 'd' => 'id']],
+            ],
+            'WHERE'      => ['i.itemtype' => $asset::class, 'i.items_id' => $asset->getID()],
+        ]) as $r) {
+            $set = ['asset_entities_id' => $snapshot['asset_entities_id']];
+            if ($moved || $asset->isAccessibleFromEntities([(int) $r['drill_entity']])) {
+                $set['asset_name'] = $snapshot['asset_name'];
+            }
+            $DB->update(self::getTable(), $set, ['id' => (int) $r['id']]);
+        }
+    }
+
+    /**
+     * How to show the asset of a link row to the current user.
+     *
+     * - `visible`: the drill's entity can see the asset. Live name; a link
+     *   only when the user may open the asset.
+     * - `moved`:   the asset now belongs to an entity the drill cannot see.
+     *   The stored name and that entity; never live asset data, and a link
+     *   only when the user may open the asset.
+     * - `missing`: the asset no longer exists.
+     *
+     * @param array<string,mixed> $row one drills_items row
+     * @return array{state:string, name:string, html:string, moved_to:string, entities_id:int, asset:?CommonDBTM}
+     */
+    public static function assetView(array $row, int $drillEntity): array
+    {
+        global $DB;
+
+        $asset = getItemForItemtype((string) $row['itemtype']);
+        if (!$asset || !$asset->getFromDB((int) $row['items_id'])) {
+            $name = trim((string) ($row['asset_name'] ?? '')) ?: NOT_AVAILABLE;
+            return ['state' => 'missing', 'name' => $name, 'html' => htmlescape($name), 'moved_to' => '', 'entities_id' => -1, 'asset' => null];
+        }
+
+        $canOpen = $asset->can($asset->getID(), READ);
+
+        if ($asset->isAccessibleFromEntities([$drillEntity])) {
+            $name = (string) $asset->getName();
+            // A link added before 1.0.0 whose snapshot the upgrade could not take.
+            if (array_key_exists('asset_name', $row) && (string) $row['asset_name'] === '' && (int) ($row['id'] ?? 0) > 0) {
+                $DB->update(self::getTable(), self::snapshotOf($asset), ['id' => (int) $row['id']]);
+            }
+            return [
+                'state'       => 'visible',
+                'name'        => $name,
+                'html'        => $canOpen ? $asset->getLink() : htmlescape($name),
+                'moved_to'    => '',
+                'entities_id' => (int) $asset->getEntityID(),
+                'asset'       => $asset,
+            ];
+        }
+
+        $name    = trim((string) ($row['asset_name'] ?? '')) ?: (string) $asset::getTypeName(1);
+        $eid     = (int) ($row['asset_entities_id'] ?? 0);
+        $movedTo = (string) Dropdown::getDropdownName('glpi_entities', $eid);
+        $label   = sprintf(__('%1$s (moved to %2$s)', 'drillreport'), $name, $movedTo);
+        return [
+            'state'       => 'moved',
+            'name'        => $label,
+            'html'        => $canOpen
+                ? "<a href='" . htmlescape($asset->getLinkURL()) . "'>" . htmlescape($label) . "</a>"
+                : htmlescape($label),
+            'moved_to'    => $movedTo,
+            'entities_id' => $eid,
+            'asset'       => null,
+        ];
+    }
+
+    /**
+     * Notice for the drill form when EVERY system in scope has moved to an
+     * entity the drill cannot see: recommend transferring the drill when
+     * they all went to one entity, otherwise only say where they went. The
+     * drill is never moved automatically. '' when there is nothing to say.
+     */
+    public static function movedNotice(Drill $drill): string
+    {
+        global $DB;
+
+        $entities = [];
+        $total    = 0;
+        foreach ($DB->request([
+            'FROM'  => self::getTable(),
+            'WHERE' => [self::$items_id_1 => $drill->getID()],
+        ]) as $r) {
+            $total++;
+            $view = self::assetView($r, (int) $drill->fields['entities_id']);
+            if ($view['state'] !== 'moved') {
+                return '';
+            }
+            $entities[$view['entities_id']] = $view['moved_to'];
+        }
+        if ($total === 0) {
+            return '';
+        }
+
+        if (count($entities) === 1) {
+            return sprintf(
+                __('All systems in scope of this drill now belong to the entity "%s". Consider transferring the drill there: a user with the Transfer right can add it to the transfer list from the DR drills list.', 'drillreport'),
+                (string) reset($entities)
+            );
+        }
+        return sprintf(
+            __('All systems in scope of this drill have moved to other entities (%s). The drill stays in its entity.', 'drillreport'),
+            implode(', ', $entities)
+        );
     }
 
     public function prepareInputForAdd($input)
     {
-        if (
-            is_array($input)
-            && !self::assetLinkable(
+        $linkable = is_array($input)
+            ? self::linkableAsset(
                 (string) ($input['itemtype'] ?? ''),
                 (int) ($input['items_id'] ?? 0),
                 (int) ($input[self::$items_id_1] ?? 0)
             )
-        ) {
+            : null;
+        if (is_array($input) && $linkable === null) {
             Session::addMessageAfterRedirect(
                 __s('This asset cannot be added: it is not an allowed asset type, or it is not visible from the drill\'s entity.', 'drillreport'),
                 false,
@@ -113,6 +267,9 @@ class Drill_Item extends CommonDBRelation
             return $input;
         }
         $input = $this->nullifyEmpty($input);
+        if ($linkable !== null) {
+            $input = self::snapshotOf($linkable) + $input;
+        }
 
         $itemtype = (string) ($input['itemtype'] ?? '');
         $items_id = (int) ($input['items_id'] ?? 0);
@@ -130,6 +287,10 @@ class Drill_Item extends CommonDBRelation
 
     public function prepareInputForUpdate($input)
     {
+        // The snapshot is written by this class only, never from a form.
+        if (is_array($input)) {
+            unset($input['asset_name'], $input['asset_entities_id']);
+        }
         $input = parent::prepareInputForUpdate($input);
         return is_array($input) ? $this->nullifyEmpty($input) : $input;
     }
@@ -277,9 +438,9 @@ class Drill_Item extends CommonDBRelation
         $canedit = Session::haveRight(self::$rightname, UPDATE);
 
         $assetLabel = '';
-        $asset = getItemForItemtype((string) ($this->fields['itemtype'] ?? ''));
-        if ($asset && $asset->getFromDB((int) ($this->fields['items_id'] ?? 0))) {
-            $assetLabel = $asset->getLink();
+        $drill = new Drill();
+        if ($ID > 0 && $drill->getFromDB((int) $this->fields[self::$items_id_1])) {
+            $assetLabel = self::assetView($this->fields, (int) $drill->fields['entities_id'])['html'];
         }
 
         echo "<div class='card'><div class='card-body'>";
@@ -343,8 +504,7 @@ class Drill_Item extends CommonDBRelation
             . "<th>" . __s('Order', 'drillreport') . "</th>"
             . "</tr>";
         foreach ($rows as $r) {
-            $asset = getItemForItemtype($r['itemtype']);
-            $label = ($asset && $asset->getFromDB($r['items_id'])) ? $asset->getLink() : htmlescape(NOT_AVAILABLE);
+            $label = self::assetView($r, (int) $drill->fields['entities_id'])['html'];
             if ($canedit) {
                 $label .= " <a href='" . htmlescape(self::getFormURLWithID($r['id']) . '&parent_id=' . $drill->getID()) . "' title='" . __s('Edit') . "'><i class='ti ti-edit'></i></a>";
             }

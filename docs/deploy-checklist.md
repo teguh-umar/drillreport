@@ -109,6 +109,21 @@ Confirm: `unzip -l ../drillreportv*.zip` → root is `drillreport/`, no `.git/`.
       actions → pick one → Carry over → a copy appears with "Carried over from
       <drill>", the original is still on its drill, and the picked action is
       no longer offered for this drill. The report shows the same note
+- [ ] **Reference data** (v1.0.0 / v0.7.17), after the upgrade: Setup →
+      Dropdowns → DR scenarios shows an Entity column, each scenario in the
+      entity of the drills that use it; Action categories are all in the root
+      entity with "Child entities" = Yes; a drill form lists only its entity's
+      scenarios; Test types can be edited only while working in the root entity
+- [ ] **Transfer** (v1.0.0 / v0.7.17), as a user with the Transfer right: DR
+      drills list → tick a drill → Actions → "Add to transfer list" →
+      Administration → Entities → Transfer → pick the destination → the drill
+      is in the new entity with its objectives, actions and systems; its
+      scenario and local categories exist there under the same name
+- [ ] **Moved asset** (v1.0.0 / v0.7.17): transfer an asset that is in a
+      drill's scope to an entity the drill cannot see → the drill's "Systems in
+      scope" shows "<name> (moved to <entity>)", as a link only for a user who
+      can open the asset; when every system of the drill has moved, the drill
+      form shows the notice recommending a transfer
 - [ ] Systems in scope → asset picker lists `Appliance` + `Computer`; add one →
       row appears with RTO/RPO columns
 - [ ] Open the linked `Appliance` / `Computer` → **"PGN Suite"** tab → **"DR drill history"**

@@ -97,11 +97,13 @@ class Report
             'WHERE' => ['plugin_drillreport_drills_id' => $drill->getID()],
             'ORDER' => ['recovery_order', 'id'],
         ]) as $r) {
-            $assetName = NOT_AVAILABLE;
+            // An asset that moved to an entity the drill cannot see is shown
+            // from its stored snapshot, with no live data (criticity).
+            $view      = Drill_Item::assetView($r, $eid);
+            $assetName = $view['name'];
             $criticity = '';
-            $asset = getItemForItemtype((string) $r['itemtype']);
-            if ($asset && $asset->getFromDB((int) $r['items_id'])) {
-                $assetName = $asset->getName();
+            $asset     = $view['asset'];
+            if ($asset !== null) {
                 if ($showCriticity && isset($asset->fields['businesscriticities_id'])) {
                     $criticity = (string) Dropdown::getDropdownName(
                         'glpi_businesscriticities',

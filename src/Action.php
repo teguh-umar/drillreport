@@ -50,12 +50,46 @@ class Action extends CommonDBChild
 
     public function prepareInputForAdd($input)
     {
+        if (
+            is_array($input)
+            && !$this->categoryAllowed($input, self::drillEntity((int) ($input[self::$items_id] ?? 0)))
+        ) {
+            return false;
+        }
         $input = parent::prepareInputForAdd($input);
         return is_array($input) ? $this->prepareCommon($input) : $input;
     }
 
+    /**
+     * A newly picked category must be visible from the drill's entity. The
+     * form's dropdown already filters like this; a posted value is checked
+     * again here.
+     *
+     * @param array<string,mixed> $input
+     */
+    private function categoryAllowed(array $input, int $entity): bool
+    {
+        $field  = 'plugin_drillreport_actioncategories_id';
+        $picked = (int) ($input[$field] ?? 0);
+        if (
+            $picked <= 0
+            || $picked === (int) ($this->fields[$field] ?? 0)
+            || ActionCategory::visibleFrom($picked, $entity)
+        ) {
+            return true;
+        }
+        Session::addMessageAfterRedirect(
+            __s('This action category is not available in the drill\'s entity.', 'drillreport'),
+            false,
+            ERROR
+        );
+        return false;
+    }
+
     public function prepareInputForUpdate($input)
     {
+        $entity = self::drillEntity((int) ($this->fields[self::$items_id] ?? 0));
+
         // Moving the action to another drill: never detach it (no drill), and
         // drop the asset link, which points at a row of the old drill.
         if (is_array($input) && array_key_exists(self::$items_id, $input)) {
@@ -63,13 +97,11 @@ class Action extends CommonDBChild
             if ($new <= 0) {
                 unset($input[self::$items_id]);
             } elseif ($new !== (int) ($this->fields[self::$items_id] ?? 0)) {
+                $newEntity = self::drillEntity($new);
                 // Its Finding lives in the old drill's entity (riskregister's
                 // key is entities_id + code): a re-send from another entity
                 // would miss it and create a second Finding.
-                if (
-                    (int) ($this->fields['riskregister_findings_id'] ?? 0) > 0
-                    && self::drillEntity($new) !== self::drillEntity((int) $this->fields[self::$items_id])
-                ) {
+                if ((int) ($this->fields['riskregister_findings_id'] ?? 0) > 0 && $newEntity !== $entity) {
                     Session::addMessageAfterRedirect(
                         __s('This action was already sent to Risk Register, so it cannot be moved to a drill of another entity. Carry it over instead.', 'drillreport'),
                         false,
@@ -78,7 +110,22 @@ class Action extends CommonDBChild
                     return false;
                 }
                 $input['plugin_drillreport_drills_items_id'] = 0;
+
+                if ($newEntity !== $entity) {
+                    // The category follows the action into the other entity:
+                    // the one of the same name there, or a copy of it.
+                    $field = 'plugin_drillreport_actioncategories_id';
+                    $input[$field] = ActionCategory::forEntity(
+                        (int) ($input[$field] ?? $this->fields[$field] ?? 0),
+                        $newEntity
+                    );
+                    $entity = $newEntity;
+                }
             }
+        }
+
+        if (is_array($input) && !$this->categoryAllowed($input, $entity)) {
+            return false;
         }
 
         $input = parent::prepareInputForUpdate($input);
@@ -274,9 +321,9 @@ class Action extends CommonDBChild
             if ((int) $row['plugin_drillreport_drills_items_id'] > 0) {
                 $li = new Drill_Item();
                 if ($li->getFromDB((int) $row['plugin_drillreport_drills_items_id'])) {
-                    $asset = getItemForItemtype($li->fields['itemtype']);
-                    if ($asset && $asset->getFromDB($li->fields['items_id'])) {
-                        $assetLabel = (string) $asset->getName();
+                    $view = Drill_Item::assetView($li->fields, $eid);
+                    if ($view['state'] !== 'missing') {
+                        $assetLabel = $view['name'];
                     }
                 }
             }
@@ -403,6 +450,12 @@ class Action extends CommonDBChild
                 $input[$f] = $source->fields[$f];
             }
         }
+        // A category the target's entity cannot see: the one of the same
+        // name there, or a copy of it.
+        $input['plugin_drillreport_actioncategories_id'] = ActionCategory::forEntity(
+            (int) ($source->fields['plugin_drillreport_actioncategories_id'] ?? 0),
+            (int) $target->fields['entities_id']
+        );
 
         return (int) (new self())->add($input);
     }
@@ -485,9 +538,12 @@ class Action extends CommonDBChild
         echo "<tr class='tab_bg_1'><td>" . __s('Finding', 'drillreport') . "</td><td>"
             . Html::input('name', ['value' => $this->fields['name'] ?? '']) . "</td>"
             . "<td>" . htmlescape(ActionCategory::getTypeName(1)) . "</td><td>";
+        // Categories, groups and users of the drill's entity (-1 = no drill yet).
+        $drillEntity = self::drillEntity($backDid);
         ActionCategory::dropdown([
-            'name'  => 'plugin_drillreport_actioncategories_id',
-            'value' => $this->fields['plugin_drillreport_actioncategories_id'] ?? 0,
+            'name'   => 'plugin_drillreport_actioncategories_id',
+            'value'  => $this->fields['plugin_drillreport_actioncategories_id'] ?? 0,
+            'entity' => $drillEntity,
         ]);
         echo "</td></tr>";
 
@@ -498,9 +554,9 @@ class Action extends CommonDBChild
         echo "</td></tr>";
 
         echo "<tr class='tab_bg_1'><td>" . __s('Owner group', 'drillreport') . "</td><td>";
-        \Group::dropdown(['name' => 'groups_id', 'value' => $this->fields['groups_id'] ?? 0, 'condition' => ['is_assign' => 1]]);
+        \Group::dropdown(['name' => 'groups_id', 'value' => $this->fields['groups_id'] ?? 0, 'condition' => ['is_assign' => 1], 'entity' => $drillEntity]);
         echo "</td><td>" . __s('Owner') . "</td><td>";
-        \User::dropdown(['name' => 'users_id', 'value' => $this->fields['users_id'] ?? 0, 'right' => 'all']);
+        \User::dropdown(['name' => 'users_id', 'value' => $this->fields['users_id'] ?? 0, 'right' => 'all', 'entity' => $drillEntity]);
         echo "</td></tr>";
 
         echo "<tr class='tab_bg_1'><td>" . __s('Due date') . "</td><td>";

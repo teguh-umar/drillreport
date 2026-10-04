@@ -13,6 +13,34 @@ Format: [Keep a Changelog](https://keepachangelog.com/); this project uses
 
 ## [Unreleased]
 
+## [0.12.2] - 2026-10-04
+
+Access control only: rows are now checked against the **entity of their
+drill**, not just the profile right. Includes 0.12.0 / 0.12.1 (never
+deployed), so the upgrade still needs
+`bin/console glpi:plugin:install drillreport --force`.
+
+### Security
+- **The Improvement actions list showed every entity's actions.** Objective,
+  Action and Drill_Item have no `entities_id` of their own, and core restricts
+  a search list only when the table has one. Their searches now join the drill
+  and keep only rows whose drill is in the user's entities
+  (`plugin_drillreport_addDefaultJoin` / `addDefaultWhere`, `src/EntityScope.php`).
+  Cron and CLI are not restricted.
+- **The action, objective and system-in-scope pages accepted any id.** They
+  checked the profile right only, so a row of another entity's drill could be
+  opened, changed or deleted by its id. Every branch now also requires that the
+  user may open the row's drill, read from the stored row, not from the
+  request. A drill or asset posted with an objective / system update is ignored.
+- **Asset tab "DR drill history"** listed drills of other entities; it is now
+  limited to the viewer's entities.
+- **Adding a system to a drill** trusted the posted asset. The server now
+  checks that it is an allowed asset type, exists, and is visible from the
+  drill's entity (same entity, or a recursive asset of an ancestor entity).
+- "Carried over from <drill>" is shown only to a viewer who may open that drill.
+
+### Fixed
+- The sample drill links an asset of its own entity only.
 ## [0.12.1] - 2026-10-04
 
 Supersedes 0.12.0 (never deployed). Same upgrade step:

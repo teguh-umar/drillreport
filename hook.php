@@ -305,6 +305,26 @@ function plugin_drillreport_install(): bool
     return true;
 }
 
+/**
+ * Search lists of Objective / Action / Drill_Item: join the drill and keep
+ * only rows whose drill is in the user's entities. These tables have no
+ * `entities_id`, so core adds no entity restriction of its own
+ * (Hooks::AUTO_ADD_DEFAULT_JOIN / AUTO_ADD_DEFAULT_WHERE).
+ *
+ * @param array<int,string> $already_link_tables
+ * @return array<string,mixed>
+ */
+function plugin_drillreport_addDefaultJoin($itemtype, $ref_table, &$already_link_tables): array
+{
+    return \GlpiPlugin\Drillreport\EntityScope::defaultJoin((string) $itemtype, (string) $ref_table);
+}
+
+/** @return array<int|string,mixed> */
+function plugin_drillreport_addDefaultWhere($itemtype): array
+{
+    return \GlpiPlugin\Drillreport\EntityScope::defaultWhere((string) $itemtype);
+}
+
 function plugin_drillreport_uninstall(): bool
 {
     \CronTask::unregister('drillreport');

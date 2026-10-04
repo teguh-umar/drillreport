@@ -95,6 +95,12 @@ Confirm: `unzip -l ../drillreportv*.zip` → root is `drillreport/`, no `.git/`.
       each shows its add form
 - [ ] Add an objective (result dropdown) → saved, shows in the list, editable
 - [ ] Add an improvement action (severity, owner group, due date) → saved
+- [ ] **Entity checks** (v0.12.2 / v0.7.16) — as a user whose profile is on
+      **one non-root entity only**: the Improvement actions list shows only
+      that entity's actions; opening `front/action.form.php?id=<id of another
+      entity's action>` (same for `objective.form.php`, `drill_item.form.php`)
+      is refused; an asset's "DR drill history" lists only that entity's drills.
+      As Super-Admin everything still lists and opens as before
 - [ ] **Move** (v0.12.1 / v0.7.15): open an action → the "DR drill" dropdown
       shows its drill → pick another drill → Save → you land on that drill and
       the action is in its "Improvement actions" tab, gone from the old one

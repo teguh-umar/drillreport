@@ -409,7 +409,8 @@ class Action extends CommonDBChild
 
     /**
      * "drill name (date)" of the action this one was carried over from; ''
-     * when it was created here, or the original no longer exists.
+     * when it was created here, the original no longer exists, or the viewer
+     * may not open the drill it came from.
      */
     public static function originLabel(int $sourceId): string
     {
@@ -419,6 +420,7 @@ class Action extends CommonDBChild
             $sourceId <= 0
             || !$source->getFromDB($sourceId)
             || !$drill->getFromDB((int) $source->fields[self::$items_id])
+            || !$drill->can($drill->getID(), READ)
         ) {
             return '';
         }

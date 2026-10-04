@@ -95,10 +95,10 @@ Confirm: `unzip -l ../drillreportv*.zip` → root is `drillreport/`, no `.git/`.
       each shows its add form
 - [ ] Add an objective (result dropdown) → saved, shows in the list, editable
 - [ ] Add an improvement action (severity, owner group, due date) → saved
-- [ ] **Move** (v0.12.0 / v0.7.14): open an action → the "DR drill" dropdown
+- [ ] **Move** (v0.12.1 / v0.7.15): open an action → the "DR drill" dropdown
       shows its drill → pick another drill → Save → you land on that drill and
       the action is in its "Improvement actions" tab, gone from the old one
-- [ ] **Carry over** (v0.12.0 / v0.7.14): on a drill's "Improvement actions"
+- [ ] **Carry over** (v0.12.1 / v0.7.15): on a drill's "Improvement actions"
       tab, "Carry over an action from another drill" lists the other drills'
       actions → pick one → Carry over → a copy appears with "Carried over from
       <drill>", the original is still on its drill, and the picked action is

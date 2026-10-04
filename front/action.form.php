@@ -32,7 +32,10 @@ if (isset($_POST['add'])) {
     $action->add($_POST);
     $backToDrill();
 } elseif (isset($_POST['update'])) {
-    $action->update($_POST);
+    // A refused update (e.g. a move that is not allowed) stays on the action.
+    if (!$action->update($_POST)) {
+        Html::back();
+    }
     $backToDrill();
 } elseif (isset($_POST['purge']) || isset($_POST['delete'])) {
     $action->delete($_POST, true);

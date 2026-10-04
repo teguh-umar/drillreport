@@ -63,12 +63,33 @@ class Action extends CommonDBChild
             if ($new <= 0) {
                 unset($input[self::$items_id]);
             } elseif ($new !== (int) ($this->fields[self::$items_id] ?? 0)) {
+                // Its Finding lives in the old drill's entity (riskregister's
+                // key is entities_id + code): a re-send from another entity
+                // would miss it and create a second Finding.
+                if (
+                    (int) ($this->fields['riskregister_findings_id'] ?? 0) > 0
+                    && self::drillEntity($new) !== self::drillEntity((int) $this->fields[self::$items_id])
+                ) {
+                    Session::addMessageAfterRedirect(
+                        __s('This action was already sent to Risk Register, so it cannot be moved to a drill of another entity. Carry it over instead.', 'drillreport'),
+                        false,
+                        ERROR
+                    );
+                    return false;
+                }
                 $input['plugin_drillreport_drills_items_id'] = 0;
             }
         }
 
         $input = parent::prepareInputForUpdate($input);
         return is_array($input) ? $this->prepareCommon($input) : $input;
+    }
+
+    /** Entity of a drill; -1 when the drill does not exist. */
+    private static function drillEntity(int $drills_id): int
+    {
+        $drill = new Drill();
+        return $drill->getFromDB($drills_id) ? (int) $drill->fields['entities_id'] : -1;
     }
 
     /**
@@ -426,9 +447,11 @@ class Action extends CommonDBChild
         echo "<form method='post' action='" . htmlescape(self::getFormURL()) . "' data-track-changes='true'>";
         // An existing action can be moved to another drill (the dropdown
         // below); a new one always belongs to the drill it is added from.
-        // Core treats a parent change as create + purge
-        // (CommonDBConnexity::checkAttachedItemChangesAllowed()), so offer the
-        // dropdown only to users who hold both.
+        // A parent change is a plain update (same id, same history), but core
+        // allows it only to a user who could create the row under the new
+        // parent and purge the current one
+        // (CommonDBConnexity::checkAttachedItemChangesAllowed()). Offer the
+        // dropdown only to them; anyone else would just get a refusal.
         $canMove = $ID > 0 && $canedit
             && Session::haveRight(self::$rightname, CREATE)
             && Session::haveRight(self::$rightname, PURGE);

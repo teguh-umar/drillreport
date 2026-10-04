@@ -91,10 +91,7 @@ class Upgrade
                 if (!$asset || !$asset->getFromDB((int) $r['items_id'])) {
                     continue;
                 }
-                $DB->update($table, [
-                    'asset_name'        => (string) $asset->getName(),
-                    'asset_entities_id' => $asset->isEntityAssign() ? (int) $asset->getEntityID() : 0,
-                ], ['id' => (int) $r['id']]);
+                $DB->update($table, Drill_Item::snapshotOf($asset), ['id' => (int) $r['id']]);
             } catch (\Throwable $e) {
                 self::log('asset snapshot skipped for link ' . (int) $r['id'] . ': ' . $e->getMessage());
             }

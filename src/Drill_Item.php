@@ -106,7 +106,7 @@ class Drill_Item extends CommonDBRelation
      *
      * @return array{asset_name:string, asset_entities_id:int}
      */
-    private static function snapshotOf(CommonDBTM $asset): array
+    public static function snapshotOf(CommonDBTM $asset): array
     {
         return [
             'asset_name'        => (string) $asset->getName(),

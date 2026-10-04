@@ -123,6 +123,7 @@ function plugin_drillreport_install(): bool
           `id` int unsigned NOT NULL AUTO_INCREMENT,
           `plugin_drillreport_drills_id` int unsigned NOT NULL DEFAULT 0,
           `plugin_drillreport_drills_items_id` int unsigned NOT NULL DEFAULT 0,
+          `source_actions_id` int unsigned NOT NULL DEFAULT 0,
           `plugin_drillreport_actioncategories_id` int unsigned NOT NULL DEFAULT 0,
           `name` varchar(255) NOT NULL DEFAULT '',
           `content` text,
@@ -140,6 +141,7 @@ function plugin_drillreport_install(): bool
           PRIMARY KEY (`id`),
           KEY `drill` (`plugin_drillreport_drills_id`),
           KEY `drill_item` (`plugin_drillreport_drills_items_id`),
+          KEY `source_actions_id` (`source_actions_id`),
           KEY `category` (`plugin_drillreport_actioncategories_id`),
           KEY `severity` (`severity`),
           KEY `status` (`status`),
@@ -198,6 +200,12 @@ function plugin_drillreport_install(): bool
     if ($DB->tableExists('glpi_plugin_drillreport_drills_items')) {
         // v0.6.0: the DR failover target (name / IP) for this system.
         $glpiMigration->addField('glpi_plugin_drillreport_drills_items', 'dr_target', 'string', ['value' => '', 'after' => 'items_id']);
+    }
+    if ($DB->tableExists('glpi_plugin_drillreport_actions')) {
+        // v0.12.0: an action carried over from another drill remembers the
+        // action it was copied from (0 = created here). 'fkey' = INT UNSIGNED.
+        $glpiMigration->addField('glpi_plugin_drillreport_actions', 'source_actions_id', 'fkey', ['after' => 'plugin_drillreport_drills_items_id']);
+        $glpiMigration->addKey('glpi_plugin_drillreport_actions', 'source_actions_id');
     }
 
     DRMigration::install($glpiMigration);

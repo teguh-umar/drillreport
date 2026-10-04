@@ -13,6 +13,33 @@ Format: [Keep a Changelog](https://keepachangelog.com/); this project uses
 
 ## [Unreleased]
 
+## [0.12.0] - 2026-10-04
+
+**Upgrade needs the install step** (new column):
+`bin/console glpi:plugin:install drillreport --force`, then
+`glpi:plugin:activate drillreport` if it was deactivated.
+
+### Added
+- **Move an improvement action to another drill.** The action's edit form has
+  a "DR drill" dropdown; picking another drill and saving moves the action
+  there. Its asset link is cleared (it pointed at a system of the old drill).
+  Offered to users who hold Update, Create and Delete permanently on
+  improvement actions, which is what core requires for a parent change.
+- **Carry over an action from another drill.** The drill's "Improvement
+  actions" tab has a "Carry over an action from another drill" picker listing
+  actions of the other drills the user may see. It **copies** the action into
+  this drill (finding, category, severity, status, owner, due date,
+  observation, root cause, recommendation); the original stays on its drill.
+  The copy shows "Carried over from <drill> (<date>)" in the tab, on its edit
+  form and in the printable report. An action can be carried into a drill once.
+- Column `glpi_plugin_drillreport_actions.source_actions_id` (INT UNSIGNED,
+  0 = created here) records the action a copy came from.
+
+### Changed
+- "Send findings to Risk Register" reuses an action's stored Risk Register
+  code, so an action that was sent and then moved keeps updating the same
+  Finding instead of creating a second one. A carried-over copy is a new
+  action with its own code.
 ## [0.11.1] - 2026-10-04
 
 ### Added

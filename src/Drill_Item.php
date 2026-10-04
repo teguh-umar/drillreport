@@ -71,8 +71,43 @@ class Drill_Item extends CommonDBRelation
         'rto_target_minutes', 'rto_actual_minutes', 'rpo_target_minutes', 'rpo_actual_minutes', 'recovery_order',
     ];
 
+    /**
+     * Can this asset be linked to this drill? An allowed itemtype, an existing
+     * asset, and visible from the drill's entity the GLPI way (same entity, or
+     * a recursive asset of an ancestor entity). The form's picker already
+     * filters like this; a posted value is checked again here.
+     */
+    public static function assetLinkable(string $itemtype, int $items_id, int $drills_id): bool
+    {
+        if (!in_array($itemtype, self::getLinkedAssetItemtypes(), true)) {
+            return false;
+        }
+        $asset = getItemForItemtype($itemtype);
+        $drill = new Drill();
+        if (!$asset || $items_id <= 0 || !$asset->getFromDB($items_id) || !$drill->getFromDB($drills_id)) {
+            return false;
+        }
+        return $asset->isAccessibleFromEntities([(int) $drill->fields['entities_id']]);
+    }
+
     public function prepareInputForAdd($input)
     {
+        if (
+            is_array($input)
+            && !self::assetLinkable(
+                (string) ($input['itemtype'] ?? ''),
+                (int) ($input['items_id'] ?? 0),
+                (int) ($input[self::$items_id_1] ?? 0)
+            )
+        ) {
+            Session::addMessageAfterRedirect(
+                __s('This asset cannot be added: it is not an allowed asset type, or it is not visible from the drill\'s entity.', 'drillreport'),
+                false,
+                ERROR
+            );
+            return false;
+        }
+
         $input = parent::prepareInputForAdd($input);
         if (!is_array($input)) {
             return $input;
@@ -364,7 +399,10 @@ class Drill_Item extends CommonDBRelation
             'INNER JOIN' => [
                 Drill::getTable() . ' AS d' => ['ON' => ['i' => self::$items_id_1, 'd' => 'id']],
             ],
-            'WHERE' => ['i.itemtype' => $item::class, 'i.items_id' => $item->getID()],
+            // Only drills of the viewer's entities: the asset can be visible
+            // to someone who may not open the drill.
+            'WHERE' => ['i.itemtype' => $item::class, 'i.items_id' => $item->getID()]
+                + getEntitiesRestrictCriteria('d', '', '', true),
             'ORDER' => 'd.date_drill DESC',
         ]);
 

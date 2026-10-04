@@ -12,6 +12,7 @@ include('../../../inc/includes.php');
 
 use GlpiPlugin\Drillreport\Action;
 use GlpiPlugin\Drillreport\Drill;
+use GlpiPlugin\Drillreport\EntityScope;
 use GlpiPlugin\Pgnsuite\Menu as SuiteMenu;
 
 Session::checkRight(Action::$rightname, UPDATE);
@@ -28,16 +29,25 @@ $backToDrill = static function (): void {
     Html::back();
 };
 
+// The right alone says nothing about the entity: every branch also checks
+// that the user may open the drill the row belongs to (EntityScope).
 if (isset($_POST['add'])) {
+    EntityScope::checkDrill((int) ($_POST[Action::$items_id] ?? 0));
     $action->add($_POST);
     $backToDrill();
 } elseif (isset($_POST['update'])) {
+    EntityScope::checkChild($action, (int) ($_POST['id'] ?? 0));
+    if ((int) ($_POST[Action::$items_id] ?? 0) > 0) {
+        EntityScope::checkDrill((int) $_POST[Action::$items_id]); // move target
+    }
     // A refused update (e.g. a move that is not allowed) stays on the action.
     if (!$action->update($_POST)) {
         Html::back();
     }
     $backToDrill();
 } elseif (isset($_POST['purge']) || isset($_POST['delete'])) {
+    EntityScope::checkChild($action, (int) ($_POST['id'] ?? 0));
+    $_POST[Action::$items_id] = (int) $action->fields[Action::$items_id];
     $action->delete($_POST, true);
     $backToDrill();
 } elseif (isset($_POST['carry_over'])) {
@@ -75,6 +85,11 @@ if (isset($_POST['add'])) {
     Html::back();
 } elseif (isset($_GET['id'])) {
     $drills_id = (int) ($_GET['parent_id'] ?? 0);
+    if ((int) $_GET['id'] > 0) {
+        EntityScope::checkChild($action, (int) $_GET['id']);
+    } else {
+        EntityScope::checkDrill($drills_id);
+    }
     Html::header(Action::getTypeName(1), '', SuiteMenu::SECTOR, 'drillreport', 'action');
     SuiteMenu::renderSubNav('drillreport', 'action');
     (new Action())->showForm((int) $_GET['id'], ['parent_id' => $drills_id]);

@@ -181,7 +181,14 @@ class Sample
                 continue;
             }
             $asset = new $itemtype();
-            $rows = $asset->find([], [], 1);
+            // An asset of the sample drill's entity only (Drill_Item refuses any other).
+            $rows = $asset->find(
+                $asset->isEntityAssign()
+                    ? getEntitiesRestrictCriteria($asset::getTable(), '', $entities_id, $asset->maybeRecursive())
+                    : [],
+                [],
+                1
+            );
             if ($rows === []) {
                 continue;
             }

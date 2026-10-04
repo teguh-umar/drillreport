@@ -161,6 +161,7 @@ class Report
                 'owner'           => $owner,
                 'date_due'        => (string) $r['date_due'],
                 'rr_code'         => (int) $r['riskregister_findings_id'] > 0 ? (string) $r['riskregister_code'] : '',
+                'carried_from'    => Action::originLabel((int) ($r['source_actions_id'] ?? 0)),
             ];
         }
         usort($findings, static fn ($a, $b) => [$a['severity_rank'], $a['name']] <=> [$b['severity_rank'], $b['name']]);

@@ -95,6 +95,14 @@ Confirm: `unzip -l ../drillreportv*.zip` → root is `drillreport/`, no `.git/`.
       each shows its add form
 - [ ] Add an objective (result dropdown) → saved, shows in the list, editable
 - [ ] Add an improvement action (severity, owner group, due date) → saved
+- [ ] **Move** (v0.12.0 / v0.7.14): open an action → the "DR drill" dropdown
+      shows its drill → pick another drill → Save → you land on that drill and
+      the action is in its "Improvement actions" tab, gone from the old one
+- [ ] **Carry over** (v0.12.0 / v0.7.14): on a drill's "Improvement actions"
+      tab, "Carry over an action from another drill" lists the other drills'
+      actions → pick one → Carry over → a copy appears with "Carried over from
+      <drill>", the original is still on its drill, and the picked action is
+      no longer offered for this drill. The report shows the same note
 - [ ] Systems in scope → asset picker lists `Appliance` + `Computer`; add one →
       row appears with RTO/RPO columns
 - [ ] Open the linked `Appliance` / `Computer` → **"PGN Suite"** tab → **"DR drill history"**

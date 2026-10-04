@@ -339,6 +339,7 @@
                     {%- if a.category %} &middot; {{ a.category }}{% endif %}
                     {%- if a.owner %} &middot; {{ __('Owner') }}: {{ a.owner }}{% endif %}
                     {%- if a.rr_code %} &middot; {{ __('Risk Register', 'drillreport') }}: {{ a.rr_code }}{% endif %}
+                    {%- if a.carried_from %} &middot; {{ __('Carried over from', 'drillreport') }}: {{ a.carried_from }}{% endif %}
                 </div>
                 {% if a.content %}<p><strong>{{ __('Observation', 'drillreport') }}:</strong> {{ a.content }}</p>{% endif %}
                 {% if a.cause %}<p><strong>{{ __('Root cause', 'drillreport') }}:</strong> {{ a.cause }}</p>{% endif %}

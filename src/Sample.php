@@ -25,7 +25,9 @@ class Sample
         $row = $DB->request([
             'SELECT' => 'id',
             'FROM'   => Drill::getTable(),
-            'WHERE'  => ['name' => ['LIKE', self::MARKER . '%'], 'is_deleted' => 0],
+            // The user's entities only: the sample of another entity is not theirs.
+            'WHERE'  => ['name' => ['LIKE', self::MARKER . '%'], 'is_deleted' => 0]
+                + getEntitiesRestrictCriteria(Drill::getTable()),
             'LIMIT'  => 1,
         ])->current();
         return $row ? (int) $row['id'] : 0;
@@ -209,7 +211,8 @@ class Sample
     }
 
     /**
-     * Purge every [SAMPLE] drill (and its children) plus the [SAMPLE] actions.
+     * Purge every [SAMPLE] drill of the user's entities (and its children)
+     * plus the [SAMPLE] actions.
      *
      * @return int number of drills removed
      */
@@ -221,7 +224,7 @@ class Sample
         foreach ($DB->request([
             'SELECT' => 'id',
             'FROM'   => Drill::getTable(),
-            'WHERE'  => ['name' => ['LIKE', self::MARKER . '%']],
+            'WHERE'  => ['name' => ['LIKE', self::MARKER . '%']] + getEntitiesRestrictCriteria(Drill::getTable()),
         ]) as $row) {
             $ids[] = (int) $row['id'];
         }
@@ -233,13 +236,28 @@ class Sample
         return count($ids);
     }
 
+    /**
+     * Id of the reference row named $name the sample drill may use, created
+     * when there is none: a scenario or category visible from the drill's
+     * entity (its own, or a shared one of an ancestor), or a global test type.
+     */
     private static function dropdownId(\CommonDropdown $dropdown, string $name, int $entities_id): int
     {
-        $hit = $dropdown->find(['name' => $name]);
-        if ($hit !== []) {
-            return (int) array_key_first($hit);
+        if ($dropdown instanceof TestType) {
+            $hit = $dropdown->find(['name' => $name]);
+            if ($hit !== []) {
+                return (int) array_key_first($hit);
+            }
+            $id = $dropdown->add(['name' => $name]);
+            return $id ? (int) $id : 0;
         }
-        $id = $dropdown->add(['name' => $name, 'entities_id' => $entities_id]);
+
+        /** @var Scenario|ActionCategory $dropdown */
+        $hit = $dropdown::idByName($name, $entities_id);
+        if ($hit > 0) {
+            return $hit;
+        }
+        $id = $dropdown->add(['name' => $name, 'entities_id' => $entities_id, 'is_recursive' => 0]);
         return $id ? (int) $id : 0;
     }
 }

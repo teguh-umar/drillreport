@@ -5,6 +5,7 @@ use GlpiPlugin\Drillreport\RightDefinition;
 use GlpiPlugin\Drillreport\Config;
 use GlpiPlugin\Drillreport\Cron;
 use GlpiPlugin\Drillreport\Seed;
+use GlpiPlugin\Drillreport\Upgrade;
 
 function plugin_drillreport_install(): bool
 {
@@ -13,15 +14,29 @@ function plugin_drillreport_install(): bool
 
     $glpiMigration = new \Migration(PLUGIN_DRILLREPORT_VERSION);
 
+    // v1.0.0: which of the upgrades below still have their one-time data step
+    // to run (the column is not there yet). False on a fresh install.
+    $scenariosGetEntity  = $DB->tableExists('glpi_plugin_drillreport_scenarios')
+        && !$DB->fieldExists('glpi_plugin_drillreport_scenarios', 'entities_id');
+    $categoriesGetEntity = $DB->tableExists('glpi_plugin_drillreport_actioncategories')
+        && !$DB->fieldExists('glpi_plugin_drillreport_actioncategories', 'entities_id');
+    $linksGetSnapshot    = $DB->tableExists('glpi_plugin_drillreport_drills_items')
+        && !$DB->fieldExists('glpi_plugin_drillreport_drills_items', 'asset_name');
+
     // ---- Dropdowns ---------------------------------------------------------
+    // Scenarios and action categories are per entity (a name is unique within
+    // an entity); test types are global.
     DRMigration::register('glpi_plugin_drillreport_scenarios', "
         CREATE TABLE `glpi_plugin_drillreport_scenarios` (
           `id` int unsigned NOT NULL AUTO_INCREMENT,
+          `entities_id` int unsigned NOT NULL DEFAULT 0,
+          `is_recursive` tinyint NOT NULL DEFAULT 0,
           `name` varchar(255) DEFAULT NULL,
           `comment` text,
           `date_creation` timestamp NULL DEFAULT NULL,
           `date_mod` timestamp NULL DEFAULT NULL,
           PRIMARY KEY (`id`),
+          UNIQUE KEY `unicity` (`entities_id`,`name`),
           KEY `name` (`name`)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     ");
@@ -41,11 +56,14 @@ function plugin_drillreport_install(): bool
     DRMigration::register('glpi_plugin_drillreport_actioncategories', "
         CREATE TABLE `glpi_plugin_drillreport_actioncategories` (
           `id` int unsigned NOT NULL AUTO_INCREMENT,
+          `entities_id` int unsigned NOT NULL DEFAULT 0,
+          `is_recursive` tinyint NOT NULL DEFAULT 0,
           `name` varchar(255) DEFAULT NULL,
           `comment` text,
           `date_creation` timestamp NULL DEFAULT NULL,
           `date_mod` timestamp NULL DEFAULT NULL,
           PRIMARY KEY (`id`),
+          UNIQUE KEY `unicity` (`entities_id`,`name`),
           KEY `name` (`name`)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     ");
@@ -157,6 +175,8 @@ function plugin_drillreport_install(): bool
           `plugin_drillreport_drills_id` int unsigned NOT NULL DEFAULT 0,
           `itemtype` varchar(100) NOT NULL DEFAULT '',
           `items_id` int unsigned NOT NULL DEFAULT 0,
+          `asset_name` varchar(255) NOT NULL DEFAULT '',
+          `asset_entities_id` int unsigned NOT NULL DEFAULT 0,
           `dr_target` varchar(255) NOT NULL DEFAULT '',
           `rto_target_minutes` int unsigned DEFAULT NULL,
           `rto_actual_minutes` int unsigned DEFAULT NULL,
@@ -207,8 +227,33 @@ function plugin_drillreport_install(): bool
         $glpiMigration->addField('glpi_plugin_drillreport_actions', 'source_actions_id', 'fkey', ['after' => 'plugin_drillreport_drills_items_id']);
         $glpiMigration->addKey('glpi_plugin_drillreport_actions', 'source_actions_id');
     }
+    // v1.0.0: scenarios and action categories belong to an entity.
+    foreach (['glpi_plugin_drillreport_scenarios', 'glpi_plugin_drillreport_actioncategories'] as $table) {
+        if ($DB->tableExists($table)) {
+            $glpiMigration->addField($table, 'entities_id', 'fkey', ['after' => 'id']);
+            $glpiMigration->addField($table, 'is_recursive', 'bool', ['after' => 'entities_id']);
+        }
+    }
+    // v1.0.0: a link keeps the asset's name and entity, shown once the asset
+    // has moved to an entity the drill cannot see.
+    if ($DB->tableExists('glpi_plugin_drillreport_drills_items')) {
+        $glpiMigration->addField('glpi_plugin_drillreport_drills_items', 'asset_name', 'string', ['value' => '', 'after' => 'items_id']);
+        $glpiMigration->addField('glpi_plugin_drillreport_drills_items', 'asset_entities_id', 'fkey', ['after' => 'asset_name']);
+    }
 
     DRMigration::install($glpiMigration);
+
+    // v1.0.0 one-time data steps, before the seed looks for existing rows.
+    if ($scenariosGetEntity) {
+        Upgrade::scenariosToEntities();
+    }
+    if ($categoriesGetEntity) {
+        Upgrade::categoriesToRoot();
+    }
+    if ($linksGetSnapshot) {
+        Upgrade::snapshotAssets();
+    }
+    Upgrade::uniqueNamePerEntity($glpiMigration);
 
     if (class_exists(Seed::class)) {
         Seed::run();

@@ -230,14 +230,15 @@ class Objective extends CommonDBChild
     {
         global $DB;
 
+        $drill  = new Drill();
+        $entity = $drill->getFromDB($drills_id) ? (int) $drill->fields['entities_id'] : -1;
+
         $opts = [0 => Dropdown::EMPTY_VALUE];
         foreach ($DB->request([
             'FROM'  => Drill_Item::getTable(),
             'WHERE' => ['plugin_drillreport_drills_id' => $drills_id],
         ]) as $r) {
-            $asset = getItemForItemtype((string) $r['itemtype']);
-            $label = ($asset && $asset->getFromDB((int) $r['items_id'])) ? $asset->getName() : (string) $r['itemtype'];
-            $opts[(int) $r['id']] = $label;
+            $opts[(int) $r['id']] = Drill_Item::assetView($r, $entity)['name'];
         }
         Dropdown::showFromArray('plugin_drillreport_drills_items_id', $opts, ['value' => $current]);
     }

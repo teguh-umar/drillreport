@@ -16,6 +16,67 @@ Format: [Keep a Changelog](https://keepachangelog.com/); this project uses
 
 ## [Unreleased]
 
+## [0.7.17] - 2026-10-04
+
+Backported from `main` v1.0.0. Entities are treated as separate companies: a drill can be handed to another
+entity with GLPI's Transfer, a drill keeps its link to an asset that moved
+away without showing that asset's live data, and reference data is no longer
+one list for everybody.
+
+**Upgrade needs the install step** (new columns, one-time data steps):
+`bin/console glpi:plugin:install drillreport --force`, then
+`glpi:plugin:activate drillreport` if it was deactivated.
+
+### Added
+- **Transfer a drill to another entity.** The DR drills list and a drill's
+  Actions menu offer core's "Add to transfer list" (shown by GLPI only to a
+  user with the Transfer right, in multi-entity mode); the transfer itself is
+  done in Administration > Entities > Transfer. Objectives, improvement actions
+  and systems in scope move with the drill.
+  - A scenario or an action category the destination entity cannot see is
+    replaced by the one of the same name there; when there is none, a copy
+    (the name only) is created in the destination.
+  - A drill's entity changes only through Transfer; an entity posted with a
+    drill update is ignored.
+- **A linked asset that moves to another entity keeps its link.** The drill
+  stays where it is. Each system in scope stores the asset's name and entity;
+  once the drill's entity can no longer see the asset, the drill shows the
+  stored name with "moved to <entity>" instead of reading the asset, on the
+  Systems in scope tab, in the objective's system dropdown, in the printable
+  report and in the asset text sent to Risk Register. The name is a link only
+  for a user who may open the asset, and a later rename by the new entity
+  does not reach the drill.
+- **Notice when every system in scope has moved.** The drill form says where
+  they went. When they all went to one entity it recommends transferring the
+  drill there; when they went to several it only lists them. The drill is
+  never moved automatically.
+
+### Changed
+- **DR scenarios are per entity.** A scenario has an entity and a "Child
+  entities" switch (off by default), and its name is unique within the entity.
+  On upgrade each scenario goes to the entity of the drills that use it; one
+  used in several entities stays with the first and gets a copy in each of the
+  others; an unused one stays in the root entity.
+- **Action categories are shared defaults plus local additions.** The existing
+  and seeded categories become root-entity rows visible from every entity, so
+  nothing changes on upgrade; an entity may add its own.
+- **Test types stay global and are edited at group level only**: the plugin's
+  Configuration right plus working in the root entity.
+- A drill may only use a scenario, and an action a category, that is visible
+  from the drill's entity (same entity, or shared from an ancestor). The
+  dropdowns are filtered and a posted value is checked again by the server.
+- Moving an action to a drill of another entity, or carrying one over, maps
+  its category the same way as a transfer does.
+- The action form's Owner group and Owner dropdowns list the drill's entity.
+- The sample drill's "open / remove" looks only at the user's entities.
+
+### Not included
+- No e-mail notification for "every system has moved": GLPI switches
+  notifications off while a transfer runs, so the notice is on the drill form.
+- Risk Register Findings of actions already sent stay in the entity they were
+  sent to. After a drill transfer, "Send findings to Risk Register" creates
+  them in the new entity.
+
 ## [0.7.16] - 2026-10-04
 
 Backported from `main` v0.12.2. Access control only: rows are now checked against the **entity of their

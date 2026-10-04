@@ -29,19 +29,24 @@ class Seed
 
     public static function run(): void
     {
-        self::seed(new TestType(), TestType::SEED);
-        self::seed(new ActionCategory(), self::ACTION_CATEGORIES);
+        // Test types are global (no entity). Action categories are shared
+        // defaults: root entity, visible from every child entity.
+        self::seed(new TestType(), TestType::SEED, []);
+        self::seed(new ActionCategory(), self::ACTION_CATEGORIES, ['entities_id' => 0, 'is_recursive' => 1]);
         // Scenario is intentionally left empty — it is entirely org-specific.
     }
 
     /**
-     * @param list<string> $names
+     * @param list<string>      $names
+     * @param array<string,int> $scope entity columns of the seeded rows; also
+     *                                 limits the "already there" check to them
      */
-    private static function seed(CommonDropdown $dropdown, array $names): void
+    private static function seed(CommonDropdown $dropdown, array $names, array $scope): void
     {
+        $where = array_intersect_key($scope, ['entities_id' => 0]);
         foreach ($names as $name) {
-            if ($dropdown->find(['name' => $name]) === []) {
-                $dropdown->add(['name' => $name, 'entities_id' => 0]);
+            if ($dropdown->find(['name' => $name] + $where) === []) {
+                $dropdown->add(['name' => $name] + $scope);
             }
         }
     }

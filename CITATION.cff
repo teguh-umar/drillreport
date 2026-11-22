@@ -1,0 +1,17 @@
+cff-version: 1.2.0
+message: "If you reuse this software, please cite it as below."
+title: "DR Drill Report"
+type: software
+abstract: "Logs annual disaster-recovery drills and produces an audit-ready after-action report aligned to ISO 22301 and NIST SP 800-84."
+authors:
+  - given-names: Teguh
+    family-names: DHAMAR
+repository-code: "https://github.com/teguh-umar/drillreport"
+license: GPL-3.0-or-later
+version: "1.0.0"
+date-released: "2026-11-22"
+keywords:
+  - glpi
+  - glpi-plugin
+  - disaster-recovery
+  - business-continuity

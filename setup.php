@@ -31,7 +31,7 @@ function plugin_version_drillreport(): array
     return [
         'name'         => 'DR Drill Report',
         'version'      => PLUGIN_DRILLREPORT_VERSION,
-        'author'       => 'ICT',
+        'author'       => 'Teguh DHAMAR',
         'license'      => 'GPL-3.0-or-later',
         'homepage'     => '',
         'requirements' => [

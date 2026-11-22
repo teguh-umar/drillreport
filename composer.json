@@ -4,7 +4,7 @@
   "type": "glpi-plugin",
   "license": "GPL-3.0-or-later",
   "authors": [
-    { "name": "PGN ICT" }
+    { "name": "Teguh DHAMAR" }
   ],
   "require": { "php": ">=8.2" },
   "autoload": { "psr-4": { "GlpiPlugin\\Drillreport\\": "src/" } }

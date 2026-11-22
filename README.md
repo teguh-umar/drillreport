@@ -4,7 +4,7 @@ GLPI 11 plugin for logging **annual Disaster-Recovery drills** and producing an
 audit-ready report aligned to **ISO 22398** / **ISO 22301** §8.5–9.1 and
 **NIST SP 800-84** (After-Action Report / Improvement Plan).
 
-Part of the PGN ICT GLPI 11 plugin suite (`integrasipaman`, `riskregister`, SAC,
+Part of a GLPI 11 plugin suite (`integrasipaman`, `riskregister`, SAC,
 `drillreport`). Standalone — it works with none of the others installed.
 
 ## Status
@@ -24,8 +24,8 @@ are the MVP work items — see `docs/drillreport-konsep-awal.md` §10.
   per-asset RTO/RPO/recovery).
 - **`Drill_Item`** links a drill to `Appliance` (web applications) and `Computer`
   by default — configurable via `plugin:drillreport` / `asset_itemtypes`. Every
-  supported asset gets a **"DR drill history"** section inside the shared **"PGN Suite"**
-  asset tab (one tab for all PGN plugins, horizontal sub-tabs — hub §5).
+  supported asset gets a **"DR drill history"** section inside the shared **"ICT Tools"**
+  asset tab (one tab for all plugins of the suite, horizontal sub-tabs).
 - **Dropdowns** (Setup → Dropdowns): DR scenario (per entity), test type (global,
   seeded with the five NIST 800-84 types, edited from the root entity only),
   action category (shared defaults in the root entity, plus an entity's own).
@@ -73,6 +73,36 @@ git archive --format=zip --prefix=drillreport/ -o ../drillreportv<version>.zip H
 | `plugin_drillreport_approve` | Sign off a drill report (status → approved)    |
 | `plugin_drillreport_config`  | Setup page, dropdowns                          |
 
-## License
+## Automatic actions
 
-GPL-3.0-or-later — see [LICENSE](LICENSE). © PGN ICT.
+| Action | Default frequency |
+|---|---|
+| `ActionFollowup` | weekly |
+| `DrillReminder` | daily |
+
+They can be switched off or rescheduled in **Setup > Automatic actions**.
+
+## Data it stores
+
+`glpi_plugin_drillreport_actioncategories`, `glpi_plugin_drillreport_actions`, `glpi_plugin_drillreport_drills`, `glpi_plugin_drillreport_drills_items`, `glpi_plugin_drillreport_objectives`, `glpi_plugin_drillreport_scenarios`, `glpi_plugin_drillreport_testtypes`.
+
+Uninstall removes these tables, with the plugin's rights, automatic actions and settings.
+
+## Security
+
+- Every form uses GLPI's CSRF token, and every page checks the plugin's rights and the user's entities.
+- Secrets such as API keys are stored with GLPI's secured configuration, sent once and never shown again.
+- Calls to outside services run only from automatic actions or an explicit button, with a timeout.
+- Report a vulnerability privately as described in [SECURITY.md](SECURITY.md).
+
+## Development
+
+- Offline tests: `none yet`
+- Release check: `none yet`
+- Rules for contributors: [CHARTER.md](CHARTER.md) and [AGENTS.md](AGENTS.md).
+- Changes: [CHANGELOG.md](CHANGELOG.md).
+
+## Licence
+
+GPL-3.0-or-later, author Teguh DHAMAR. See [LICENSE](LICENSE) and [NOTICE](NOTICE). To cite this plugin, see
+[CITATION.cff](CITATION.cff).

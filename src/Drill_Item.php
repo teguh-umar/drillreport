@@ -348,7 +348,7 @@ class Drill_Item extends CommonDBRelation
      * the `fields` plugin. Scans `glpi_plugin_fields_*` tables for one that has
      * both configured key columns plus `itemtype`/`items_id`, and returns the
      * row's values. Returns [] when `fields` is inactive or nothing matches —
-     * the exact container/field names are confirmed on VM-HQ-GLPI (docs §11).
+     * the exact container/field names are confirmed on VM-SERVER-22 (docs §11).
      *
      * @return array{rto?:int, rpo?:int}
      */
@@ -411,7 +411,7 @@ class Drill_Item extends CommonDBRelation
             return self::createTabEntry(self::getTypeName(Session::getPluralNumber()), $nb, $item::class);
         }
 
-        // "DR drill history" on an asset is a section of the shared "PGN Suite"
+        // "DR drill history" on an asset is a section of the shared "ICT Tools"
         // asset tab now ({@see AssetSections}), not a tab of this class.
         return '';
     }
@@ -455,7 +455,7 @@ class Drill_Item extends CommonDBRelation
         echo "<table class='tab_cadre_fixe'>";
         echo "<tr class='tab_bg_1'><td>" . __s('Asset') . "</td><td colspan='3'>{$assetLabel}</td></tr>";
         echo "<tr class='tab_bg_1'><td>" . __s('DR failover target', 'drillreport') . "</td><td colspan='3'>"
-            . Html::input('dr_target', ['value' => $this->fields['dr_target'] ?? '', 'size' => 50, 'placeholder' => 'DR_DBSERVER2 / 192.168.230.87'])
+            . Html::input('dr_target', ['value' => $this->fields['dr_target'] ?? '', 'size' => 50, 'placeholder' => 'DR_DBSERVER2 / 192.0.2.87'])
             . "</td></tr>";
         echo "<tr class='tab_bg_1'><td>" . __s('RTO target (min)', 'drillreport') . "</td><td>"
             . Html::input('rto_target_minutes', ['type' => 'number', 'min' => 0, 'value' => $this->fields['rto_target_minutes'] ?? '']) . "</td>"
@@ -544,7 +544,7 @@ class Drill_Item extends CommonDBRelation
 
     /**
      * "DR drill history" body — rendered as the drillreport section of the
-     * shared "PGN Suite" asset tab ({@see AssetSections::renderDrills()}).
+     * shared "ICT Tools" asset tab ({@see AssetSections::renderDrills()}).
      */
     public static function showForAsset(CommonDBTM $item): void
     {

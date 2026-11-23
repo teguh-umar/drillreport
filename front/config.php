@@ -25,7 +25,7 @@ $can_update = Session::haveRight('plugin_drillreport_config', UPDATE);
 
 $clamp = static fn (int $v, int $min, int $max): int => max($min, min($max, $v));
 
-// Users with core `config` READ reach this via the "PGN Suite" tab on
+// Users with core `config` READ reach this via the "ICT Tools" tab on
 // Setup > General — bounce a save back there. Plugin-right-only users (no
 // core `config` right, so that tab is unreachable to them) keep the
 // standalone page they've always had.
@@ -93,7 +93,7 @@ if (isset($_POST['remove_sample'])) {
 }
 
 // A core-config-READ user (e.g. the "Config" cog in Setup > Plugins, or this
-// URL bookmarked from before v0.9.0) always lands on the PGN Suite tab now,
+// URL bookmarked from before v0.9.0) always lands on the ICT Tools tab now,
 // GET included — the standalone page below is only for plugin-right-only
 // users, for whom that tab is unreachable.
 if (Session::haveRight('config', READ) && class_exists(ConfigTab::class)) {

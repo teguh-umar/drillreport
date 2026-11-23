@@ -5,7 +5,7 @@ namespace GlpiPlugin\Drillreport;
 use CommonDBTM;
 
 /**
- * drillreport's section provider for the shared "PGN Suite" tab on asset forms
+ * drillreport's section provider for the shared "ICT Tools" tab on asset forms
  * ({@see \GlpiPlugin\Pgnsuite\AssetTab}, lib/pgnsuite/).
  *
  * Wired in {@see plugin_init_drillreport()} via

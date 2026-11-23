@@ -185,7 +185,7 @@ Supersedes 0.12.0 (never deployed). Same upgrade step:
 ### Changed
 - `lib/pgnsuite/ConfigTab.php` updated to canonical **r3** (SHA-256
   `008C4C817DB2E42040915136108CD41917C34760A8F4CDDC60E46BDB208F39D0`). Visual only:
-  the Setup > General "PGN Suite" sub-nav is now as wide as its longest title
+  the Setup > General "ICT Tools" sub-nav is now as wide as its longest title
   (capped at 16rem, title as tooltip) instead of `col-md-3`. `CONTRACT_VERSION`
   unchanged (1).
 
@@ -193,7 +193,7 @@ Supersedes 0.12.0 (never deployed). Same upgrade step:
 
 ### Fixed
 - **GLPI 11 custom assets (e.g. Security, Storage) could never be used as
-  drill assets** - not selectable in Setup, no "PGN Suite" section on their
+  drill assets** - not selectable in Setup, no "ICT Tools" section on their
   form, no purge cascade. `plugin_init` runs before core boots custom asset
   definitions (`InitializePlugins` priority 110 > `CustomObjectsBoot` 100,
   `11.0/bugfixes` `ListenersPriority`), so at that moment they are neither in
@@ -201,15 +201,15 @@ Supersedes 0.12.0 (never deployed). Same upgrade step:
   (statically cached for the request) silently dropped them. It now also
   reads active definitions straight from `glpi_assets_assetdefinitions`
   (`Glpi\CustomAsset\<system_name>Asset`, label from the `label` column).
-  Found while answering VM check 2 of the PGN Suite asset-tab contract.
+  Found while answering VM check 2 of the ICT Tools asset-tab contract.
   After deploying, add them in drillreport Setup > Asset itemtypes.
 ## [0.10.0] - 2026-09-24
 
 ### Changed
-- **"DR drill history" moved into the shared "PGN Suite" asset tab** (suite
+- **"DR drill history" moved into the shared "ICT Tools" asset tab** (suite
   contract v1 r1, user decision 2026-09-24, hub §5/§7). On every configured
   asset itemtype (`asset_itemtypes`, default `Appliance`, `Computer`) the
-  PGN plugins' tabs now collapse into one "PGN Suite" tab with horizontal
+  suite plugins' tabs now collapse into one "ICT Tools" tab with horizontal
   sub-tabs; drillreport's is "DR drill history" (order 40). `Drill_Item` no
   longer `addtabon`s asset itemtypes — only `Drill` ("Systems in scope").
   The rights tab on `Profile` is unchanged.
@@ -232,7 +232,7 @@ Supersedes 0.12.0 (never deployed). Same upgrade step:
 ### Fixed
 - **PRODUCTION-DOWN HOTFIX — `Config::showForm()` fatal broke every GLPI
   page that touches `Plugin::load()`, not just drillreport's own pages**
-  (found live on VM-HQ-GLPI immediately after deploying v0.9.4: `Setup >
+  (found live on VM-SERVER-22 immediately after deploying v0.9.4: `Setup >
   Plugins > Install` failed with "function plugin_drillreport_install is
   missing", and the real error in `files/_log/php-errors.log` was
   `*** Error while loading plugin drillreport: syntax error, unexpected
@@ -243,7 +243,7 @@ Supersedes 0.12.0 (never deployed). Same upgrade step:
   load. Because `hook.php` and `setup.php` both reference
   `GlpiPlugin\Drillreport\Config`/`Drill_Item` early, the fatal happened
   during `Plugin::load()`, which core's search engine calls broadly — so
-  the whole VM-HQ-GLPI search page (and anything else touching
+  the whole VM-SERVER-22 search page (and anything else touching
   `Plugin::getSpecificValueToDisplay()`) was affected, not just this
   plugin's own screens. Fixed: `showForm()` is now a proper instance
   method matching the parent signature; both call sites
@@ -304,7 +304,7 @@ Supersedes 0.12.0 (never deployed). Same upgrade step:
 ## [0.9.1] - 2026-09-14
 
 ### Fixed
-- **`front/config.php` GET path missed the PGN Suite redirect** — v0.9.0
+- **`front/config.php` GET path missed the ICT Tools redirect** — v0.9.0
   only redirected core-`config`-READ users back to the tab after a POST
   (save); opening the page directly (the "Config" cog in Setup → Plugins,
   or a bookmarked URL) still showed the standalone page for those users.
@@ -315,9 +315,9 @@ Supersedes 0.12.0 (never deployed). Same upgrade step:
 ## [0.9.0] - 2026-09-14
 
 ### Added
-- **"PGN Suite" shared config tab.** drillreport now joins the suite-wide
-  "PGN Suite" tab on Setup → General (`lib/pgnsuite/ConfigTab.php` — a
-  byte-identical, unedited copy shipped by every PGN plugin; SHA-256
+- **"ICT Tools" shared config tab.** drillreport now joins the suite-wide
+  "ICT Tools" tab on Setup → General (`lib/pgnsuite/ConfigTab.php` — a
+  byte-identical, unedited copy shipped by every suite plugin; SHA-256
   `89e864d926385ebb09f463a5968fe0e5971503b8e9567540feba56371637ac40`, read
   and verified against the canonical copy before vendoring). `src/SuiteConfig.php` provides drillreport's section (gated on
   `plugin_drillreport_config` READ, returns `null` — hidden — otherwise).
@@ -329,7 +329,7 @@ Supersedes 0.12.0 (never deployed). Same upgrade step:
 - `front/config.php`'s "DR Drill Report" **sidebar Setup entry removed**
   (`src/Menu.php`) — config now lives in the shared tab. The page itself is
   still fully reachable (direct URL, Setup → Plugins cog): a user with core
-  `config` READ is redirected back to the PGN Suite tab after saving
+  `config` READ is redirected back to the ICT Tools tab after saving
   (`ConfigTab::getReturnUrl('drillreport')`); a user who holds only
   `plugin_drillreport_config` (no core `config` right, so that tab is
   unreachable to them) keeps the standalone page exactly as before.
@@ -338,7 +338,7 @@ Verified via `glpi-plugin-development` skill + GLPI 11 core source
 (`Plugin::registerClass()`/`isPluginItemType()`/`registerStandardTab()`)
 before wiring — confirmed `addtabon` on a shared class name across multiple
 plugins collapses to exactly one tab, no duplication risk. **Not yet
-live-verified on VM-HQ-GLPI** — check after deploy that exactly one "PGN
+live-verified on VM-SERVER-22** — check after deploy that exactly one "ORG
 Suite" tab appears with both icofr's and drillreport's sections inside.
 
 ## [0.8.5] - 2026-09-13
@@ -655,7 +655,7 @@ Suite" tab appears with both icofr's and drillreport's sections inside.
 
 ## [0.3.2] - 2026-09-08
 
-First fix from the VM-HQ-GLPI production deploy — install + activate were clean
+First fix from the VM-SERVER-22 production deploy — install + activate were clean
 (no class-load fatal), adding a drill failed on save.
 
 ### Fixed
@@ -743,7 +743,7 @@ Static self-review against GLPI 11 source (`11.0/bugfixes`) — no VM available.
 
 ## [0.2.0] - 2026-09-07
 
-First build packaged for a VM-HQ-GLPI test deploy.
+First build packaged for a VM-SERVER-22 test deploy.
 
 ### Added
 - Child-record management on the drill form: add / edit / delete `Objective`,

@@ -4,7 +4,7 @@
  * drillreport — GLPI 11 plugin for annual Disaster-Recovery drill logging.
  *
  * @license GPL-3.0-or-later
- * @author  PGN ICT
+ * @author  ICT
  */
 
 use GlpiPlugin\Drillreport\Drill;
@@ -116,7 +116,7 @@ function plugin_init_drillreport(): void
     Plugin::registerClass(DRProfile::class, ['addtabon' => 'Profile']);
 
     // Shared suite tab on Setup > General (lib/pgnsuite/ConfigTab.php,
-    // byte-identical copy from every PGN plugin — see hub file §5). Never
+    // byte-identical copy from every suite plugin — see hub file §5). Never
     // edit this plugin's copy on its own; the class only defines the tab
     // shell + reads $PLUGIN_HOOKS[ConfigTab::HOOK], it does not depend on
     // anything else drillreport-specific.

@@ -55,8 +55,8 @@ manual steps are below.
    instance (test with a core notification first if unsure).
 4. Test without waiting for the schedule:
    ```bash
-   sudo -u nginx php /data/www/glpi/front/cron.php DrillReminder
-   sudo -u nginx php /data/www/glpi/front/cron.php ActionFollowup
+   sudo -u nginx php /var/www/glpi/front/cron.php DrillReminder
+   sudo -u nginx php /var/www/glpi/front/cron.php ActionFollowup
    ```
    Check `files/_log/drillreport_cron.log` for the raised/skipped counts, and
    `files/_log/mail-*.log` (or `php-errors.log`) if a mail transport issue is

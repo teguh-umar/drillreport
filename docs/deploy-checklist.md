@@ -1,6 +1,6 @@
-# drillreport — deploy & first-run checklist (VM-HQ-GLPI)
+# drillreport — deploy & first-run checklist (VM-SERVER-22)
 
-**Target:** VM-HQ-GLPI (`10.129.2.174`, via JumpServer bastion `paman.pgn.co.id:2222`), GLPI root `/data/www/glpi`
+**Target:** VM-SERVER-22 (`10.99.2.174`, via JumpServer bastion `paman.example.org:2222`), GLPI root `/var/www/glpi`
 **Artifact:** `drillreportv<version>.zip` — archive root `drillreport/`, git-tracked files only, no `.git/`
 **GLPI:** 11.0.x · **PHP:** 8.2+ (VM is 8.4)
 
@@ -8,7 +8,7 @@ This is the **first** deploy — drillreport has never run on a real GLPI. Run t
 to bottom; fix any failure as its own commit, rebuild the zip, redeploy, re-run
 the section.
 
-VM-HQ-GLPI is a **shared production instance** (integrasipaman v1.11.0 is live on
+VM-SERVER-22 is a **shared production instance** (integrasipaman v1.11.0 is live on
 it). A class-load fatal in a plugin takes the whole instance down — do §0.5
 first.
 
@@ -30,7 +30,7 @@ Confirm: `unzip -l ../drillreportv*.zip` → root is `drillreport/`, no `.git/`.
 - [ ] Note the current active-plugin list: `sudo -u nginx php bin/console glpi:plugin:list`
 - [ ] Confirm you can reach the box on a second SSH session (for rollback)
 - [ ] **Rollback plan** if the login page dies after activate:
-      `cd /data/www/glpi/plugins && sudo rm -rf drillreport && sudo systemctl reload php-fpm`
+      `cd /var/www/glpi/plugins && sudo rm -rf drillreport && sudo systemctl reload php-fpm`
       — GLPI ignores a plugin dir that isn't there; the instance comes straight back.
       (If it was activated first: `sudo -u nginx php bin/console glpi:plugin:deactivate drillreport` also works, but removing the dir is the sledgehammer.)
 - [ ] Pick a low-traffic window; keep `tail -f files/_log/php-errors.log` open throughout
@@ -38,18 +38,18 @@ Confirm: `unzip -l ../drillreportv*.zip` → root is `drillreport/`, no `.git/`.
 ## 1. Upload & extract
 
 - [ ] Upload `drillreportv<version>.zip` (JumpServer file transfer / scp).
-- [ ] `cd /data/www/glpi/plugins && sudo unzip -o /path/drillreportv<version>.zip` → creates `drillreport/`
-- [ ] `sudo chown -R nginx:nginx /data/www/glpi/plugins/drillreport`
-- [ ] `grep VERSION /data/www/glpi/plugins/drillreport/setup.php` → matches
-- [ ] `tail -f /data/www/glpi/files/_log/php-errors.log` in another shell for the rest of this pass
+- [ ] `cd /var/www/glpi/plugins && sudo unzip -o /path/drillreportv<version>.zip` → creates `drillreport/`
+- [ ] `sudo chown -R nginx:nginx /var/www/glpi/plugins/drillreport`
+- [ ] `grep VERSION /var/www/glpi/plugins/drillreport/setup.php` → matches
+- [ ] `tail -f /var/www/glpi/files/_log/php-errors.log` in another shell for the rest of this pass
 
 ## 2. Install
 
-- [ ] `cd /data/www/glpi && sudo -u nginx php bin/console glpi:plugin:install drillreport --username=<admin>`
+- [ ] `cd /var/www/glpi && sudo -u nginx php bin/console glpi:plugin:install drillreport --username=<admin>`
 - [ ] `sudo -u nginx php bin/console glpi:plugin:activate drillreport`
 
 > **Upgrading an already-installed drillreport** (not a first install): the web
-> **Setup → Plugins → Upgrade** button is unreliable on VM-HQ-GLPI's GLPI 11
+> **Setup → Plugins → Upgrade** button is unreliable on VM-SERVER-22's GLPI 11
 > build (`BadRequestHttpException` at `front/plugin.form.php`). Use the CLI:
 > `sudo -u nginx php bin/console glpi:plugin:install drillreport --force`
 > then `glpi:plugin:activate drillreport` if it deactivated. `--force` is
@@ -126,16 +126,16 @@ Confirm: `unzip -l ../drillreportv*.zip` → root is `drillreport/`, no `.git/`.
       form shows the notice recommending a transfer
 - [ ] Systems in scope → asset picker lists `Appliance` + `Computer`; add one →
       row appears with RTO/RPO columns
-- [ ] Open the linked `Appliance` / `Computer` → **"PGN Suite"** tab → **"DR drill history"**
+- [ ] Open the linked `Appliance` / `Computer` → **"ICT Tools"** tab → **"DR drill history"**
       sub-tab shows the drill; there is **no** separate "DR drill history" tab any more,
-      and exactly **one** "PGN Suite" tab even with other PGN plugins installed
-- [ ] **Setup → General → "PGN Suite" tab** — exactly **one** tab appears
-      (shared with every other PGN plugin installed, not one per plugin);
+      and exactly **one** "ICT Tools" tab even with other suite plugins installed
+- [ ] **Setup → General → "ICT Tools" tab** — exactly **one** tab appears
+      (shared with every other suite plugin installed, not one per plugin);
       drillreport's section is in the left sub-nav, opens, and its active
       sub-tab text is readable in whatever GLPI palette is active
       (since v0.9.2 / v0.7.6, uses `--glpi-tabs-*` CSS vars — a pale/washed-out
       active tab means `lib/pgnsuite/ConfigTab.php` is stale, re-vendor it)
-- [ ] In that section, toggle a value, **Save** → lands back on the same PGN
+- [ ] In that section, toggle a value, **Save** → lands back on the same ORG
       Suite tab / drillreport section with "Configuration updated."
       (`ConfigTab::getReturnUrl()` — NOT a redirect to `/` or an inventory-XML
       error), value persisted
@@ -143,7 +143,7 @@ Confirm: `unzip -l ../drillreportv*.zip` → root is `drillreport/`, no `.git/`.
       holds **only** `plugin_drillreport_config` (no core `config` right) —
       the old standalone page still renders and works (this is its only
       remaining audience; a core-`config`-READ user gets redirected to the
-      PGN Suite tab instead, GET included)
+      ICT Tools tab instead, GET included)
 - [ ] Drill form → **"View / print report"** button → `front/report.php` renders
       all sections (summary, overview, participants, scope, timeline if enabled,
       RTO/RPO with met/not-met marks, objectives, findings, evidence, approval)
@@ -154,7 +154,7 @@ Confirm: `unzip -l ../drillreportv*.zip` → root is `drillreport/`, no `.git/`.
       one (e.g. Timeline) → Save → the report no longer shows it and the
       remaining headings are renumbered 1..8. Remove **all** → Save → all 9
       come back (empty means every section)
-- [ ] PGN Suite tab → `show_business_criticity = No` → the report's "Systems in
+- [ ] ICT Tools tab → `show_business_criticity = No` → the report's "Systems in
       scope" table drops the Business Criticality column
 
 ## 4. `fields` plugin soft-read (optional, if `fields` v1.23.2 is configured)
@@ -180,9 +180,9 @@ Confirm: `unzip -l ../drillreportv*.zip` → root is `drillreport/`, no `.git/`.
 
 ## 6. Cron
 
-- [ ] `sudo -u nginx php /data/www/glpi/front/cron.php DrillReminder` → runs, no error
+- [ ] `sudo -u nginx php /var/www/glpi/front/cron.php DrillReminder` → runs, no error
       (logs to `files/_log/drillreport_cron*` only in the configured month)
-- [ ] `sudo -u nginx php /data/www/glpi/front/cron.php ActionFollowup` → runs, no error
+- [ ] `sudo -u nginx php /var/www/glpi/front/cron.php ActionFollowup` → runs, no error
 
 ## 7. Uninstall (last, on a throwaway pass)
 

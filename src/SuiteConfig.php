@@ -5,7 +5,7 @@ namespace GlpiPlugin\Drillreport;
 use Session;
 
 /**
- * drillreport's section provider for the shared "PGN Suite" tab on
+ * drillreport's section provider for the shared "ICT Tools" tab on
  * Setup > General ({@see \GlpiPlugin\Pgnsuite\ConfigTab}, lib/pgnsuite/).
  *
  * Wired in {@see plugin_init_drillreport()} via

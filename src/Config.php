@@ -179,7 +179,7 @@ class Config extends CommonDBTM
 
     /**
      * The config screen's body (everything between the page header/footer) —
-     * shared by the standalone `front/config.php` page and the "PGN Suite"
+     * shared by the standalone `front/config.php` page and the "ICT Tools"
      * tab section ({@see SuiteConfig::render()}). Both post to the same
      * controller (`front/config.php`), so this only renders, never handles POST.
      */

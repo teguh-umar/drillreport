@@ -5,7 +5,7 @@
 > saat plugin itu terdeteksi aktif.
 >
 > **Target: GLPI 11** (dikonfirmasi — instance yang dipakai versi 11). Deploy ke
-> VM-HQ-GLPI, satu instance bersama `integrasipaman` / `riskregister` / SAC
+> VM-SERVER-22, satu instance bersama `integrasipaman` / `riskregister` / SAC
 > (lihat hub `_pgn-glpi-suite.md`).
 
 ---
@@ -163,7 +163,7 @@ foreach ($actions as $action) {                       // baris glpi_plugin_drill
 > **ISO 22301** klausul 8.5 & 9.1 (BCMS — exercise programme + evaluasi
 > terdokumentasi), **ISO/IEC 27031** (ICT readiness), **NIST SP 800-84** (definisi
 > **After-Action Report / Improvement Plan — AAR/IP**), **NIST SP 800-34 Rev.1**,
-> **FEMA HSEEP** (template AAR/IP). Konteks Pertamina: **SNI ISO 22301** acuan
+> **FEMA HSEEP** (template AAR/IP). Konteks the holding company: **SNI ISO 22301** acuan
 > formal, ISO 22398 panduan teknisnya.
 >
 > Irisan semua standar → 14 komponen laporan. Peta ke struktur data plugin:
@@ -293,7 +293,7 @@ PSR-4 (ikut `riskregister`): `GlpiPlugin\Drillreport\Drill`,
 | `plugin_drillreport_drills_id` | INT UNSIGNED NOT NULL DEFAULT 0 | idx |
 | `itemtype` | VARCHAR(100) NOT NULL DEFAULT '' | `Appliance` / `Computer` / … (whitelist config `asset_itemtypes`) |
 | `items_id` | INT UNSIGNED NOT NULL DEFAULT 0 | idx gabungan `(itemtype, items_id)` |
-| `dr_target` | VARCHAR(255) NOT NULL DEFAULT '' | target failover DR (nama replika / IP), mis. `DR_DBSERVER2 / 192.168.230.87` (0.6.0) — kolom di laporan §3, bantu audit |
+| `dr_target` | VARCHAR(255) NOT NULL DEFAULT '' | target failover DR (nama replika / IP), mis. `DR_DBSERVER2 / 192.0.2.87` (0.6.0) — kolom di laporan §3, bantu audit |
 | `rto_target_minutes` | INT UNSIGNED NULL | pre-fill soft-read dari `fields` aset — bisa override |
 | `rto_actual_minutes` | INT UNSIGNED NULL | manual |
 | `rpo_target_minutes` | INT UNSIGNED NULL | pre-fill soft-read |
@@ -338,7 +338,7 @@ DR / SLA aset. Field paling dekat:
 | Cara | Status GLPI 11 | Catatan |
 |---|---|---|
 | **Genericity / custom fields native GLPI 11** | ❌ **Hanya** untuk *custom asset definition* baru — **tidak bisa** menambah field ke `Computer`/`Appliance`/`Software` bawaan | — |
-| **Plugin `fields`** (`pluginsGLPI/fields`, "Additional Fields") | ✅ **Kompatibel GLPI 11** (v1.24.x) · **SUDAH TERPASANG di VM-HQ-GLPI** (dikonfirmasi user 2026-09-01) | Cara standar menambah blok RTO/RPO (number/dropdown) ke `Appliance`/`Computer` via UI. Sisa verifikasi VM: versi persisnya + container/blok sudah di-assign ke itemtype `Appliance` & `Computer` |
+| **Plugin `fields`** (`pluginsGLPI/fields`, "Additional Fields") | ✅ **Kompatibel GLPI 11** (v1.24.x) · **SUDAH TERPASANG di VM-SERVER-22** (dikonfirmasi user 2026-09-01) | Cara standar menambah blok RTO/RPO (number/dropdown) ke `Appliance`/`Computer` via UI. Sisa verifikasi VM: versi persisnya + container/blok sudah di-assign ke itemtype `Appliance` & `Computer` |
 | Plugin `customfields` (`pluginsGLPI/customfields`) | Legacy | Jangan pakai — digantikan `fields` |
 
 **c. Itemtype "aplikasi" di GLPI — yang benar**
@@ -367,7 +367,7 @@ nyata.
 ### 6.4 Keputusan desain RTO/RPO (dampak dari riset §6.3 + fakta terkonfirmasi)
 
 **Fakta terkonfirmasi (user 2026-09-01):**
-- Plugin **`fields` sudah terpasang** di VM-HQ-GLPI.
+- Plugin **`fields` sudah terpasang** di VM-SERVER-22.
 - **Web application = itemtype `Appliance`.**
 
 **Sumber kebenaran target RTO/RPO = custom field plugin `fields` pada aset:**
@@ -700,7 +700,7 @@ hub §2 — tanpa bentrok.
 Full identifier: `GlpiPlugin\Drillreport\Cron::DrillReminder` /
 `…::ActionFollowup` / `…::FindingStatusSync`.
 
-Di VM-HQ-GLPI dijalankan lewat `sudo -u nginx php /data/www/glpi/front/cron.php
+Di VM-SERVER-22 dijalankan lewat `sudo -u nginx php /var/www/glpi/front/cron.php
 DrillReminder` (tidak ada `bin/console` cron — hub §3); `/etc/cron.d/glpi` yang
 sudah ada meng-cover otomatis.
 
@@ -756,7 +756,7 @@ sudah ada meng-cover otomatis.
 **Repo:** `teguh-umar/drillreport` (private) · **v0.2.x** (Unreleased). Child-CRUD +
 integrasi RR + **laporan cetak Twig** + menu sektor sendiri + **static review
 lengkap vs source `glpi 11.0/bugfixes`**. `php -l` bersih. **Belum dijalankan di
-VM-HQ-GLPI** — jalankan `docs/deploy-checklist.md`.
+VM-SERVER-22** — jalankan `docs/deploy-checklist.md`.
 
 > ⚠️ **Gotcha GLPI 11.0.x — semua 3 sudah difix di drillreport** (heads-up dari
 > sesi riskregister yang kena masing-masing di v1.1.1 / v1.1.2 / v1.1.3 / v1.2.0):

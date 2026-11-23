@@ -7,7 +7,7 @@ namespace GlpiPlugin\Drillreport;
  * fresh install has a concrete reference. Every row's name is prefixed with
  * {@see self::MARKER} so it is easy to spot and remove.
  *
- * Content is the real PT PGN / ICT CRM DRC drill of 23 August 2026, transcribed
+ * Content is the real the company / ICT CRM DRC drill of 23 August 2026, transcribed
  * from DRILL_CRM_2026_Activities_Plan_v.1.0_Fix.xlsx + DRC-DRILL Agustus 2026
  * CRM.pdf. See docs/entering-a-real-drill.md for the full field-by-field mapping.
  * The multi-asset "Systems in scope" table cannot be seeded (the 8 CRM servers
@@ -67,11 +67,11 @@ class Sample
             'users_id_tech'                   => (int) ($_SESSION['glpiID'] ?? 0),
             'objectives'                      => "1. CRM (Siebel 8.1) online di DRC pasca-failover, dieksekusi tim internal.\n"
                                                . "2. Integritas data CRM terjaga — switchover Oracle Data Guard tanpa gap.\n"
-                                               . "3. RMS/HQAPEX dan Gapura Online Payment berfungsi di DRC.\n"
-                                               . "4. Payment Engine (MyPertamina / PGN Mobile) berfungsi di DRC.\n"
+                                               . "3. RMS dan Online Payment Gateway berfungsi di DRC.\n"
+                                               . "4. Payment Engine (MyApp / Mobile App) berfungsi di DRC.\n"
                                                . "5. Fallback DRC → DC bersih dan layanan normal kembali.",
             'scope_summary'                   => 'Failover terkontrol aplikasi CRM (Siebel 8.1, web + database Oracle Data Guard), '
-                                               . 'RMS/HQAPEX, Gapura Online Payment, dan Payment Engine via MyPertamina/PGNMobile '
+                                               . 'RMS, Online Payment Gateway, dan Payment Engine via MyApp/MobileApp '
                                                . 'dari Pusat Data Utama (Jl. K.H Zainul Arifin 20, Jakarta) ke DRC Indosat Jatiluhur, '
                                                . 'lalu dikembalikan. Skenario: kegagalan total DC HQ / DB primary CRM.',
             'data_loss_summary'               => 'Tidak ada kehilangan data — pengecekan gap primary/standby "Sukses" setelah '
@@ -81,11 +81,11 @@ class Sample
             'executive_summary'               => 'Failover CRM berjalan baik secara fungsional (aplikasi online, data konsisten, '
                                                . 'tanpa bantuan vendor). RTO meleset: total downtime ~104 menit vs rencana ~65 menit; '
                                                . 'penyebab utama tidak ada standby database ter-restore di DRC. 1 sub-test gagal: '
-                                               . 'pembayaran via MyPertamina & PGN Mobile (konfigurasi IP API belum diarahkan ke '
+                                               . 'pembayaran via MyApp & Mobile App (konfigurasi IP API belum diarahkan ke '
                                                . 'DB DRC). Rencana perbaikan Q4 2026.',
             'lessons_learned'                 => 'Runbook failover akurat dan dieksekusi tim internal. Bottleneck di infrastruktur '
                                                . 'data & konfigurasi integrasi, bukan prosedur. Perlu keterlibatan tim MIS untuk '
-                                               . 'konfigurasi API pembayaran, penambahan resource HQAPEX, dan monitoring rutin '
+                                               . 'konfigurasi API pembayaran, penambahan resource APEX-RMS, dan monitoring rutin '
                                                . 'sinkronisasi archivelog.',
             'status'                          => 'submitted',
         ]);
@@ -98,12 +98,12 @@ class Sample
         //      minutes as target + actual start/end times (xlsx execution log).
         foreach ([
             ['Backup database & config check', 210, '2026-08-23 18:00:00', '2026-08-23 20:17:00', 'met', '01_backup_disk.png', 'Disk space cukup; selesai lebih cepat. (bukan downtime)'],
-            ['Shutdown aplikasi CRM, RMS & Gapura', 15, '2026-08-23 21:09:00', '2026-08-23 21:18:00', 'met', '02_shutdown_nosessions.png', 'Tidak ada sesi aplikasi di database.'],
+            ['Shutdown aplikasi CRM, RMS & Payment Gateway', 15, '2026-08-23 21:09:00', '2026-08-23 21:18:00', 'met', '02_shutdown_nosessions.png', 'Tidak ada sesi aplikasi di database.'],
             ['Switchover database DC → DRC', 20, '2026-08-23 21:18:00', '2026-08-23 21:30:00', 'met', '03_switchover_db_2130.png', 'Primary ↔ Standby switch Oracle Data Guard, tidak ada gap.'],
-            ['Failover VM CRM/RMS + re-IP + hosts + Gapura conn.string', 50, '2026-08-23 21:30:00', '2026-08-23 22:11:00', 'partial', '04_vm_failover.png', 'Sukses tapi kendala NIC DRCBAY11 & Guest OS RMS unsupported.'],
-            ['Test CRM, RMS, Gapura & Payment Engine di DRC', 24, '2026-08-23 22:12:00', '2026-08-23 22:45:00', 'partial', '05a_crm_test.png; 05b_payment_ok.png; 05c_pgnmobile_fail.png', 'CRM/RMS/Gapura Sukses; Payment via PGN Mobile GAGAL.'],
+            ['Failover VM CRM/RMS + re-IP + hosts + Payment Gateway conn.string', 50, '2026-08-23 21:30:00', '2026-08-23 22:11:00', 'partial', '04_vm_failover.png', 'Sukses tapi kendala NIC DRCBAY11 & Guest OS RMS unsupported.'],
+            ['Test CRM, RMS, Payment Gateway & Payment Engine di DRC', 24, '2026-08-23 22:12:00', '2026-08-23 22:45:00', 'partial', '05a_crm_test.png; 05b_payment_ok.png; 05c_mobileapp_fail.png', 'CRM/RMS/Payment Gateway Sukses; Payment via Mobile App GAGAL.'],
             ['Switchover database DRC → DC (fallback)', 14, '2026-08-23 22:46:00', '2026-08-23 22:55:00', 'met', '06_fallback_gap0.png', 'Delete test-failover VM, gap check (0), switchover — Sukses.'],
-            ['Startup CRM/RMS di DC + test akhir', 30, '2026-08-23 22:56:00', '2026-08-23 23:10:00', 'met', '07_final_test.png', 'CRM, RMS, Gapura Online Payment normal.'],
+            ['Startup CRM/RMS di DC + test akhir', 30, '2026-08-23 22:56:00', '2026-08-23 23:10:00', 'met', '07_final_test.png', 'CRM, RMS, Online Payment Gateway normal.'],
         ] as [$name, $target, $start, $end, $result, $evidence, $comment]) {
             (new Objective())->add([
                 'plugin_drillreport_drills_id' => $drillId,
@@ -122,20 +122,20 @@ class Sample
         $infraCat = self::dropdownId(new ActionCategory(), 'Infrastructure / capacity', $entities_id);
         $actions = [
             [
-                'name'           => 'Pembayaran via MyPertamina & PGN Mobile gagal saat test DRC',
+                'name'           => 'Pembayaran via MyApp & Mobile App gagal saat test DRC',
                 'category'       => self::dropdownId(new ActionCategory(), 'Network & connectivity', $entities_id),
                 'severity'       => 'high',
-                'content'        => 'Test Payment Engine via PGN Mobile — Gagal. Error "Unexpected system error", "Token is not valid".',
+                'content'        => 'Test Payment Engine via Mobile App — Gagal. Error "Unexpected system error", "Token is not valid".',
                 'cause'          => 'Konfigurasi IP pada sisi API (Web Method) belum diarahkan ke IP DB DRC.',
                 'recommendation' => 'Libatkan tim MIS di drill berikutnya untuk menyesuaikan konfigurasi API di Web Method ke IP DB DRC.',
             ],
             [
-                'name'           => 'HQAPEX (RMS) kekurangan RAM & disk',
+                'name'           => 'APEX-RMS (RMS) kekurangan RAM & disk',
                 'category'       => $infraCat,
                 'severity'       => 'medium',
                 'content'        => 'RAM VM DR 1 GB; disk `/` 89% penuh.',
                 'cause'          => 'Alokasi RAM & disk tidak memadai.',
-                'recommendation' => 'Naikkan RAM HQAPEX menjadi 8 GB dan available disk `/` menjadi 100 GB.',
+                'recommendation' => 'Naikkan RAM APEX-RMS menjadi 8 GB dan available disk `/` menjadi 100 GB.',
             ],
             [
                 'name'           => 'Sinkronisasi archivelog primary → standby perlu diawasi',
@@ -154,12 +154,12 @@ class Sample
                 'recommendation' => 'Perbaiki modul Onboard Administrator DRCBAY11.',
             ],
             [
-                'name'           => 'VM-RMS — perubahan IP terhambat, Guest OS unsupported',
+                'name'           => 'VM-SERVER-33 — perubahan IP terhambat, Guest OS unsupported',
                 'category'       => $infraCat,
                 'severity'       => 'low',
                 'content'        => 'Kursor GUI freeze/unresponsive saat input konfigurasi.',
                 'cause'          => 'Versi Guest OS sudah tidak didukung oleh Hyper-V.',
-                'recommendation' => 'Upgrade / migrasi Guest OS VM-RMS ke versi yang didukung.',
+                'recommendation' => 'Upgrade / migrasi Guest OS VM-SERVER-33 ke versi yang didukung.',
             ],
         ];
         foreach ($actions as $a) {
@@ -198,11 +198,11 @@ class Sample
                 'plugin_drillreport_drills_id' => $drillId,
                 'itemtype'                     => $itemtype,
                 'items_id'                     => (int) array_key_first($rows),
-                'dr_target'                    => 'DR_DBSERVER2 / 192.168.230.87',
+                'dr_target'                    => 'DR_DBSERVER2 / 192.0.2.87',
                 'is_recovered'                 => 1,
                 'recovery_order'               => 1,
                 'comment'                     => 'Contoh — mewakili DBSERVER2 (CRM DB). Switchover Oracle Data Guard DC↔DRC, tidak ada gap. '
-                                              . 'Tambahkan CRM_EOM/AM/GW/WEB1, Gapura, HQAPEX, Payment Engine secara manual (lihat docs/entering-a-real-drill.md).',
+                                              . 'Tambahkan CRM_EOM/AM/GW/WEB1, Payment Gateway, APEX-RMS, Payment Engine secara manual (lihat docs/entering-a-real-drill.md).',
             ]);
             break;
         }
